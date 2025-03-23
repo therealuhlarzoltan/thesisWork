@@ -14,10 +14,10 @@ public class DelayInfo {
     private String thirdPartyStationUrl;
     private String officialStationUrl;
     private String trainNumber;
-    private Integer scheduledDeparture;
-    private Integer actualDeparture;
-    private Integer scheduledArrival;
-    private Integer actualArrival;
+    private String scheduledDeparture;
+    private String actualDeparture;
+    private String scheduledArrival;
+    private String actualArrival;
     private Integer arrivalDelay;
     private Integer departureDelay;
     private LocalDate date;

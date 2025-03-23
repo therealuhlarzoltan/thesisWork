@@ -1,6 +1,10 @@
 server.port: 8888
 
-spring.cloud.config.server.native.searchLocations: file:${PWD}/config-repo
+spring:
+  profiles:
+    active: native
+
+spring.cloud.config.server.native.searchLocations: file:${PWD}/configurations
 spring.cloud.config.server.encrypt.key: ${CONFIG_SERVER_ENCRYPT_KEY}
 
 spring.security:
@@ -8,10 +12,9 @@ spring.security:
         name: ${CONFIG_SERVER_USER}
         password: ${CONFIG_SERVER_PASSWORD}
 
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
 logging:
   level:
     root: DEBUG
-
----
-spring.config.activate.on-profile: docker
-spring.cloud.config.server.native.searchLocations: file:/configurations

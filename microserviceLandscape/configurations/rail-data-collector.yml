@@ -3,22 +3,22 @@ server:
   error.include-message: always
   forward-headers-strategy: framework
 
-  railway.api:
-    base-url: http://apiv2.oroszi.net/elvira
-    timetable-getter-uri: /?from={from}&to={to}
-    train-details-getter-uri: /details?url={url}
+railway.api:
+  base-url: http://apiv2.oroszi.net/elvira
+  timetable-getter-uri: /?from={from}&to={to}
+  train-details-getter-uri: /details?url={url}
 
-  springdoc:
-    swagger-ui:
-      path: /openapi/swagger-ui.html
-    api-docs:
-      path: /openapi/api-docs
-    paths-to-match: /**
-    packages-to-scan:
-      - hu.uni_obuda.thesis.railways.data.raildatacollector
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/api-docs
+  paths-to-match: /**
+  packages-to-scan:
+    - hu.uni_obuda.thesis.railways.data.raildatacollector
 
-  management.endpoint.health.show-details: "ALWAYS"
-  management.endpoints.web.exposure.include: "*"
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
 
 logging:
   level:
