@@ -6,5 +6,5 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDate;
 
 public interface RailDataService {
-    Flux<DelayInfo> getDelayInfo(String trainNumber, LocalDate date);
+    Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date);
 }

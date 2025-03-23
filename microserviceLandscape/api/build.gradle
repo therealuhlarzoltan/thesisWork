@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'io.spring.dependency-management' version '1.1.5'
-    id 'io.freefair.lombok' version '8.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'io.freefair.lombok' version '8.13'
 }
 
 group = 'hu.uni_obuda.thesis.railways'
@@ -10,6 +10,7 @@ version = '1.0-SNAPSHOT'
 ext {
     springBootVersion = '3.4.3'
     javaVersion = 22
+    lombokVersion = '1.18.36'
 }
 
 java {
@@ -26,9 +27,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
     implementation 'org.springdoc:springdoc-openapi-starter-common:2.0.2'
-    compileOnly 'org.projectlombok:lombok:1.18.28'
-    annotationProcessor 'org.projectlombok:lombok:1.18.28'
-    testCompileOnly 'org.projectlombok:lombok:1.18.28'
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
 }
 
 test {

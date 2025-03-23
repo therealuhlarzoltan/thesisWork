@@ -9,5 +9,5 @@ import java.time.LocalDate;
 
 public interface RailDataCollector {
     @GetMapping("/collect-delay")
-    Flux<DelayInfo> getDelayInfo(@RequestParam String trainNumber, @RequestParam LocalDate date);
+    Flux<DelayInfo> getDelayInfo(@RequestParam String trainNumber, @RequestParam String from, @RequestParam String to, @RequestParam LocalDate date);
 }

@@ -1,6 +1,12 @@
 server.port: 8888
 
 spring.cloud.config.server.native.searchLocations: file:${PWD}/config-repo
+spring.cloud.config.server.encrypt.key: ${CONFIG_SERVER_ENCRYPT_KEY}
+
+spring.security:
+    user:
+        name: ${CONFIG_SERVER_USER}
+        password: ${CONFIG_SERVER_PASSWORD}
 
 logging:
   level:
