@@ -5,8 +5,8 @@ server:
 
 railway.api:
   base-url: http://apiv2.oroszi.net/elvira
-  timetable-getter-uri: /?from={from}&to={to}
-  train-details-getter-uri: /details?url={url}
+  timetable-getter-uri: /
+  train-details-getter-uri: /details
 
 springdoc:
   swagger-ui:

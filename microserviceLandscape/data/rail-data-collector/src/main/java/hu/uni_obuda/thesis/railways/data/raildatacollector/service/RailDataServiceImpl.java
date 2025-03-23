@@ -38,7 +38,7 @@ public class RailDataServiceImpl implements RailDataService {
                 .flatMap(entry -> entry.getDetails().stream())
                 .filter(details -> details.getTrainInfo().getCode().equals(trainNumber))
                 .findFirst()
-                .map(details -> Mono.just(details.getTrainInfo().getCode()))
+                .map(details -> Mono.just(details.getTrainInfo().getUrl()))
                 .orElse(Mono.error(new InvalidInputDataException("Train number not found")));
     }
 

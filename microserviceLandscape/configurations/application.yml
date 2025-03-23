@@ -1,0 +1,2 @@
+spring.mvc.format.date-time=iso
+spring.web.encoding.charset=UTF-8

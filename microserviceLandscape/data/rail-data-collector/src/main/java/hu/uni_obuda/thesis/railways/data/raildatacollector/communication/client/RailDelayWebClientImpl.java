@@ -11,12 +11,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -35,16 +38,20 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
     @Override
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to) {
         URI timetableUri = UriComponentsBuilder.fromUriString(timetableGetterUri)
-                .build(from, to);
-        return webClient.get().uri(timetableUri).exchangeToMono(apiResponse -> {
+                .queryParam("from", from)
+                .queryParam("to", to)
+                .build().toUri();
+        return webClient.get().uri(timetableUri.toString())
+        .exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {
                             try {
                                 ShortTimetableResponse parsedResponse = objectMapper.readValue(response, ShortTimetableResponse.class);
+                                parsedResponse.removeUnnecessaryData();
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
-                                return Mono.error(mapMappingExceptionToException(ioException, timetableGetterUri));
+                                return Mono.error(mapMappingExceptionToException(ioException, timetableUri.toString()));
                             }
                         });
             } else {
@@ -55,9 +62,10 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
 
     @Override
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String thirdPartyUrl) {
-        URI trainDetailsUri = UriComponentsBuilder.fromUriString(thirdPartyUrl)
-                .build(thirdPartyUrl);
-        return webClient.get().uri(trainDetailsGetterUri).exchangeToMono(apiResponse -> {
+        URI trainDetailsUri = UriComponentsBuilder.fromUriString(trainDetailsGetterUri)
+                .queryParam("url", thirdPartyUrl)
+                .build().toUri();
+        return webClient.get().uri(trainDetailsUri.toString()).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {
@@ -65,7 +73,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
                                 ShortTrainDetailsResponse parsedResponse = objectMapper.readValue(response, ShortTrainDetailsResponse.class);
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
-                                return Mono.error(mapMappingExceptionToException(ioException, timetableGetterUri));
+                                return Mono.error(mapMappingExceptionToException(ioException, trainDetailsUri.toString()));
                             }
                         });
             } else {
@@ -75,7 +83,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
     }
 
     private RuntimeException mapApiResponseToException(ClientResponse clientResponse) {
-        return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(railwayBaseUrl + clientResponse.request().getURI().toString()));
+        return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(clientResponse.request().getURI().toString()));
     }
 
     private RuntimeException mapMappingExceptionToException(IOException ioException, String uri) {

@@ -37,4 +37,12 @@ public class ShortTimetableResponse {
         @JsonProperty("vsz_code")
         private String vszCode;
     }
+
+    public void removeUnnecessaryData() {
+        for (var entry : timetable) {
+            if (entry.getDetails().size() > 1) {
+                entry.getDetails().remove(1);
+            }
+        }
+    }
 }
