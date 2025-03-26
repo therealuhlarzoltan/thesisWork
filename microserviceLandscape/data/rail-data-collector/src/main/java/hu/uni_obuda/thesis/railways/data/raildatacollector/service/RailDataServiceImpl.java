@@ -4,17 +4,31 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
+import io.netty.channel.ConnectTimeoutException;
+import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.WriteTimeoutException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +41,14 @@ public class RailDataServiceImpl implements RailDataService {
     @Override
     public Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date) {
         return gateway.getShortTimetable(from, to)
+                .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
+                .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
+                .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
                 .flatMap(timetableResponse -> extractTrainUri(timetableResponse, trainNumber))
                 .flatMap(trainUri -> gateway.getShortTrainDetails(trainUri))
+                .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
+                .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
+                .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
                 .flatMap(shortTrainDetailsResponse ->  mapToDelayInfo(shortTrainDetailsResponse, trainNumber, date))
                 .flatMapMany(Flux::fromIterable);
     }
@@ -90,5 +110,35 @@ public class RailDataServiceImpl implements RailDataService {
     private static int convertToMinutes(String time) {
         LocalTime localTime = LocalTime.parse(time, dateTimeFormatter);
         return localTime.getHour() * 60 + localTime.getMinute();
+    }
+
+    private ExternalApiException mapNotFoundToExternalApiException(WebClientResponseException.NotFound notFound) {
+        return new ExternalApiException(notFound.getStatusCode(), extractUrlFromRequest(notFound.getRequest()));
+    }
+
+    private ExternalApiException mapBadRequestToExternalApiException(WebClientResponseException.BadRequest badRequest) {
+        return new ExternalApiException(badRequest.getStatusCode(), extractUrlFromRequest(badRequest.getRequest()));
+    }
+
+    private URL extractUrlFromRequest(HttpRequest request) {
+        try {
+            return request.getURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ApiException mapWebClientRequestExceptionToApiException(WebClientRequestException requestException) {
+        URL url;
+        try {
+            url = requestException.getUri().toURL();
+        } catch (MalformedURLException _) {
+            url = null;
+        }
+        Throwable cause = requestException.getCause();
+        if (cause instanceof ConnectTimeoutException || cause instanceof ReadTimeoutException || cause instanceof WriteTimeoutException) {
+            return new ExternalApiException(HttpStatus.SERVICE_UNAVAILABLE, url, "Connection timed out");
+        }
+        return new InternalApiException(requestException.getMessage(), url);
     }
 }

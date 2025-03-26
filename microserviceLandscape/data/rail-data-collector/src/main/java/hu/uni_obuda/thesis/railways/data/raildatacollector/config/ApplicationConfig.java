@@ -25,7 +25,6 @@ public class ApplicationConfig {
     @Value("${railway.api.base-url}")
     private String railwayApiUrl;
 
-
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
         return builder.baseUrl(railwayApiUrl)
@@ -35,21 +34,19 @@ public class ApplicationConfig {
     }
 
     private HttpClient createHttpClient(int connectionTimeoutInMs, int connectionReadTimeoutInMs, int connectionWriteTimeoutInMs) {
-        HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectionTimeoutInMs);
-        if (connectionReadTimeoutInMs > 0 && connectionWriteTimeoutInMs > 0) {
-            httpClient.doOnConnected(conn -> conn
-                    .addHandlerLast(new ReadTimeoutHandler(5, TimeUnit.MICROSECONDS))
-                    .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.MICROSECONDS))
-            );
-        } else if (connectionReadTimeoutInMs > 0) {
-            httpClient.doOnConnected(conn -> conn
-                    .addHandlerLast(new ReadTimeoutHandler(5, TimeUnit.MICROSECONDS)));
-        } else if (connectionWriteTimeoutInMs > 0) {
-            httpClient.doOnConnected(conn -> conn
-                    .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.MICROSECONDS))
-            );
+        HttpClient httpClient = HttpClient.create();
+
+        if (connectionTimeoutInMs > 0) {
+            httpClient = httpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectionTimeoutInMs);
         }
 
-        return httpClient;
+        return httpClient.doOnConnected(conn -> {
+            if (connectionReadTimeoutInMs > 0) {
+                conn.addHandlerLast(new ReadTimeoutHandler(connectionReadTimeoutInMs, TimeUnit.MILLISECONDS));
+            }
+            if (connectionWriteTimeoutInMs > 0) {
+                conn.addHandlerLast(new WriteTimeoutHandler(connectionWriteTimeoutInMs, TimeUnit.MILLISECONDS));
+            }
+        });
     }
 }

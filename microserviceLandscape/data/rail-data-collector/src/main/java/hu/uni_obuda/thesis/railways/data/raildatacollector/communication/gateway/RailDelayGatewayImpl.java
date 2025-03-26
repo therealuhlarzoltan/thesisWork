@@ -3,13 +3,23 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gatewa
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.RailDelayWebClient;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -18,35 +28,40 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
 
     private final RailDelayWebClient webClient;
 
+    @Value("${railway.api.base-url}")
+    private String railwayBaseUrl;
+    @Value("${railway.api.time-table-getter-uri}")
+    private String timetableGetterUri;
+    @Value("${railway.api.train-details-getter-uri}")
+    private String trainDetailsGetterUri;
+
     @CircuitBreaker(name = "getTimetableApi", fallbackMethod = "handleTimetableFallback")
     @Retry(name = "getTimetableApi")
-    @TimeLimiter(name = "getTimetableApi", fallbackMethod = "handleTimetableTimeoutFallback")
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to) {
         return webClient.getShortTimetable(from, to);
     }
 
     @CircuitBreaker(name = "getTrainDetailsApi", fallbackMethod = "handleDetailsFallback")
     @Retry(name = "getTrainDetailsApi")
-    @TimeLimiter(name = "getTrainDetailsApi", fallbackMethod = "handleDetailsTimeoutFallback")
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
         return webClient.getShortTrainDetails(trainUri);
     }
 
-
-    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, Exception ex) {
-        return Mono.empty();
+    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, Throwable throwable) throws MalformedURLException {
+        return Mono.error(resolveApiException(throwable));
     }
 
-    public Mono<ShortTimetableResponse> handleTimetableTimeoutFallback(String from, String to, TimeoutException timeoutException) {
-        return Mono.empty();
+    public Mono<ShortTrainDetailsResponse> handleDetailsFallback(String trainUri, Throwable throwable) throws MalformedURLException {
+        return Mono.error(resolveApiException(throwable));
     }
 
-    public Mono<ShortTrainDetailsResponse> handleDetailsFallback(String trainUri, Exception ex) {
-        return Mono.empty();
+    private ApiException resolveApiException(Throwable throwable) throws MalformedURLException {
+        if (throwable instanceof WebClientResponseException response) {
+            return new ExternalApiException(response.getStatusCode(), response.getRequest().getURI().toURL());
+        } else if (throwable instanceof WebClientRequestException request) {
+            return new InternalApiException(request.getMessage(), request.getUri().toURL());
+        } else {
+            return new InternalApiException("A runtime exception occurred", null);
+        }
     }
-
-    public Mono<ShortTrainDetailsResponse> handleDetailsTimeoutFallback(String trainUri, TimeoutException timeoutException) {
-        return Mono.empty();
-    }
-
 }
