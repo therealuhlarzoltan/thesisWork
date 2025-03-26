@@ -41,7 +41,7 @@ public class ShortTimetableResponse {
     public void removeUnnecessaryData() {
         for (var entry : timetable) {
             if (entry.getDetails().size() > 1) {
-                entry.getDetails().remove(1);
+                entry.getDetails().retainAll(List.of(entry.getDetails().getFirst()));
             }
         }
     }

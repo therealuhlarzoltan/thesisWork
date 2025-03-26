@@ -8,6 +8,14 @@ railway.api:
   timetable-getter-uri: /
   train-details-getter-uri: /details
 
+tcp:
+    connection:
+      timeout-in-ms: 30000
+      read:
+        timeout-in-ms: 20000
+      write:
+        timeout-in-ms: 20000
+
 springdoc:
   swagger-ui:
     path: /openapi/swagger-ui.html
@@ -23,3 +31,6 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: INFO
+    reactor.netty: TRACE
+    org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
+    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: TRACE

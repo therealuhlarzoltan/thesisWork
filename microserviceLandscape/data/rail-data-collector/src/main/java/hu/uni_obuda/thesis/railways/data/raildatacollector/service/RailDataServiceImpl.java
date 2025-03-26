@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RailDataServiceImpl implements RailDataService {
 
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH::mm");
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     private final RailDelayGateway gateway;
 
@@ -52,7 +52,7 @@ public class RailDataServiceImpl implements RailDataService {
     private static DelayInfo mapStationInfoToDelayInfo(ShortTrainDetailsResponse.Station station, String trainNumber, LocalDate date) {
         Integer arrivalDelay;
         Integer departureDelay;
-        if (station.getRealArrival() != null || station.getRealDeparture() != null) {
+        if (station.getRealArrival() == null && station.getRealDeparture() == null) {
             arrivalDelay = null;
             departureDelay = null;
         } else {

@@ -33,7 +33,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     }
 
 
-    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, Throwable throwable) {
+    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, Exception ex) {
         return Mono.empty();
     }
 
@@ -41,7 +41,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
         return Mono.empty();
     }
 
-    public Mono<ShortTrainDetailsResponse> handleDetailsFallback(String trainUri, Throwable throwable) {
+    public Mono<ShortTrainDetailsResponse> handleDetailsFallback(String trainUri, Exception ex) {
         return Mono.empty();
     }
 

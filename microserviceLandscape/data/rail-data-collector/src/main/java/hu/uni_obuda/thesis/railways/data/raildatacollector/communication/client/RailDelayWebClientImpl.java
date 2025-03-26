@@ -6,6 +6,8 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -15,15 +17,15 @@ import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
 public class RailDelayWebClientImpl implements RailDelayWebClient {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RailDelayWebClientImpl.class);
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -37,7 +39,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
 
     @Override
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to) {
-        URI timetableUri = UriComponentsBuilder.fromUriString(timetableGetterUri)
+        URI timetableUri = UriComponentsBuilder.fromPath(timetableGetterUri)
                 .queryParam("from", from)
                 .queryParam("to", to)
                 .build().toUri();
@@ -62,10 +64,8 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
 
     @Override
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String thirdPartyUrl) {
-        URI trainDetailsUri = UriComponentsBuilder.fromUriString(trainDetailsGetterUri)
-                .queryParam("url", thirdPartyUrl)
-                .build().toUri();
-        return webClient.get().uri(trainDetailsUri.toString()).exchangeToMono(apiResponse -> {
+        URI trainDetailsUri = URI.create(railwayBaseUrl + trainDetailsGetterUri + "?url=" + URLEncoder.encode(thirdPartyUrl, StandardCharsets.UTF_8));
+        return webClient.get().uri(trainDetailsUri).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {
