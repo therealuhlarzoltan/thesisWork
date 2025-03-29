@@ -35,7 +35,7 @@ resilience4j:
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
       getTrainDetailsApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -52,7 +52,7 @@ resilience4j:
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
 
   retry:
     instances:

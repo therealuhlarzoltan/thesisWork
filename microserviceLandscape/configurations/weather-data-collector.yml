@@ -6,6 +6,7 @@ server:
 weather.api:
   base-url: https://api.open-meteo.com
   forecast-url: /v1/forecast
+  time-zone: Europe/Berlin
 
 maps.api:
   base-url: https://maps.googleapis.com/maps/api
@@ -24,7 +25,7 @@ tcp:
 resilience4j:
   circuitbreaker:
     instances:
-      getWeatherForecastApi:
+      getWeatherDataApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
         slidingWindowType: COUNT_BASED
@@ -39,8 +40,8 @@ resilience4j:
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException
-      getRecentWeatherApi:
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+      geocodingApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
         slidingWindowType: COUNT_BASED
@@ -55,11 +56,11 @@ resilience4j:
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
 
   retry:
     instances:
-      getWeatherForecastApi:
+      getWeatherDataApi:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
@@ -68,7 +69,7 @@ resilience4j:
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-      getRecentWeatherApi:
+      geocodingApi:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:

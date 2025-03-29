@@ -28,13 +28,6 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
 
     private final RailDelayWebClient webClient;
 
-    @Value("${railway.api.base-url}")
-    private String railwayBaseUrl;
-    @Value("${railway.api.time-table-getter-uri}")
-    private String timetableGetterUri;
-    @Value("${railway.api.train-details-getter-uri}")
-    private String trainDetailsGetterUri;
-
     @CircuitBreaker(name = "getTimetableApi", fallbackMethod = "handleTimetableFallback")
     @Retry(name = "getTimetableApi")
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to) {

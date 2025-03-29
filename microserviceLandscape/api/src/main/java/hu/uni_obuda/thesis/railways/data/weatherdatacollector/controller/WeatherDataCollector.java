@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.weatherdatacollector.service;
+package hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller;
 
 
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;

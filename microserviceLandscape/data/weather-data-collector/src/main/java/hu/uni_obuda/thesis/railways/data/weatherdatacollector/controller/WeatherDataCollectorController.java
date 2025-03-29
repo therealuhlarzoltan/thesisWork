@@ -1,7 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller;
 
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.service.WeatherDataCollector;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.service.WeatherDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;

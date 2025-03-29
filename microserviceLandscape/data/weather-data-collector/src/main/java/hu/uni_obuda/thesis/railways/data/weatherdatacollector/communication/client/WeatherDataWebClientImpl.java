@@ -17,17 +17,21 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.time.LocalDate;
 
 @Component
 public class WeatherDataWebClientImpl implements WeatherDataWebClient {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+    private final String HOURLY_PARAMETERS = "temperature_2m,relative_humidity_2m,snow_depth,snowfall,precipitation,showers,rain,visibility,wind_speed_10m,cloud_cover,wind_speed_80m";
 
     @Value("${weather.api.base-url}")
     private String weatherBaseUrl;
     @Value("${weather.api.forecast-url}")
     private String forecastUri;
+    @Value("${weather.api.time-zone}")
+    private String timeZone;
 
     @Autowired
     public WeatherDataWebClientImpl(@Qualifier("weatherWebClient") WebClient webClient, ObjectMapper objectMapper) {
@@ -35,8 +39,14 @@ public class WeatherDataWebClientImpl implements WeatherDataWebClient {
         this.objectMapper = objectMapper;
     }
 
-    public Mono<WeatherResponse> getWeatherByCoordinates(double latitude, double longitude) {
+    public Mono<WeatherResponse> getWeatherByCoordinates(double latitude, double longitude, LocalDate date) {
         URI requestUri = UriComponentsBuilder.fromPath(forecastUri)
+                .queryParam("latitude", latitude)
+                .queryParam("longitude", longitude)
+                .queryParam("timezone", timeZone)
+                .queryParam("start_date", date.toString())
+                .queryParam("end_date", date.toString())
+                .queryParam("hourly", HOURLY_PARAMETERS)
                 .build().toUri();
 
         return webClient.get().uri(requestUri).exchangeToMono(apiResponse -> {
