@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequiredArgsConstructor
 public class WeatherDataCollectorController implements WeatherDataCollector {
@@ -14,7 +16,7 @@ public class WeatherDataCollectorController implements WeatherDataCollector {
     private final WeatherDataService service;
 
     @Override
-    public Mono<WeatherInfo> getWeatherInfo(String stationName) {
-        return service.
+    public Mono<WeatherInfo> getWeatherInfo(String stationName, LocalDateTime dateTime) {
+        return service.getWeatherInfoByAddress(stationName, dateTime);
     }
 }

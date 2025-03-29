@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
 public interface WeatherDataCollector {
     @GetMapping("/collect-weather-info")
-    Mono<WeatherInfo> getWeatherInfo(String stationName);
+    Mono<WeatherInfo> getWeatherInfo(@RequestParam String stationName, @RequestParam LocalDateTime dateTime);
 }

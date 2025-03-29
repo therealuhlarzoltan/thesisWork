@@ -1,7 +1,8 @@
 package hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.CoordinatesResponse;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.WeatherResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,7 +36,7 @@ public class WeatherDataWebClientImpl implements WeatherDataWebClient {
     }
 
     public Mono<WeatherResponse> getWeatherByCoordinates(double latitude, double longitude) {
-        URI requestUri = UriComponentsBuilder.fromPath(address)
+        URI requestUri = UriComponentsBuilder.fromPath(forecastUri)
                 .build().toUri();
 
         return webClient.get().uri(requestUri).exchangeToMono(apiResponse -> {

@@ -2,7 +2,8 @@ package hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.cli
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.CoordinatesResponse;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.WeatherResponse;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
