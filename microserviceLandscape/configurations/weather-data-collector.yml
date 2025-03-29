@@ -7,6 +7,12 @@ weather.api:
   base-url: https://api.open-meteo.com
   forecast-url: /v1/forecast
 
+maps.api:
+  base-url: https://maps.googleapis.com/maps/api
+  geocoding-url: /geocode/json
+  country-code : HU
+  api-key: ${MAPS_API_KEY}
+
 tcp:
   connection:
     timeout-in-ms: 10000

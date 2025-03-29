@@ -18,24 +18,28 @@ import java.net.URI;
 import java.net.URL;
 
 @Component
-public class WeatherDataWebClientImpl implements WeatherDataWebClient {
+public class MapsWebClientImpl implements MapsWebClient {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    @Value("${weather.api.base-url}")
-    private String weatherBaseUrl;
-    @Value("${weather.api.forecast-url}")
-    private String forecastUri;
+    @Value("${maps.api.base-url}")
+    private String mapsBaseUrl;
+    @Value("${maps.api.geocoding-url}")
+    private String geocodingUri;
+    @Value("${maps.api.country-code}")
+    private String countryCode;
 
     @Autowired
-    public WeatherDataWebClientImpl(@Qualifier("weatherWebClient") WebClient webClient, ObjectMapper objectMapper) {
+    public MapsWebClientImpl(@Qualifier("mapsWebClient") WebClient webClient, ObjectMapper objectMapper) {
         this.webClient = webClient;
         this.objectMapper = objectMapper;
     }
 
-    public Mono<WeatherResponse> getWeatherByCoordinates(double latitude, double longitude) {
-        URI requestUri = UriComponentsBuilder.fromPath(address)
+    public Mono<CoordinatesResponse> getCoordinates(String address) {
+        address = address.replaceAll(",", " ") + " " + countryCode;
+        URI requestUri = UriComponentsBuilder.fromPath(geocodingUri)
+                .queryParam("address", address)
                 .build().toUri();
 
         return webClient.get().uri(requestUri).exchangeToMono(apiResponse -> {
@@ -43,7 +47,7 @@ public class WeatherDataWebClientImpl implements WeatherDataWebClient {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {
                             try {
-                                WeatherResponse parsedResponse = objectMapper.readValue(response, WeatherResponse.class);
+                                CoordinatesResponse parsedResponse = objectMapper.readValue(response, CoordinatesResponse.class);
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
                                 return Mono.error(mapMappingExceptionToException(ioException, requestUri.toString()));
@@ -64,7 +68,7 @@ public class WeatherDataWebClientImpl implements WeatherDataWebClient {
     }
 
     private URL getUrlFromUriString(String uri) {
-        return getUrlFromString(weatherBaseUrl + uri);
+        return getUrlFromString(mapsBaseUrl + uri);
     }
 
     private URL getUrlFromString(String url) {

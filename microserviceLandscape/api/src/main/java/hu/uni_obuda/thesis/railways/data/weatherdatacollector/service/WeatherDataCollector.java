@@ -10,5 +10,5 @@ import java.time.ZonedDateTime;
 
 public interface WeatherDataCollector {
     @GetMapping("/collect-weather-info")
-    Mono<WeatherInfo> getWeatherInfo();
+    Mono<WeatherInfo> getWeatherInfo(String stationName);
 }

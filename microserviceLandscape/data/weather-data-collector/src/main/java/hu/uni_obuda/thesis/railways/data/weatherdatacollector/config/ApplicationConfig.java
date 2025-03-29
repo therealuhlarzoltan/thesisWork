@@ -23,10 +23,20 @@ public class ApplicationConfig {
     private int connectionWriteTimeoutInMs;
     @Value("${weather.api.base-url}")
     private String weatherApiUrl;
+    @Value("${maps.api.base-url}")
+    private String mapsApiUrl;
 
-    @Bean
-    public WebClient webClient(WebClient.Builder builder) {
+    @Bean(name = "weatherWebClient")
+    public WebClient weatherWebClient(WebClient.Builder builder) {
         return builder.baseUrl(weatherApiUrl)
+                .defaultHeader("Content-Type", "application/json")
+                .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
+                .build();
+    }
+
+    @Bean(name = "mapsWebClient")
+    public WebClient mapsWebClient(WebClient.Builder builder) {
+        return builder.baseUrl(mapsApiUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
                 .build();
