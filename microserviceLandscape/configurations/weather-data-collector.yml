@@ -3,23 +3,29 @@ server:
   error.include-message: always
   forward-headers-strategy: framework
 
-railway.api:
-  base-url: http://apiv2.oroszi.net/elvira
-  timetable-getter-uri: /
-  train-details-getter-uri: /details
+weather.api:
+  base-url: https://api.open-meteo.com
+  forecast-url: /v1/forecast
+  time-zone: Europe/Berlin
+
+maps.api:
+  base-url: https://maps.googleapis.com/maps/api
+  geocoding-url: /geocode/json
+  country-code : HU
+  api-key: ${MAPS_API_KEY}
 
 tcp:
-    connection:
+  connection:
+    timeout-in-ms: 10000
+    read:
       timeout-in-ms: 10000
-      read:
-        timeout-in-ms: 10000
-      write:
-        timeout-in-ms: 10000
+    write:
+      timeout-in-ms: 10000
 
 resilience4j:
   circuitbreaker:
     instances:
-      getTimetableApi:
+      getWeatherDataApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
         slidingWindowType: COUNT_BASED
@@ -31,12 +37,11 @@ resilience4j:
         recordExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
-          - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
-      getTrainDetailsApi:
+      geocodingApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
         slidingWindowType: COUNT_BASED
@@ -48,7 +53,6 @@ resilience4j:
         recordExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
-          - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
@@ -56,7 +60,7 @@ resilience4j:
 
   retry:
     instances:
-      getTimetableApi:
+      getWeatherDataApi:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
@@ -65,7 +69,7 @@ resilience4j:
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-      getTrainDetailsApi:
+      geocodingApi:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
@@ -82,7 +86,7 @@ springdoc:
     path: /openapi/api-docs
   paths-to-match: /**
   packages-to-scan:
-    - hu.uni_obuda.thesis.railways.data.raildatacollector
+    - hu.uni_obuda.thesis.railways.data.weatherdatacollector
 
 management.endpoint.health.show-details: "ALWAYS"
 management.endpoints.web.exposure.include: "*"
