@@ -1,19 +1,39 @@
 package hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Data
 public class WeatherInfo {
-    private ZonedDateTime time;
-    private int temperature;
-    private int humidity;
-    private double windSpeed;
-    private boolean isSnowing;
-    private boolean isRaining;
+    private LocalDateTime time;
+    private String address;
+    private Double latitude;
+    private Double longitude;
+
+    private Double temperature;
+    private Double relativeHumidity;
+
+    private Double windSpeedAt10m;
+    private Double windSpeedAt80m;
+
+    private Boolean isSnowing;
+    private Double snowFall;
+    private Double snowDepth;
+
+    private Boolean isRaining;
+    private Double precipitation;
+    private Double rain;
+    private Double showers;
+
+    private Double visibilityInMeters;
+    private Integer cloudCoverPercentage;
+
 }
