@@ -10,13 +10,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class MapsWebClientImpl implements MapsWebClient {
@@ -30,6 +31,8 @@ public class MapsWebClientImpl implements MapsWebClient {
     private String geocodingUri;
     @Value("${maps.api.country-code}")
     private String countryCode;
+    @Value("${maps.api.api-key}")
+    private String apiKey;
 
     @Autowired
     public MapsWebClientImpl(@Qualifier("mapsWebClient") WebClient webClient, ObjectMapper objectMapper) {
@@ -39,10 +42,7 @@ public class MapsWebClientImpl implements MapsWebClient {
 
     public Mono<CoordinatesResponse> getCoordinates(String address) {
         address = address.replaceAll(",", " ") + " " + countryCode;
-        URI requestUri = UriComponentsBuilder.fromPath(geocodingUri)
-                .queryParam("address", address)
-                .build().toUri();
-
+        URI requestUri = URI.create(mapsBaseUrl + geocodingUri + "?address=" + URLEncoder.encode(address, StandardCharsets.UTF_8) + "&key=" + apiKey);
         return webClient.get().uri(requestUri).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
                 return Mono.from(apiResponse.bodyToMono(String.class))

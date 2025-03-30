@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -33,7 +32,7 @@ public class WeatherInfo {
     private Double rain;
     private Double showers;
 
-    private Double visibilityInMeters;
+    private Integer visibilityInMeters;
     private Integer cloudCoverPercentage;
 
 }

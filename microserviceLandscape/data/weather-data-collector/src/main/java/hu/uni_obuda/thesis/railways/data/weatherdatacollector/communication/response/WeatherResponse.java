@@ -84,7 +84,7 @@ public class WeatherResponse {
         private List<Double> precipitation  = new ArrayList<>();
         private List<Double> showers = new ArrayList<>();
         private List<Double> rain = new ArrayList<>();
-        private List<Double> visibility = new ArrayList<>();
+        private List<Integer> visibility = new ArrayList<>();
 
         @JsonProperty("wind_speed_10m")
         private List<Double> windSpeed10m = new ArrayList<>();

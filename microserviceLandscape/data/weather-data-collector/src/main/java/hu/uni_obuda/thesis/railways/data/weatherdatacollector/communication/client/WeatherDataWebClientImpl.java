@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @Component
@@ -47,9 +48,9 @@ public class WeatherDataWebClientImpl implements WeatherDataWebClient {
                 .queryParam("start_date", date.toString())
                 .queryParam("end_date", date.toString())
                 .queryParam("hourly", HOURLY_PARAMETERS)
-                .build().toUri();
+                .build(false).encode(StandardCharsets.UTF_8).toUri();
 
-        return webClient.get().uri(requestUri).exchangeToMono(apiResponse -> {
+        return webClient.get().uri(requestUri.toString()).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {

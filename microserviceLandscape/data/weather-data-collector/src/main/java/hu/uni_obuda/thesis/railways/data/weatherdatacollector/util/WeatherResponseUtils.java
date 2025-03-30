@@ -140,7 +140,7 @@ public class WeatherResponseUtils {
         }
     }
 
-    public static Double extractVisibility(WeatherResponse weatherResponse, LocalDateTime dateTime) {
+    public static Integer extractVisibility(WeatherResponse weatherResponse, LocalDateTime dateTime) {
         int index = getHourIndex(weatherResponse, dateTime);
         if (index == -1) {
             return null;
