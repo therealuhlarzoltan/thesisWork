@@ -25,7 +25,7 @@ public class MessageProcessorConfig {
 
     @Bean(name = "messageProcessingScheduler")
     public Scheduler messageProcessingScheduler() {
-        return Schedulers.newBoundedElastic(threadPoolSize, taskQueueSize, "processing-pool");
+        return Schedulers.newBoundedElastic(threadPoolSize, taskQueueSize, "message-processing-pool");
     }
 
     @Bean
