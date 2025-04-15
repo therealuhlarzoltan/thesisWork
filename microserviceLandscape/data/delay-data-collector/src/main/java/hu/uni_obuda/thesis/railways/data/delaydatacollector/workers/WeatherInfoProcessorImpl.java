@@ -1,7 +1,106 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
 
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hu.uni_obuda.thesis.railways.data.event.Event;
+import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
+import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.messaging.Message;
 
-@Component
+@RequiredArgsConstructor
 public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WeatherInfoProcessorImpl.class);
+
+    private final ObjectMapper objectMapper;
+    private final WeatherInfoRegistry registry;
+    private final IncomingMessageSink messageSink;
+
+    @Override
+    public void accept(Message<Event<?, ?>> eventMessage) {
+        LOG.debug("Received message wth id {}", eventMessage.getHeaders().getId());
+        if (eventMessage.getHeaders().containsKey("correlationId")) {
+            processMessageWithCorrelationId(eventMessage);
+        } else {
+            processMessageWithoutCorrelationId(eventMessage);
+        }
+    }
+
+    private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {
+        LOG.info("Processing message created at {} with no correlationId...", message.getPayload().getEventCreatedAt());
+        HttpResponseEvent responseEvent = retrieveHttpResponseEvent(message.getPayload());
+        if (responseEvent == null) {
+            LOG.error("Could not retrieve response event from message: {}", message.getPayload());
+            return;
+        }
+        HttpResponseEvent.Type eventType = responseEvent.getEventType();
+        switch (eventType) {
+            case SUCCESS -> {
+                WeatherInfo response = retrieveWeatherInfo(responseEvent);
+                if (response == null) {
+                    LOG.error("Could not retrieve weather info from event: {}", responseEvent);
+                    return;
+                }
+                messageSink.getWeatherSink().tryEmitNext(response);
+                registry.onWeatherInfo(response);
+            }
+            case ERROR -> {
+                LOG.error("Received an error response: {}", responseEvent);
+            }
+            case null, default -> LOG.error("Received unknown event type: {}", eventType);
+        }
+
+    }
+
+    private void processMessageWithCorrelationId(Message<Event<?, ?>> message) {
+        String correlationId = message.getHeaders().get("correlationId").toString();
+        LOG.info("Processing message created at {} with correlationId {}...", message.getPayload().getEventCreatedAt(), correlationId);
+        HttpResponseEvent responseEvent = retrieveHttpResponseEvent(message.getPayload());
+        if (responseEvent == null) {
+            LOG.error("Could not retrieve response event from message: {}", message.getPayload());
+            return;
+        }
+        HttpResponseEvent.Type eventType = responseEvent.getEventType();
+        switch (eventType) {
+            case SUCCESS -> {
+                WeatherInfo response = retrieveWeatherInfo(responseEvent);
+                if (response == null) {
+                    LOG.error("Could not retrieve weather info from event: {}", responseEvent);
+                    return;
+                }
+                messageSink.getWeatherSink().tryEmitNext(response);
+                registry.onWeatherInfo(correlationId, response);
+            }
+            case ERROR -> {
+                LOG.error("Received an error response: {}", responseEvent);
+            }
+            case null, default -> LOG.error("Received unknown event type: {}", eventType);
+        }
+    }
+
+    private HttpResponseEvent retrieveHttpResponseEvent(Event<?, ?> genericEvent) {
+        if (!(genericEvent instanceof HttpResponseEvent responseEvent)) {
+            LOG.error("Unexpected event parameters, expected a HttpResponseEvent");
+            return null;
+        }
+        return responseEvent;
+    }
+
+    private WeatherInfo retrieveWeatherInfo(HttpResponseEvent httpResponseEvent) {
+        return deserializeObject(httpResponseEvent.getData().getMessage(), WeatherInfo.class);
+    }
+
+    private <T> T deserializeObject(String json, Class<T> clazz) {
+        T obj = null;
+        try {
+            obj = objectMapper.readValue(json, clazz);
+        } catch (JsonProcessingException ex) {
+            LOG.error("Could not deserialize object from json", ex);
+            return null;
+        }
+        return obj;
+    }
 }
