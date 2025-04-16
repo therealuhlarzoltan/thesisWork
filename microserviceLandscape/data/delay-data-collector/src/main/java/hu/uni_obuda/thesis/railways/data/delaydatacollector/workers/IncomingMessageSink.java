@@ -1,0 +1,14 @@
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
+
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
+import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import lombok.Getter;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Sinks;
+
+@Getter
+@Component
+public class IncomingMessageSink {
+    private final Sinks.Many<DelayInfo> delaySink = Sinks.many().multicast().onBackpressureBuffer();
+    private final Sinks.Many<WeatherInfo> weatherSink = Sinks.many().multicast().onBackpressureBuffer();
+}
