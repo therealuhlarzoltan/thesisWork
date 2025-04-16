@@ -7,9 +7,12 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +25,16 @@ public class DelayServiceImpl implements DelayService {
     private final DelayRepository delayRepository;
     private final WeatherService weatherService;
     private final DelayMapper mapper;
+    private final Scheduler scheduler;
 
+    @Autowired
+    public DelayServiceImpl(DelayRepository delayRepository, WeatherService weatherService,
+                            DelayMapper delayMapper, @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
+        this.delayRepository = delayRepository;
+        this.weatherService = weatherService;
+        this.mapper = delayMapper;
+        this.scheduler = scheduler;
+    }
 
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos.flatMap(delayInfo -> {
@@ -37,7 +49,9 @@ public class DelayServiceImpl implements DelayService {
                         return Mono.just(mapper.apiToEntity(delayInfo));
                     });
         })
-        .flatMap(delayRepository::save).subscribe();
+        .flatMap(delayRepository::save)
+        .subscribeOn(scheduler)
+        .subscribe();
     }
 
     private LocalDateTime getTimeForWeatherForecast(DelayInfo delayInfo) {

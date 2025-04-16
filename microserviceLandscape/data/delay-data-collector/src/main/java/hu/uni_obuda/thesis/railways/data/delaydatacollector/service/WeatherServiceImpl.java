@@ -15,7 +15,7 @@ public class WeatherServiceImpl implements WeatherService {
 
     private final WeatherInfoRegistry registry;
 
-    @Cacheable(value = "weather", key = "#stationName + ':' + #dateTime.toString()")
+    @Cacheable(value = "weather", key = "#stationName + ':' + #dateTime.truncatedTo(T(java.time.temporal.ChronoUnit).HOURS).toString()")
     @Override
     public Mono<WeatherInfo> getWeatherInfo(String stationName, LocalDateTime dateTime) {
         return registry.waitForWeather(stationName, dateTime);
