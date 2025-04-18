@@ -4,7 +4,6 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.JsonToWea
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.WeatherInfoToJsonConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 
