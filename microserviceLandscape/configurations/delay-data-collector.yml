@@ -1,0 +1,31 @@
+server:
+  port: 8080
+  error.include-message: always
+  forward-headers-strategy: framework
+
+caching:
+  delay:
+    cache-duration: 24
+  train-status:
+    cache-duration: 24
+
+spring:
+  redis:
+    host: localhost
+    port: 6379
+
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/api-docs
+  paths-to-match: /**
+  packages-to-scan:
+    - hu.uni_obuda.thesis.railways.data.delaydatacollector
+
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
+logging:
+  level:
+    root: INFO
