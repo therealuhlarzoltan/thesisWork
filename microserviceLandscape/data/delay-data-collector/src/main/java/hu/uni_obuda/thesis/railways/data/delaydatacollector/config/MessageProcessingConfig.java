@@ -22,9 +22,9 @@ public class MessageProcessingConfig {
     private final ObjectMapper objectMapper;
     private final IncomingMessageSink messageSink;
 
-    @Value("${app.threadPoolSize:10}")
+    @Value("${app.messaging.processing.threadPoolSize:10}")
     Integer threadPoolSize;
-    @Value("${app.taskQueueSize:100}")
+    @Value("${app.messaging.processing.taskQueueSize:100}")
     Integer taskQueueSize;
 
     @Bean(name = "messageProcessingScheduler")
