@@ -1,21 +1,33 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 @EnableScheduling
 @Configuration
 public class ApplicationConfig {
 
+    @Value("${app.messaging.sending.threadPoolSize:10}")
+    Integer messageSenderThreadPoolSize;
+    @Value("${app.messaging.sending.taskQueueSize:100}")
+    Integer messageSenderTaskQueueSize;
+
+    @Value("${app.data.processing.delay.threadPoolSize:10}")
+    Integer delayProcessorThreadPoolSize;
+    @Value("${app.data.processing.delay.taskQueueSize:100}")
+    Integer delayProcessorTaskQueueSize;
+
     @Bean(name = "messageSenderScheduler")
     public Scheduler messageScheduler() {
-        return null;
+        return Schedulers.newBoundedElastic(messageSenderThreadPoolSize, messageSenderTaskQueueSize, "message-sender-pool");
     }
 
     @Bean(name = "trainDelayProcessorScheduler")
     public Scheduler delayProcessorScheduler() {
-        return null;
+        return Schedulers.newBoundedElastic(delayProcessorThreadPoolSize, delayProcessorTaskQueueSize, "delay-processor-pool");
     }
 }
