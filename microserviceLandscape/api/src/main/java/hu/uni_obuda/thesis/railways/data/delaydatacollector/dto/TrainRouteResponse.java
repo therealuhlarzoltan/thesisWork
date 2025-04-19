@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class TrainRouteResponse {
-    private Integer routeId;
     private String trainNumber;
     private String lineNumber;
     private String startStation;
