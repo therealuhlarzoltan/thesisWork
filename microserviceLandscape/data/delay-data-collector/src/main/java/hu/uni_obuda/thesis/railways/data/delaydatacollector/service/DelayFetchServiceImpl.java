@@ -1,0 +1,49 @@
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.MessageSender;
+import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+
+import java.time.LocalDate;
+
+@Service
+public class DelayFetchServiceImpl implements DelayFetchService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DelayFetchServiceImpl.class);
+
+    private final Scheduler scheduler;
+    private final MessageSender messageSender;
+
+    @Autowired
+    public DelayFetchServiceImpl(@Qualifier("messageSenderScheduler") Scheduler scheduler, MessageSender messageSender) {
+        this.scheduler = scheduler;
+        this.messageSender = messageSender;
+    }
+
+    @Override
+    public void fetchDelay(String trainNumber, String from, String to, LocalDate date) {
+        Mono.fromRunnable(() -> {
+            DelayInfoRequest delayInfoRequest = new DelayInfoRequest(trainNumber, from, to, date);
+            CrudEvent<String, DelayInfoRequest> crudEvent = new CrudEvent<>(CrudEvent.Type.GET, trainNumber, delayInfoRequest);
+            messageSender.sendMessage("railDataRequests-out-0", crudEvent);
+        }).subscribeOn(scheduler).subscribe();
+    }
+
+    @Override
+    public void fetchDelay(String correlationId, String trainNumber, String from, String to, LocalDate date) {
+        Mono.fromRunnable(() -> {
+            DelayInfoRequest delayInfoRequest = new DelayInfoRequest(trainNumber, from, to, date);
+            CrudEvent<String, DelayInfoRequest> crudEvent = new CrudEvent<>(CrudEvent.Type.GET, trainNumber, delayInfoRequest);
+            messageSender.sendMessage("railDataRequests-out-0", correlationId, crudEvent);
+        }).subscribeOn(scheduler).subscribe();
+    }
+}
