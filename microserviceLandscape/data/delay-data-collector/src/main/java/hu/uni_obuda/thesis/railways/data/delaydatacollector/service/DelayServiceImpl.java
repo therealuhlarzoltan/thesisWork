@@ -1,8 +1,11 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.DelayInfoCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.DelayEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.DelayRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.util.StringUtils;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -16,7 +19,6 @@ import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDateTime;
 
-@RequiredArgsConstructor
 @Service
 public class DelayServiceImpl implements DelayService {
 
@@ -24,34 +26,61 @@ public class DelayServiceImpl implements DelayService {
 
     private final DelayRepository delayRepository;
     private final WeatherService weatherService;
+    private final DelayInfoCache delayInfoCache;
+    private final TrainStatusCache trainStatusCache;
     private final DelayMapper mapper;
     private final Scheduler scheduler;
 
     @Autowired
-    public DelayServiceImpl(DelayRepository delayRepository, WeatherService weatherService,
-                            DelayMapper delayMapper, @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
+    public DelayServiceImpl(DelayRepository delayRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
+                            DelayMapper delayMapper, TrainStatusCache trainStatusCache,
+                            @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
         this.delayRepository = delayRepository;
         this.weatherService = weatherService;
+        this.delayInfoCache = delayInfoCache;
+        this.trainStatusCache = trainStatusCache;
         this.mapper = delayMapper;
         this.scheduler = scheduler;
     }
 
     public void processDelays(Flux<DelayInfo> delayInfos) {
-        delayInfos.flatMap(delayInfo -> {
-            return weatherService.getWeatherInfo(delayInfo.getStationCode(), getTimeForWeatherForecast(delayInfo))
-                    .flatMap(weatherInfo -> Mono.fromCallable(() -> {
-                        DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
-                        delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);
-                        return delayEntity;
-                    }))
-                    .onErrorResume(throwable -> {
-                        LOG.warn("Could not get weather info for {}", delayInfo.getStationCode(), throwable);
-                        return Mono.just(mapper.apiToEntity(delayInfo));
-                    });
-        })
-        .flatMap(delayRepository::save)
-        .subscribeOn(scheduler)
-        .subscribe();
+        delayInfos
+            .flatMap(delayInfo -> {
+                if (!StringUtils.isAnyText(delayInfo.getActualArrival(), delayInfo.getActualDeparture())) {
+                    return trainStatusCache
+                            .markIncomplete(delayInfo.getTrainNumber(), delayInfo.getDate())
+                            .then(Mono.empty());
+                } else {
+                    Mono<Void> markCompleteMono = StringUtils.isText(delayInfo.getActualArrival())
+                            ? trainStatusCache.markComplete(delayInfo.getTrainNumber(), delayInfo.getDate())
+                            : Mono.empty();
+
+                    return markCompleteMono.thenReturn(delayInfo);
+                }
+            })
+            .flatMap(delayInfo -> delayInfoCache.isDuplicate(delayInfo)
+                .flatMap(duplicate -> {
+                    if (duplicate) {
+                        return Mono.empty();
+                    }
+                    return delayInfoCache.cacheDelay(delayInfo).thenReturn(delayInfo);
+                })
+            )
+            .flatMap(delayInfo -> {
+                return weatherService.getWeatherInfo(delayInfo.getStationCode(), getTimeForWeatherForecast(delayInfo))
+                        .flatMap(weatherInfo -> Mono.fromCallable(() -> {
+                            DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
+                            delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);
+                            return delayEntity;
+                        }))
+                        .onErrorResume(throwable -> {
+                            LOG.warn("Could not get weather info for {}", delayInfo.getStationCode(), throwable);
+                            return Mono.just(mapper.apiToEntity(delayInfo));
+                        });
+            })
+            .flatMap(delayRepository::save)
+            .subscribeOn(scheduler)
+            .subscribe();
     }
 
     private LocalDateTime getTimeForWeatherForecast(DelayInfo delayInfo) {
