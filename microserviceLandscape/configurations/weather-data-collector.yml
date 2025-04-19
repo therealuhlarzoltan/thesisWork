@@ -79,6 +79,40 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
 
+spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: ${RABBIT_MQ_USERNAME}
+    password: ${RABBIT_MQ_PASSWORD}
+
+
+    cloud:
+      function:
+        definition: messageProcessor
+
+      stream:
+        defaultBinder: rabbit
+        default.contentType: application/json
+        bindings:
+          weatherDataResponses-out-0:
+            destination: weatherDataResponses
+            producer:
+              required-groups: auditGroup
+          messageProcessor-in-0:
+            destination: weatherDataRequests
+            group: weatherDataCollectorsGroup
+
+  spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
+    maxAttempts: 3
+    backOffInitialInterval: 500
+    backOffMaxInterval: 1000
+    backOffMultiplier: 2.0
+
+  spring.cloud.stream.rabbit.bindings.messageProcessor-in-0.consumer:
+    autoBindDlq: true
+    republishToDlq: true
+
 springdoc:
   swagger-ui:
     path: /openapi/swagger-ui.html
