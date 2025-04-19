@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.dto;
 
+import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +22,5 @@ public class DelayInfo {
     private Integer arrivalDelay;
     private Integer departureDelay;
     private LocalDate date;
+    private WeatherInfo weatherInfo;
 }
