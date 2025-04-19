@@ -15,6 +15,9 @@ public class TrainRouteEntity {
     @Column("train_number")
     private String trainNumber;
 
+    @Column("line_number")
+    private String lineNumber;
+
     @Column("start_station")
     private String from;
 
