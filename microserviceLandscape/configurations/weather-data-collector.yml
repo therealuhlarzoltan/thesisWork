@@ -98,7 +98,7 @@ spring:
           weatherDataResponses-out-0:
             destination: weatherDataResponses
             producer:
-              required-groups: auditGroup
+              required-groups: auditGroup, delayDataCollectorsGroup
           messageProcessor-in-0:
             destination: weatherDataRequests
             group: weatherDataCollectorsGroup
