@@ -1,43 +1,66 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
 
-
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainRouteEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainRouteRepository;
-import lombok.RequiredArgsConstructor;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayFetcherService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
-@RequiredArgsConstructor
+import java.time.LocalDate;
+
 @Component
 public class TrainDelayProcessorImpl implements TrainDelayProcessor {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TrainDelayProcessorImpl.class);
+    private static final long PROCESSING_INTERVAL_IN_MILLIS = 3_600_000; // every hour
+
+    private  final Scheduler scheduler;
     private final TrainRouteRepository trainRouteRepository;
     private final DelayFetcherService delayFetcherService;
-    private final DelayRepository delayRepository; // stores delay records
+    private final TrainStatusCache trainStatusCache;;
 
-    private static final String REDIS_PREFIX = "train:complete:";
-
-    @Scheduled(fixedRate = 60_000) // every minute (requires @EnableScheduling)
-    public void processTrainRoutes() {
-        trainRouteRepository.findAll()
-                .flatMap(this::processTrainIfIncomplete)
-                .subscribe(); // trigger the chain
+    @Autowired
+    public TrainDelayProcessorImpl(@Qualifier("trainDelayProcessorScheduler") Scheduler scheduler, TrainRouteRepository trainRouteRepository,
+                                   DelayFetcherService delayFetcherService, TrainStatusCache trainStatusCache) {
+        this.scheduler = scheduler;
+        this.trainRouteRepository = trainRouteRepository;
+        this.delayFetcherService = delayFetcherService;
+        this.trainStatusCache = trainStatusCache;
     }
 
-    private Mono<Void> processTrainIfIncomplete(TrainRouteEntity trainRoute) {
-        String trainId = trainRoute.getTrainNumber();
-        String redisKey = REDIS_PREFIX + trainId;
+    @Scheduled(fixedDelay = PROCESSING_INTERVAL_IN_MILLIS)
+    public void processTrainRoutes() {
 
-        return redisTemplate.opsForValue().get(redisKey)
-                .flatMap(value -> {
-                    // Train is already marked as complete, skip processing
-                    return Mono.empty();
-                })
-                .switchIfEmpty(
-                        delayFetcherService.getDelaysForRoute(trainRoute)
-                                .flatMapMany(Flux::fromIterable) // assuming List<DelayEntity>
-                                .flatMap(delayRepository::save)
-                                .then(
-                                        redisTemplate.opsForValue().set(redisKey, "complete")
+        LocalDate today = LocalDate.now();
+
+        trainRouteRepository.findAll()
+                .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, today))
+                .subscribeOn(scheduler)
+                .subscribe();
+    }
+
+    private Mono<Void> processTrainIfIncomplete(TrainRouteEntity trainRoute, LocalDate date) {
+        return trainStatusCache.isComplete(trainRoute.getTrainNumber(), date)
+                .flatMap(complete -> {
+                    if (complete) {
+                        return Mono.empty();
+                    } else {
+                        return Mono.fromRunnable(() ->
+                                delayFetcherService.fetchDelay(
+                                        trainRoute.getTrainNumber(),
+                                        trainRoute.getFrom(),
+                                        trainRoute.getTo(),
+                                        LocalDate.now()
                                 )
-                );
+                        );
+                    }
+                });
     }
 }

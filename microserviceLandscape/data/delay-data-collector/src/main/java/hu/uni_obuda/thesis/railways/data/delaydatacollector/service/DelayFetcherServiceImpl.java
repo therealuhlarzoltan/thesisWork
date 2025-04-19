@@ -3,28 +3,26 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.MessageSender;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDate;
 
 @Service
-public class DelayFetchServiceImpl implements DelayFetchService {
+public class DelayFetcherServiceImpl implements DelayFetcherService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DelayFetchServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DelayFetcherServiceImpl.class);
 
     private final Scheduler scheduler;
     private final MessageSender messageSender;
 
     @Autowired
-    public DelayFetchServiceImpl(@Qualifier("messageSenderScheduler") Scheduler scheduler, MessageSender messageSender) {
+    public DelayFetcherServiceImpl(@Qualifier("messageSenderScheduler") Scheduler scheduler, MessageSender messageSender) {
         this.scheduler = scheduler;
         this.messageSender = messageSender;
     }
