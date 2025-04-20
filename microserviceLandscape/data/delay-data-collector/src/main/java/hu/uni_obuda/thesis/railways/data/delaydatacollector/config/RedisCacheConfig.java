@@ -14,6 +14,9 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RequiredArgsConstructor
 @EnableCaching
 @Configuration
@@ -23,34 +26,26 @@ public class RedisCacheConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        RedisSerializer<Object> jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        RedisSerializer<Object> defaultSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
-        RedisSerializationContext.SerializationPair<String> keySerializer =
-                RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer());
+        RedisSerializer<WeatherInfo> weatherInfoSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, WeatherInfo.class);
 
-        RedisSerializationContext.SerializationPair<Object> valueSerializer =
-                RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer);
-
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(keySerializer)
-                .serializeValuesWith(valueSerializer)
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(defaultSerializer))
                 .disableCachingNullValues();
 
+        RedisCacheConfiguration weatherInfoCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(weatherInfoSerializer))
+                .disableCachingNullValues();
+
+        Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
+        cacheConfigs.put("weather", weatherInfoCacheConfig);
+
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigs)
                 .build();
-    }
-
-    @Bean
-    public ReactiveRedisTemplate<String, WeatherInfo> reactiveRedisTemplate(ReactiveRedisConnectionFactory connectionFactory) {
-        RedisSerializer<String> keySerializer = new StringRedisSerializer();
-        RedisSerializer<WeatherInfo> valueSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, WeatherInfo.class);
-
-        RedisSerializationContext<String, WeatherInfo> context = RedisSerializationContext
-                .<String, WeatherInfo>newSerializationContext(keySerializer)
-                .value(valueSerializer)
-                .build();
-
-        return new ReactiveRedisTemplate<>(connectionFactory, context);
     }
 }

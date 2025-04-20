@@ -1,3 +1,16 @@
+app:
+  messaging:
+    sending:
+      threadPoolSize: 24
+      taskQueueSize: 750
+    processing:
+      threadPoolSize: 24
+      taskQueueSize: 750
+  data:
+    processing:
+      threadPoolSize: 24
+      taskQueueSize: 750
+
 server:
   port: 8002
   error.include-message: always

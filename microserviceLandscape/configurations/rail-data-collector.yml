@@ -1,3 +1,8 @@
+app:
+  threadPoolSize: 24
+  taskQueueSize: 750
+
+
 server:
   port: 8000
   error.include-message: always
@@ -10,11 +15,11 @@ railway.api:
 
 tcp:
     connection:
-      timeout-in-ms: 10000
+      timeout-in-ms: 30000
       read:
-        timeout-in-ms: 10000
+        timeout-in-ms: 30000
       write:
-        timeout-in-ms: 10000
+        timeout-in-ms: 30000
 
 resilience4j:
   circuitbreaker:
