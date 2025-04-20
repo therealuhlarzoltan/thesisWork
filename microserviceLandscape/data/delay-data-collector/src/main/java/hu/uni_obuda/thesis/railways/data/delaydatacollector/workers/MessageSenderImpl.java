@@ -21,10 +21,13 @@ public class MessageSenderImpl implements MessageSender {
     public void sendMessage(String bindingName, Event<?, ?> event) {
         LOG.info("Sending a message to {}", bindingName);
         Message message = MessageBuilder.withPayload(event)
+                .setHeader("partitionKey", event.getKey())
                 .build();
 
         if (!streamBridge.send(bindingName, message)) {
             LOG.error("Failed to send the message to {}", bindingName);
+        } else {
+            LOG.info("Successfully sent a message to {}", bindingName);
         }
     }
 
@@ -37,9 +40,12 @@ public class MessageSenderImpl implements MessageSender {
         LOG.info("Sending a  message to {} with correlationId {}", bindingName, correlationId);
         Message message = MessageBuilder.withPayload(event)
                 .setHeader("correlationId", correlationId)
+                .setHeader("partitionKey", event.getKey())
                 .build();
         if (!streamBridge.send(bindingName, message)) {
             LOG.error("Failed to send the  message to {} with correlationId {}", bindingName, correlationId);
+        } else {
+            LOG.info("Successfully sent a message to {} with correlationId {}", bindingName, correlationId);
         }
     }
 }

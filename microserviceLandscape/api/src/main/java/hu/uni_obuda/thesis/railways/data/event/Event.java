@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = CrudEvent.class, name = "CrudEvent"),
+        @JsonSubTypes.Type(value = HttpResponseEvent.class, name = "HttpResponseEvent")
 })
 public abstract class Event<K, T> {
     protected final K key;

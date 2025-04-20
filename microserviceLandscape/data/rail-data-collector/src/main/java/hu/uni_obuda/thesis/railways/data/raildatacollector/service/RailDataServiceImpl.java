@@ -88,7 +88,17 @@ public class RailDataServiceImpl implements RailDataService {
             }
         }
 
-        return new DelayInfo(station.getCode(), station.getGetUrl().split("=")[1], station.getUrl(), trainNumber, station.getScheduledArrival(), station.getRealArrival(), station.getScheduledDeparture(), station.getRealDeparture(), arrivalDelay, departureDelay, date);
+        return DelayInfo.builder().stationCode(station.getCode()).thirdPartyStationUrl(station.getGetUrl().split("=")[1])
+                .officialStationUrl(station.getUrl())
+                .trainNumber(trainNumber)
+                .scheduledDeparture(station.getScheduledDeparture())
+                .scheduledArrival(station.getScheduledArrival())
+                .actualArrival(station.getRealArrival())
+                .actualDeparture(station.getRealDeparture())
+                .arrivalDelay(arrivalDelay)
+                .departureDelay(departureDelay)
+                .date(date)
+                .build();
     }
 
     private static Integer calculateArrivalDelay(String scheduledArrival, String realArrival) {

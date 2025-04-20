@@ -1,5 +1,10 @@
+app:
+  threadPoolSize: 24
+  taskQueueSize: 750
+
+
 server:
-  port: 8080
+  port: 8000
   error.include-message: always
   forward-headers-strategy: framework
 
@@ -10,11 +15,11 @@ railway.api:
 
 tcp:
     connection:
-      timeout-in-ms: 10000
+      timeout-in-ms: 30000
       read:
-        timeout-in-ms: 10000
+        timeout-in-ms: 30000
       write:
-        timeout-in-ms: 10000
+        timeout-in-ms: 30000
 
 resilience4j:
   circuitbreaker:
@@ -83,21 +88,23 @@ spring:
     password: ${RABBIT_MQ_PASSWORD}
 
 
-    cloud:
-      function:
-        definition: messageProcessor
+  cloud:
+    function:
+      definition: messageProcessor
 
-      stream:
-        defaultBinder: rabbit
-        default.contentType: application/json
-        bindings:
-          railDataRequests-out-0:
-            destination: railDataResponses
-            producer:
-              required-groups: auditGroup, delayDataCollectorsGroup
-          messageProcessor-in-0:
-            destination: railDataRequests
-            group: railDataCollectorsGroup
+    stream:
+      defaultBinder: rabbit
+      default.contentType: application/json
+      bindings:
+        railDataResponses-out-0:
+          destination: railDataResponses
+          producer:
+            required-groups: auditGroup, delayDataCollectorsGroup
+        messageProcessor-in-0:
+          destination: railDataRequests
+          group: railDataCollectorsGroup
+          contentType: application/json
+
 
   spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
     maxAttempts: 3

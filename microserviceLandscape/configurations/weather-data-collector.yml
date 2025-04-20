@@ -1,5 +1,9 @@
+app:
+  threadPoolSize: 24
+  taskQueueSize: 750
+
 server:
-  port: 8080
+  port: 8001
   error.include-message: always
   forward-headers-strategy: framework
 
@@ -16,11 +20,11 @@ maps.api:
 
 tcp:
   connection:
-    timeout-in-ms: 10000
+    timeout-in-ms: 15000
     read:
-      timeout-in-ms: 10000
+      timeout-in-ms: 15000
     write:
-      timeout-in-ms: 10000
+      timeout-in-ms: 15000
 
 resilience4j:
   circuitbreaker:
@@ -87,31 +91,32 @@ spring:
     password: ${RABBIT_MQ_PASSWORD}
 
 
-    cloud:
-      function:
-        definition: messageProcessor
+  cloud:
+    function:
+      definition: messageProcessor
 
-      stream:
-        defaultBinder: rabbit
-        default.contentType: application/json
-        bindings:
-          weatherDataResponses-out-0:
-            destination: weatherDataResponses
-            producer:
-              required-groups: auditGroup, delayDataCollectorsGroup
-          messageProcessor-in-0:
-            destination: weatherDataRequests
-            group: weatherDataCollectorsGroup
+    stream:
+      defaultBinder: rabbit
+      default.contentType: application/json
+      bindings:
+        weatherDataResponses-out-0:
+          destination: weatherDataResponses
+          producer:
+            required-groups: auditGroup, delayDataCollectorsGroup
+        messageProcessor-in-0:
+          destination: weatherDataRequests
+          group: weatherDataCollectorsGroup
+          contentType: application/json
 
-  spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
-    maxAttempts: 3
-    backOffInitialInterval: 500
-    backOffMaxInterval: 1000
-    backOffMultiplier: 2.0
+spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
+  maxAttempts: 3
+  backOffInitialInterval: 500
+  backOffMaxInterval: 1000
+  backOffMultiplier: 2.0
 
-  spring.cloud.stream.rabbit.bindings.messageProcessor-in-0.consumer:
-    autoBindDlq: true
-    republishToDlq: true
+spring.cloud.stream.rabbit.bindings.messageProcessor-in-0.consumer:
+  autoBindDlq: true
+  republishToDlq: true
 
 springdoc:
   swagger-ui:

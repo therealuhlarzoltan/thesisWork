@@ -35,7 +35,8 @@ public class TrainRoutServiceImpl implements TrainRouteService {
 
     @Override
     public Mono<TrainRouteResponse> createTrainRoute(TrainRouteRequest trainRouteRequest) {
-        return repository.save(mapper.apiToEntity(trainRouteRequest)).map(mapper::entityToApi);
+        var entity = mapper.apiToEntity(trainRouteRequest);
+        return repository.insertTrain(entity.getTrainNumber(), entity.getLineNumber(), entity.getFrom(), entity.getTo()).map(mapper::entityToApi);
     }
 
     @Override

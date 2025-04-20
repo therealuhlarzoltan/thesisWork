@@ -15,7 +15,7 @@ public class TrainStatusCacheImpl implements TrainStatusCache {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
 
-    @Value("${caching.train-status.cache-duration}:12")
+    @Value("${caching.train-status.cache-duration:12}")
     private Integer cacheDuration;
 
     @Override
