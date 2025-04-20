@@ -2,6 +2,7 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.dto;
 
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Data
 public class DelayInfo {
     private String stationCode;
