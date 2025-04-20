@@ -56,7 +56,7 @@ public class DelayServiceImpl implements DelayService {
         delayInfos
             .flatMap(delayInfo -> {
                 if (StringUtils.isText(delayInfo.getStationCode()) && !stationRepository.existsById(delayInfo.getStationCode()).block()) {
-                    stationRepository.save(TrainStationEntity.builder().stationCode(delayInfo.getStationCode()).build()).block();
+                    stationRepository.insertStation(delayInfo.getStationCode()).block();
                 }
                 return Mono.just(delayInfo);
             })
