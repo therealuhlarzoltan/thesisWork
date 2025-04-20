@@ -63,7 +63,7 @@ public class DelayServiceImpl implements DelayService {
             })
             .flatMap(delayInfo -> {
                 if (!StringUtils.isAnyText(delayInfo.getActualArrival(), delayInfo.getActualDeparture())) {
-                    LOG.warn("Train not finished its journey {}", delayInfo.getTrainNumber());
+                    LOG.warn("Train haven't finished its journey {}", delayInfo.getTrainNumber());
                     return trainStatusCache
                             .markIncomplete(delayInfo.getTrainNumber(), delayInfo.getDate())
                             .then(Mono.empty());
