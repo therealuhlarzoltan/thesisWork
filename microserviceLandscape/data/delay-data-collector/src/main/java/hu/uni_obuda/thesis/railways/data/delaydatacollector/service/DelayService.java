@@ -5,4 +5,5 @@ import reactor.core.publisher.Flux;
 
 public interface DelayService {
     void processDelays(Flux<DelayInfo> delayInfos);
+    Flux<DelayInfo> getTrainDelays();
 }

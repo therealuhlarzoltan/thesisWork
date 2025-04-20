@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
-@RestController
+@RestController("train-routes")
 public class TrainRouteControllerImpl implements TrainRouteController {
 
     private final TrainRouteService service;

@@ -36,6 +36,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     }
 
     @Scheduled(fixedDelay = PROCESSING_INTERVAL_IN_MILLIS)
+    @Override
     public void processTrainRoutes() {
 
         LocalDate today = LocalDate.now();
