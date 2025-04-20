@@ -48,7 +48,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     }
 
     private Mono<Void> processTrainIfIncomplete(TrainRouteEntity trainRoute, LocalDate date) {
-        LOG.info("Fetching date for train number {}", trainRoute.getTrainNumber());
+        LOG.info("Fetching delay for train number {}", trainRoute.getTrainNumber());
         return trainStatusCache.isComplete(trainRoute.getTrainNumber(), date)
                 .flatMap(complete -> {
                     if (complete) {
