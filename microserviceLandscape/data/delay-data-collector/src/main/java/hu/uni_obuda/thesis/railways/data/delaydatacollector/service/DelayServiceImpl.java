@@ -47,21 +47,28 @@ public class DelayServiceImpl implements DelayService {
         this.scheduler = scheduler;
     }
 
+    @Override
+    public Flux<DelayInfo> getTrainDelays() {
+        return delayRepository.findAll().map(mapper::entityToApi);
+    }
+
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos
             .flatMap(delayInfo -> {
                 if (StringUtils.isText(delayInfo.getStationCode()) && !stationRepository.existsById(delayInfo.getStationCode()).block()) {
-                    stationRepository.save(TrainStationEntity.builder().stationCode(delayInfo.getStationCode()).build()).block();
+                    stationRepository.insertStation(delayInfo.getStationCode()).block();
+                    LOG.info("Inserted station: {}", delayInfo.getStationCode());
                 }
                 return Mono.just(delayInfo);
             })
             .flatMap(delayInfo -> {
                 if (!StringUtils.isAnyText(delayInfo.getActualArrival(), delayInfo.getActualDeparture())) {
+                    LOG.warn("Train haven't finished its journey {}", delayInfo.getTrainNumber());
                     return trainStatusCache
                             .markIncomplete(delayInfo.getTrainNumber(), delayInfo.getDate())
                             .then(Mono.empty());
                 } else {
-                    Mono<Void> markCompleteMono = StringUtils.isText(delayInfo.getActualArrival())
+                    Mono<Void> markCompleteMono = StringUtils.isText(delayInfo.getActualArrival()) && !StringUtils.isText(delayInfo.getScheduledDeparture())
                             ? trainStatusCache.markComplete(delayInfo.getTrainNumber(), delayInfo.getDate())
                             : Mono.empty();
 
@@ -71,16 +78,19 @@ public class DelayServiceImpl implements DelayService {
             .flatMap(delayInfo -> delayInfoCache.isDuplicate(delayInfo)
                 .flatMap(duplicate -> {
                     if (duplicate) {
+                        LOG.info("Train delay already recorded for train {} at station {} on date {}", delayInfo.getTrainNumber(), delayInfo.getStationCode(), delayInfo.getDate());
                         return Mono.empty();
                     }
                     return delayInfoCache.cacheDelay(delayInfo).thenReturn(delayInfo);
                 })
             )
             .flatMap(delayInfo -> {
+                LOG.info("Getting weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
                 return weatherService.getWeatherInfo(delayInfo.getStationCode(), getTimeForWeatherForecast(delayInfo))
                         .flatMap(weatherInfo -> Mono.fromCallable(() -> {
                             DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
                             delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);
+                            LOG.info("Received weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
                             return delayEntity;
                         }))
                         .onErrorResume(throwable -> {

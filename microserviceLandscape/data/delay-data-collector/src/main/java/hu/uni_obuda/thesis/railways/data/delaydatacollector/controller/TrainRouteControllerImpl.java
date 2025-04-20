@@ -5,12 +5,12 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainRouteRespon
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.TrainRouteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
-@RestController
+@RestController("train-routes")
 public class TrainRouteControllerImpl implements TrainRouteController {
 
     private final TrainRouteService service;

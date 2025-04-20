@@ -1,3 +1,16 @@
+app:
+  messaging:
+    sending:
+      threadPoolSize: 24
+      taskQueueSize: 750
+    processing:
+      threadPoolSize: 24
+      taskQueueSize: 750
+  data:
+    processing:
+      threadPoolSize: 24
+      taskQueueSize: 750
+
 server:
   port: 8002
   error.include-message: always
@@ -48,16 +61,20 @@ spring:
           destination: railDataRequests
           producer:
             required-groups: auditGroup
+          content-type: application/json
         weatherDataRequests-out-0:
           destination: weatherDataRequests
           producer:
             required-groups: auditGroup
+          content-type: application/json
         delayInfoProcessor-in-0:
           destination: railDataResponses
           group: delayDataCollectorsGroup
+          contentType: application/json
         weatherInfoProcessor-in-0:
           destination:  weatherDataResponses
           group: delayDataCollectorsGroup
+          contentType: application/json
 
 spring.cloud.stream.bindings.delayInfoProcessor-in-0.consumer:
   maxAttempts: 3

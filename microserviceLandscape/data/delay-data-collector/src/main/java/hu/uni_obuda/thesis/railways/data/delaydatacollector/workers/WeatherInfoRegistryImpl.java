@@ -1,6 +1,8 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
 
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -12,14 +14,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
 
+    private static final Logger LOG = LogManager.getLogger(WeatherInfoRegistryImpl.class);
+
     private final Map<String, MonoSink<WeatherInfo>> pending = new ConcurrentHashMap<>();
 
     public Mono<WeatherInfo> waitForWeather(String stationName, LocalDateTime dateTime) {
         String key = stationName + ":" + dateTime.toString();
+        LOG.info("Waiting for weather info with key {}", key);
         return Mono.create(sink -> pending.put(key, sink));
     }
 
     public Mono<WeatherInfo> waitForWeather(String correlationId) {
+        LOG.info("Waiting for weather info with correlationId {}", correlationId);
         return Mono.create(sink -> pending.put(correlationId, sink));
     }
 
@@ -29,6 +35,7 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
         if (sink != null) {
             sink.success(info);
         }
+        LOG.info("Received weather info with key {}", key);
     }
 
     public void onWeatherInfo(String correlationId, WeatherInfo info) {
@@ -36,5 +43,6 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
         if (sink != null) {
             sink.success(info);
         }
+        LOG.info("Received weather info with correlationId {}", correlationId);
     }
 }

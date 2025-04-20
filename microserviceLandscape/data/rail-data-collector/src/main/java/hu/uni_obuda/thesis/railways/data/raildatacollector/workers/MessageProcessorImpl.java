@@ -54,12 +54,21 @@ public class MessageProcessorImpl implements MessageProcessor {
             LOG.error("Unexpected event parameters, expected a CrudEvent");
             return null;
         }
-        if (!(crudEvent.getKey() instanceof String) || !(crudEvent.getData() instanceof DelayInfoRequest)) {
+
+        if (!(crudEvent.getKey() instanceof String)) {
             LOG.error("Unexpected event parameters, expected a CrudEvent<String, DelayInfoRequest>");
             return null;
         }
 
-        return (CrudEvent<String, DelayInfoRequest>) crudEvent;
+        DelayInfoRequest delayInfoRequest;
+        try {
+            delayInfoRequest = objectMapper.convertValue(crudEvent.getData(), DelayInfoRequest.class);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Unexpected event parameters, expected a CrudEvent<String, DelayInfoRequest>");
+            return null;
+        }
+
+        return new CrudEvent<>(crudEvent.getEventType(), (String)crudEvent.getKey(), delayInfoRequest);
     }
 
     private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {

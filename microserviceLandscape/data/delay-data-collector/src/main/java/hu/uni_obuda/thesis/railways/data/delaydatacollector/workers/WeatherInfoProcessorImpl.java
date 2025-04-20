@@ -48,7 +48,7 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
                 registry.onWeatherInfo(response);
             }
             case ERROR -> {
-                LOG.error("Received an error response: {}", responseEvent);
+                LOG.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
             }
             case null, default -> LOG.error("Received unknown event type: {}", eventType);
         }
@@ -75,7 +75,7 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
                 registry.onWeatherInfo(correlationId, response);
             }
             case ERROR -> {
-                LOG.error("Received an error response: {}", responseEvent);
+                LOG.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
             }
             case null, default -> LOG.error("Received unknown event type: {}", eventType);
         }
@@ -91,6 +91,14 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
 
     private WeatherInfo retrieveWeatherInfo(HttpResponseEvent httpResponseEvent) {
         return deserializeObject(httpResponseEvent.getData().getMessage(), WeatherInfo.class);
+    }
+    private String retrieveErrorMessage(HttpResponseEvent httpResponseEvent) {
+        if (httpResponseEvent.getEventType() == HttpResponseEvent.Type.ERROR && httpResponseEvent.getData().getMessage() != null) {
+            Exception ex = deserializeObject(httpResponseEvent.getData().getMessage(), Exception.class);
+            return ex != null ? ex.getMessage() : httpResponseEvent.getData().getMessage();
+        } else {
+            return "Unexpected error response";
+        }
     }
 
     private <T> T deserializeObject(String json, Class<T> clazz) {

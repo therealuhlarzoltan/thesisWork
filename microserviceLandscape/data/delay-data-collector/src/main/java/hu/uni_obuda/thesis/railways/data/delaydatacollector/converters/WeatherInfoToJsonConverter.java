@@ -1,23 +1,28 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.converters;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.WritingConverter;
+import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.Parameter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.lang.NonNull;
 
+@RequiredArgsConstructor
 @WritingConverter
-public class WeatherInfoToJsonConverter implements Converter<WeatherInfo, String> {
+public class WeatherInfoToJsonConverter implements Converter<WeatherInfo, Object> {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Override
-    public String convert(@NonNull WeatherInfo source) {
+    public Object convert(@NonNull WeatherInfo source) {
         try {
-            return objectMapper.writeValueAsString(source);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to convert WeatherInfo to JSON", e);
+            String json = objectMapper.writeValueAsString(source);
+            return Json.of(json); // PostgreSQL driver will handle it as JSONB
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize WeatherInfo", e);
         }
     }
 }

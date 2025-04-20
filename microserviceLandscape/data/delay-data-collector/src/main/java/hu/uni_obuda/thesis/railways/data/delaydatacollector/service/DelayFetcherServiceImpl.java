@@ -29,6 +29,7 @@ public class DelayFetcherServiceImpl implements DelayFetcherService {
 
     @Override
     public void fetchDelay(String trainNumber, String from, String to, LocalDate date) {
+        LOG.info("Fetching delay for train number {}", trainNumber);
         Mono.fromRunnable(() -> {
             DelayInfoRequest delayInfoRequest = new DelayInfoRequest(trainNumber, from, to, date);
             CrudEvent<String, DelayInfoRequest> crudEvent = new CrudEvent<>(CrudEvent.Type.GET, trainNumber, delayInfoRequest);
@@ -38,6 +39,7 @@ public class DelayFetcherServiceImpl implements DelayFetcherService {
 
     @Override
     public void fetchDelay(String correlationId, String trainNumber, String from, String to, LocalDate date) {
+        LOG.info("Fetching delay for train number {}", trainNumber);
         Mono.fromRunnable(() -> {
             DelayInfoRequest delayInfoRequest = new DelayInfoRequest(trainNumber, from, to, date);
             CrudEvent<String, DelayInfoRequest> crudEvent = new CrudEvent<>(CrudEvent.Type.GET, trainNumber, delayInfoRequest);
