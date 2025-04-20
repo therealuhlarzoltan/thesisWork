@@ -3,8 +3,10 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.DelayInfoCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.DelayEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainStationEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.DelayRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.util.StringUtils;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class DelayServiceImpl implements DelayService {
     private static final Logger LOG = LoggerFactory.getLogger(DelayServiceImpl.class);
 
     private final DelayRepository delayRepository;
+    private final TrainStationRepository stationRepository;
     private final WeatherService weatherService;
     private final DelayInfoCache delayInfoCache;
     private final TrainStatusCache trainStatusCache;
@@ -32,10 +35,11 @@ public class DelayServiceImpl implements DelayService {
     private final Scheduler scheduler;
 
     @Autowired
-    public DelayServiceImpl(DelayRepository delayRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
+    public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
                             DelayMapper delayMapper, TrainStatusCache trainStatusCache,
                             @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
         this.delayRepository = delayRepository;
+        this.stationRepository = stationRepository;
         this.weatherService = weatherService;
         this.delayInfoCache = delayInfoCache;
         this.trainStatusCache = trainStatusCache;
@@ -45,6 +49,12 @@ public class DelayServiceImpl implements DelayService {
 
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos
+            .flatMap(delayInfo -> {
+                if (StringUtils.isText(delayInfo.getStationCode()) && !stationRepository.existsById(delayInfo.getStationCode()).block()) {
+                    stationRepository.save(TrainStationEntity.builder().stationCode(delayInfo.getStationCode()).build()).block();
+                }
+                return Mono.just(delayInfo);
+            })
             .flatMap(delayInfo -> {
                 if (!StringUtils.isAnyText(delayInfo.getActualArrival(), delayInfo.getActualDeparture())) {
                     return trainStatusCache

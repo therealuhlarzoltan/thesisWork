@@ -8,15 +8,14 @@ import io.r2dbc.spi.Parameter;
 import org.springframework.lang.NonNull;
 
 @WritingConverter
-public class WeatherInfoToJsonConverter implements Converter<WeatherInfo, Parameter> {
+public class WeatherInfoToJsonConverter implements Converter<WeatherInfo, String> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public Parameter convert(@NonNull WeatherInfo source) {
+    public String convert(@NonNull WeatherInfo source) {
         try {
-            String json = objectMapper.writeValueAsString(source);
-            return Parameter.fromOrEmpty(json, String.class);
+            return objectMapper.writeValueAsString(source);
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert WeatherInfo to JSON", e);
         }

@@ -21,7 +21,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-@Component
 public class MessageProcessorImpl implements MessageProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageProcessorImpl.class);
@@ -31,10 +30,8 @@ public class MessageProcessorImpl implements MessageProcessor {
     private final ResponseMessageSender responseSender;
     private final Scheduler messageProcessingScheduler;
 
-    @Autowired
     public MessageProcessorImpl(ObjectMapper objectMapper, RailDataCollector railDataCollector,
-                                ResponseMessageSender responseSender,
-                                @Qualifier("messageProcessingScheduler") Scheduler messageProcessingScheduler) {
+                                ResponseMessageSender responseSender, Scheduler messageProcessingScheduler) {
         this.objectMapper = objectMapper;
         this.railDataCollector = railDataCollector;
         this.responseSender = responseSender;

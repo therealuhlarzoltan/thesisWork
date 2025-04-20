@@ -15,7 +15,7 @@ public class DelayInfoCacheImpl implements DelayInfoCache {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
 
-    @Value("${caching.delay.cache-duration}:6")
+    @Value("${caching.delay.cache-duration:6}")
     private Integer cacheDuration;
 
     @Override
