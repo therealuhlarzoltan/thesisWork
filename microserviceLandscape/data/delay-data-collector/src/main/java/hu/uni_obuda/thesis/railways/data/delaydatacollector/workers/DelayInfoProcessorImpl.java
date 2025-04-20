@@ -47,9 +47,10 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
                     return;
                 }
                 messageSink.getDelaySink().tryEmitNext(response);
+                LOG.info("Added delay info to message sink for train {} and station {}", response.getTrainNumber(), response.getStationCode());
             }
             case ERROR -> {
-                LOG.error("Received an error response: {}", responseEvent);
+                LOG.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
             }
             case null, default -> LOG.error("Received unknown event type: {}", eventType);
         }
@@ -73,9 +74,10 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
                     return;
                 }
                 messageSink.getDelaySink().tryEmitNext(response);
+                LOG.info("Added delay info to message sink for train {} and station {}", response.getTrainNumber(), response.getStationCode());
             }
             case ERROR -> {
-                LOG.error("Received an error response: {}", responseEvent);
+                LOG.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
             }
             case null, default -> LOG.error("Received unknown event type: {}", eventType);
         }
@@ -91,6 +93,15 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
 
     private DelayInfo retrieveDelayInfo(HttpResponseEvent httpResponseEvent) {
         return deserializeObject(httpResponseEvent.getData().getMessage(), DelayInfo.class);
+    }
+
+    private String retrieveErrorMessage(HttpResponseEvent httpResponseEvent) {
+        if (httpResponseEvent.getEventType() == HttpResponseEvent.Type.ERROR && httpResponseEvent.getData().getMessage() != null) {
+            Exception ex = deserializeObject(httpResponseEvent.getData().getMessage(), Exception.class);
+            return ex != null ? ex.getMessage() : httpResponseEvent.getData().getMessage();
+        } else {
+            return "Unexpected error response";
+        }
     }
 
     private <T> T deserializeObject(String json, Class<T> clazz) {

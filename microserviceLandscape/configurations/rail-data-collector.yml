@@ -83,21 +83,23 @@ spring:
     password: ${RABBIT_MQ_PASSWORD}
 
 
-    cloud:
-      function:
-        definition: messageProcessor
+  cloud:
+    function:
+      definition: messageProcessor
 
-      stream:
-        defaultBinder: rabbit
-        default.contentType: application/json
-        bindings:
-          railDataRequests-out-0:
-            destination: railDataResponses
-            producer:
-              required-groups: auditGroup, delayDataCollectorsGroup
-          messageProcessor-in-0:
-            destination: railDataRequests
-            group: railDataCollectorsGroup
+    stream:
+      defaultBinder: rabbit
+      default.contentType: application/json
+      bindings:
+        railDataResponses-out-0:
+          destination: railDataResponses
+          producer:
+            required-groups: auditGroup, delayDataCollectorsGroup
+        messageProcessor-in-0:
+          destination: railDataRequests
+          group: railDataCollectorsGroup
+          contentType: application/json
+
 
   spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
     maxAttempts: 3

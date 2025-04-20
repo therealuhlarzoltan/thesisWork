@@ -6,6 +6,7 @@ import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 import hu.uni_obuda.thesis.railways.data.event.ResponsePayload;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller.WeatherDataCollector;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfoRequest;
@@ -54,12 +55,20 @@ public class MessageProcessorImpl implements MessageProcessor {
             LOG.error("Unexpected event parameters, expected a CrudEvent");
             return null;
         }
-        if (!(crudEvent.getKey() instanceof String) || !(crudEvent.getData() instanceof WeatherInfoRequest)) {
+        if (!(crudEvent.getKey() instanceof String)) {
             LOG.error("Unexpected event parameters, expected a CrudEvent<String, WeatherInfoRequest>");
             return null;
         }
 
-        return (CrudEvent<String, WeatherInfoRequest>) crudEvent;
+        WeatherInfoRequest weatherInfoRequest;
+        try {
+            weatherInfoRequest = objectMapper.convertValue(crudEvent.getData(), WeatherInfoRequest.class);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Unexpected event parameters, expected a CrudEvent<String, WeatherInfoRequest>");
+            return null;
+        }
+
+        return new CrudEvent<>(crudEvent.getEventType(), (String)crudEvent.getKey(), weatherInfoRequest);
     }
 
     private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {

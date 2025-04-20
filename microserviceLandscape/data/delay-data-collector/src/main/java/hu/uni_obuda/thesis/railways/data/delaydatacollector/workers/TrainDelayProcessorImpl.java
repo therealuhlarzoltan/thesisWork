@@ -38,7 +38,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     @Scheduled(fixedDelay = PROCESSING_INTERVAL_IN_MILLIS)
     @Override
     public void processTrainRoutes() {
-
+        LOG.info("Data fetch started...");
         LocalDate today = LocalDate.now();
 
         trainRouteRepository.findAll()
@@ -48,11 +48,14 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     }
 
     private Mono<Void> processTrainIfIncomplete(TrainRouteEntity trainRoute, LocalDate date) {
+        LOG.info("Fetching date for train number {}", trainRoute.getTrainNumber());
         return trainStatusCache.isComplete(trainRoute.getTrainNumber(), date)
                 .flatMap(complete -> {
                     if (complete) {
+                        LOG.info("Data for train number {} is already present for today", trainRoute.getTrainNumber());
                         return Mono.empty();
                     } else {
+                        LOG.info("Calling fetcher service for train number {}", trainRoute.getTrainNumber());
                         return Mono.fromRunnable(() ->
                                 delayFetcherService.fetchDelay(
                                         trainRoute.getTrainNumber(),
