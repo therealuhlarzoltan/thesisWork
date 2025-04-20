@@ -37,6 +37,7 @@ public class WeatherResponse {
 
     private Hourly hourly;
 
+    @Builder.Default
     private boolean isPresent = true;
 
     public static class HourlyUnits {

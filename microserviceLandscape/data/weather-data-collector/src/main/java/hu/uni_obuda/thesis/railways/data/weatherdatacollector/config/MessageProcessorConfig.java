@@ -1,7 +1,11 @@
 package hu.uni_obuda.thesis.railways.data.weatherdatacollector.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.event.Event;
+import hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller.WeatherDataCollector;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.workers.MessageProcessor;
+import hu.uni_obuda.thesis.railways.data.weatherdatacollector.workers.MessageProcessorImpl;
+import hu.uni_obuda.thesis.railways.data.weatherdatacollector.workers.ResponseMessageSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +20,9 @@ import java.util.function.Consumer;
 @Configuration
 public class MessageProcessorConfig {
 
-    private final MessageProcessor messageProcessor;
+    private final ObjectMapper objectMapper;
+    private final WeatherDataCollector weatherDataCollector;
+    private final ResponseMessageSender responseSender;
 
     @Value("${app.threadPoolSize:10}")
     Integer threadPoolSize;
@@ -30,6 +36,6 @@ public class MessageProcessorConfig {
 
     @Bean
     public Consumer<Message<Event<?, ?>>> messageProcessor() {
-        return messageProcessor;
+        return new MessageProcessorImpl(objectMapper, weatherDataCollector, responseSender, messageProcessingScheduler());
     }
 }
