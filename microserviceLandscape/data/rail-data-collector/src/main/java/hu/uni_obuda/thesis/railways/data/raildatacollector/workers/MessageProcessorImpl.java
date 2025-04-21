@@ -127,12 +127,13 @@ public class MessageProcessorImpl implements MessageProcessor {
                         });
                     })
                     .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, event))
-                    .onErrorContinue((throwable, obj) -> {
+                    .doOnError(throwable -> {
                         LOG.error("Skipped DelayInfo due to error: {}", throwable.getMessage());
                         LOG.warn("Sending error response message to delay data collector...");
                         ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
                         responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getTrainNumber(), responsePayload));
                     })
+                    .onErrorResume(throwable -> Mono.empty())
                     .subscribeOn(messageProcessingScheduler)
                     .subscribe();
             }
@@ -176,6 +177,7 @@ public class MessageProcessorImpl implements MessageProcessor {
             case ExternalApiFormatMismatchException externalApiFormatMismatchException -> externalApiFormatMismatchException;
             case InternalApiException internalApiException -> internalApiException;
             case ApiException apiException -> apiException;
+            case TrainNotInServiceException trainNotInServiceException -> trainNotInServiceException;
             default -> throwable;
         };
     }
@@ -184,9 +186,10 @@ public class MessageProcessorImpl implements MessageProcessor {
         return switch (throwable) {
             case InvalidInputDataException invalidInputDataException -> HttpStatus.resolve(invalidInputDataException.getStatusCode().value());
             case ExternalApiException externalApiException -> HttpStatus.resolve(externalApiException.getStatusCode().value());
-            case ExternalApiFormatMismatchException externalApiFormatMismatchException -> HttpStatus.BAD_GATEWAY;
-            case InternalApiException internalApiException -> HttpStatus.INTERNAL_SERVER_ERROR;
-            case ApiException apiException -> HttpStatus.BAD_GATEWAY;
+            case ExternalApiFormatMismatchException _ -> HttpStatus.BAD_GATEWAY;
+            case InternalApiException _ -> HttpStatus.INTERNAL_SERVER_ERROR;
+            case ApiException _ -> HttpStatus.BAD_GATEWAY;
+            case TrainNotInServiceException _ -> HttpStatus.TOO_EARLY;
             case null, default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }
