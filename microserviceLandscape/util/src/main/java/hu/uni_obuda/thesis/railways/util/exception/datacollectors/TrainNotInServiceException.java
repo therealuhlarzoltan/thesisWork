@@ -4,8 +4,12 @@ import java.time.LocalDate;
 
 public class TrainNotInServiceException extends RuntimeException {
 
-    private final String trainNumber;
-    private final LocalDate date;
+    private String trainNumber;
+    private LocalDate date;
+
+    public TrainNotInServiceException() {
+
+    }
 
     public TrainNotInServiceException(String trainNumber, LocalDate date) {
         super("Train with train number " + trainNumber + " is not in service on " + date.toString());

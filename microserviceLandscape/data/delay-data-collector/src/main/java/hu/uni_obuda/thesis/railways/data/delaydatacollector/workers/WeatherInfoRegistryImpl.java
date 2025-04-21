@@ -1,6 +1,8 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
 
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.WeatherInfoCache;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -11,12 +13,15 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@RequiredArgsConstructor
 @Component
 public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
 
     private static final Logger LOG = LogManager.getLogger(WeatherInfoRegistryImpl.class);
 
     private final Map<String, MonoSink<WeatherInfo>> pending = new ConcurrentHashMap<>();
+
+    private final WeatherInfoCache cache;
 
     public Mono<WeatherInfo> waitForWeather(String stationName, LocalDateTime dateTime) {
         String key = stationName + ":" + dateTime.toString();
@@ -31,6 +36,9 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
 
     public void onWeatherInfo(WeatherInfo info) {
         String key = info.getAddress() + ":" + info.getTime().toString();
+        if (info.getTemperature() != null) {
+            cache.cacheWeatherInfo(info).subscribe();
+        }
         MonoSink<WeatherInfo> sink = pending.remove(key);
         if (sink != null) {
             sink.success(info);
@@ -39,6 +47,9 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
     }
 
     public void onWeatherInfo(String correlationId, WeatherInfo info) {
+        if (info.getTemperature() != null) {
+            cache.cacheWeatherInfo(info).subscribe();
+        }
         MonoSink<WeatherInfo> sink = pending.remove(correlationId);
         if (sink != null) {
             sink.success(info);

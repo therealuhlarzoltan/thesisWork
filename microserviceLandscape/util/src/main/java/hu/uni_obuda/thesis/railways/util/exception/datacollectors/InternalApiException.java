@@ -4,6 +4,12 @@ import java.net.URL;
 import java.util.Objects;
 
 public class InternalApiException extends ApiException {
+
+    public InternalApiException() {
+        super();
+
+    }
+
     public InternalApiException(URL url) {
         super(url);
     }

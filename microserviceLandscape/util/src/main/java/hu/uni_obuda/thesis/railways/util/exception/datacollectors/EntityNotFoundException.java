@@ -2,8 +2,12 @@ package hu.uni_obuda.thesis.railways.util.exception.datacollectors;
 
 public class EntityNotFoundException extends RuntimeException {
 
-    private final Object id;
-    private final Class<?> type;
+    private Object id;
+    private Class<?> type;
+
+    public EntityNotFoundException() {
+
+    }
 
     public EntityNotFoundException(Object id, Class<?> type) {
         this.id = id;

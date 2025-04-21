@@ -1,10 +1,16 @@
 package hu.uni_obuda.thesis.railways.util.exception.datacollectors;
 
+import org.springframework.http.HttpStatusCode;
+
 import java.net.URL;
 
 public class ApiException extends RuntimeException {
 
-    protected final URL url;
+    protected URL url;
+
+    public ApiException() {
+
+    }
 
     public ApiException(URL url) {
         this.url = url;

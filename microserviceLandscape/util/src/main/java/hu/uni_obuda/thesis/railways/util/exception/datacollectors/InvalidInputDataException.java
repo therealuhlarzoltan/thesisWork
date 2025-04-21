@@ -5,11 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
-@RequiredArgsConstructor
 @Data
 public class InvalidInputDataException extends RuntimeException {
 
     private final HttpStatusCode statusCode = HttpStatus.UNPROCESSABLE_ENTITY;
+
+    public InvalidInputDataException() {
+
+    }
 
     public InvalidInputDataException(String message) {
         super(message);

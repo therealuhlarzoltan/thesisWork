@@ -21,6 +21,8 @@ caching:
     cache-duration: 24
   train-status:
     cache-duration: 24
+  weather:
+    cache-duration: 24
 
 spring:
 
