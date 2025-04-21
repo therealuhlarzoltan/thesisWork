@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.*;
 import hu.uni_obuda.thesis.railways.data.event.Event;
@@ -21,6 +22,7 @@ public class MessageProcessingConfig {
 
     private final ObjectMapper objectMapper;
     private final IncomingMessageSink messageSink;
+    private final TrainStatusCache trainStatusCache;
 
     @Value("${app.messaging.processing.threadPoolSize:10}")
     Integer threadPoolSize;
@@ -34,7 +36,7 @@ public class MessageProcessingConfig {
 
     @Bean
     public Consumer<Message<Event<?, ?>>> delayInfoProcessor() {
-        return new DelayInfoProcessorImpl(objectMapper, messageSink);
+        return new DelayInfoProcessorImpl(objectMapper, messageSink, trainStatusCache);
     }
 
     @Bean

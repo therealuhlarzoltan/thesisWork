@@ -2,10 +2,12 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.TrainNotInServiceException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
 
     private final ObjectMapper objectMapper;
     private final IncomingMessageSink messageSink;
+    private final TrainStatusCache statusCache;
 
     @Override
     public void accept(Message<Event<?, ?>> eventMessage) {
@@ -50,7 +53,14 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
                 LOG.info("Added delay info to message sink for train {} and station {}", response.getTrainNumber(), response.getStationCode());
             }
             case ERROR -> {
-                LOG.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
+                LOG.error("Received an error response for id: {}", responseEvent.getKey());
+                if (responseEvent.getData().getStatus() == HttpStatus.TOO_EARLY) {
+                    TrainNotInServiceException trainNotInServiceException = deserializeObject(responseEvent.getData().getMessage(), TrainNotInServiceException.class);
+                    if (trainNotInServiceException != null) {
+                        LOG.warn("Train with number {} is not in operation on {}, marking it as complete", trainNotInServiceException.getTrainNumber(), trainNotInServiceException.getDate());
+                        statusCache.markComplete(trainNotInServiceException.getTrainNumber(), trainNotInServiceException.getDate()).block();
+                    }
+                }
             }
             case null, default -> LOG.error("Received unknown event type: {}", eventType);
         }
@@ -77,7 +87,14 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
                 LOG.info("Added delay info to message sink for train {} and station {}", response.getTrainNumber(), response.getStationCode());
             }
             case ERROR -> {
-                LOG.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
+                LOG.error("Received an error response for correlationId: {}", correlationId);
+                if (responseEvent.getData().getStatus() == HttpStatus.TOO_EARLY) {
+                    TrainNotInServiceException trainNotInServiceException = deserializeObject(responseEvent.getData().getMessage(), TrainNotInServiceException.class);
+                    if (trainNotInServiceException != null) {
+                        LOG.warn("Train with number {} is not in operation on {}, marking it as complete", trainNotInServiceException.getTrainNumber(), trainNotInServiceException.getDate());
+                        statusCache.markComplete(trainNotInServiceException.getTrainNumber(), trainNotInServiceException.getDate()).block();
+                    }
+                }
             }
             case null, default -> LOG.error("Received unknown event type: {}", eventType);
         }
