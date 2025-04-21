@@ -41,7 +41,7 @@ public class RailDataServiceImpl implements RailDataService {
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
                 .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
-                .flatMap(timetableResponse -> extractTrainUri(timetableResponse, trainNumber))
+                .flatMap(timetableResponse -> extractTrainUri(timetableResponse, trainNumber, date))
                 .flatMap(trainUri -> gateway.getShortTrainDetails(trainUri))
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
@@ -50,13 +50,13 @@ public class RailDataServiceImpl implements RailDataService {
                 .flatMapMany(Flux::fromIterable);
     }
 
-    private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber) {
+    private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber, LocalDate date) {
         return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
                 .flatMap(entry -> entry.getDetails().stream())
                 .filter(details -> details.getTrainInfo().getCode().equals(trainNumber))
                 .findFirst()
                 .map(details -> Mono.just(details.getTrainInfo().getUrl()))
-                .orElse(Mono.error(new TrainNotInServiceException(trainNumber)))
+                .orElse(Mono.error(new TrainNotInServiceException(trainNumber, date)))
                 : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
     }
 
