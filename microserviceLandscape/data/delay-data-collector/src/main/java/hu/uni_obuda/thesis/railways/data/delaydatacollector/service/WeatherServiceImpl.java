@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.WeatherInfoCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.MessageSender;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
@@ -16,14 +17,21 @@ import java.time.LocalDateTime;
 @Service
 public class WeatherServiceImpl implements WeatherService {
 
+    private final WeatherInfoCache cache;
     private final MessageSender messageSender;
     private final WeatherInfoRegistry registry;
 
     @Override
     public Mono<WeatherInfo> getWeatherInfo(String stationName, LocalDateTime dateTime) {
-        Mono<WeatherInfo> responseMono = registry.waitForWeather(stationName, dateTime);
-        messageSender.sendMessage("weatherDataRequests-out-0", constructWeatherRequestEvent(stationName, dateTime));
-        return responseMono;
+        return cache.isCached(stationName, dateTime).flatMap(cached -> {
+            if (Boolean.TRUE.equals(cached)) {
+                return cache.retrieveWeatherInfo(stationName, dateTime);
+            } else {
+                Mono<WeatherInfo> responseMono = registry.waitForWeather(stationName, dateTime);
+                messageSender.sendMessage("weatherDataRequests-out-0", constructWeatherRequestEvent(stationName, dateTime));
+                return responseMono;
+            }
+        });
     }
 
     private CrudEvent<String, WeatherInfoRequest> constructWeatherRequestEvent(String stationName, LocalDateTime dateTime) {
