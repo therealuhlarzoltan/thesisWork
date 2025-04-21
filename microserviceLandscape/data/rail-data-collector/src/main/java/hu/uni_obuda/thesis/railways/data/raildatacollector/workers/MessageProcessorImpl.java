@@ -92,11 +92,12 @@ public class MessageProcessorImpl implements MessageProcessor {
                         })
                         .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", event))
                         .doOnError((throwable) -> {
-                            LOG.error("Skipped DelayInfo due to error: {}", throwable.getMessage());
+                            LOG.error("An error occurred: {}", throwable.getMessage());
                             LOG.warn("Sending error response message to delay data collector...");
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
                             responseSender.sendResponseMessage("railDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getTrainNumber(), responsePayload));
                         })
+                        .onErrorResume(throwable -> Mono.empty())
                         .subscribeOn(messageProcessingScheduler)
                         .subscribe();
             }
