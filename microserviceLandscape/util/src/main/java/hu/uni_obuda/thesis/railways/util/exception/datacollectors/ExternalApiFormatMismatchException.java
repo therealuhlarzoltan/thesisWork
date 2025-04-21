@@ -8,6 +8,10 @@ import java.util.Objects;
 
 public class ExternalApiFormatMismatchException extends ApiException {
 
+    public ExternalApiFormatMismatchException() {
+
+    }
+
     public ExternalApiFormatMismatchException(URL url) {
         super(url);
     }

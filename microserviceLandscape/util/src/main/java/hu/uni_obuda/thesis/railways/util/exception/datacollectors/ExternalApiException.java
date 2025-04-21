@@ -11,7 +11,11 @@ import java.util.Objects;
 
 public class ExternalApiException extends ApiException {
 
-    private final HttpStatusCode statusCode;
+    private HttpStatusCode statusCode;
+
+    public ExternalApiException() {
+        super();
+    }
 
     public ExternalApiException(HttpStatusCode statusCode, URL url) {
         super(url);
