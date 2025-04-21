@@ -4,10 +4,7 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
-import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
-import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
-import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
-import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.WriteTimeoutException;
@@ -54,12 +51,13 @@ public class RailDataServiceImpl implements RailDataService {
     }
 
     private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber) {
-        return response.getTimetable().stream()
+        return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
                 .flatMap(entry -> entry.getDetails().stream())
                 .filter(details -> details.getTrainInfo().getCode().equals(trainNumber))
                 .findFirst()
                 .map(details -> Mono.just(details.getTrainInfo().getUrl()))
-                .orElse(Mono.error(new InvalidInputDataException("Train number not found")));
+                .orElse(Mono.error(new TrainNotInServiceException(trainNumber)))
+                : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
     }
 
     private static Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
