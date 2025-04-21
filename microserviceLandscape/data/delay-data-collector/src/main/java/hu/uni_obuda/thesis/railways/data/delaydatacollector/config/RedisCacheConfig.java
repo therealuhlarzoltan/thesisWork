@@ -18,34 +18,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RequiredArgsConstructor
-@EnableCaching
 @Configuration
 public class RedisCacheConfig {
 
     private final ObjectMapper objectMapper;
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        RedisSerializer<Object> defaultSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+    public ReactiveRedisTemplate<String, WeatherInfo> weatherInfoRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        Jackson2JsonRedisSerializer<WeatherInfo> jacksonSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, WeatherInfo.class);
 
-        RedisSerializer<WeatherInfo> weatherInfoSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, WeatherInfo.class);
-
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(defaultSerializer))
-                .disableCachingNullValues();
-
-        RedisCacheConfiguration weatherInfoCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(weatherInfoSerializer))
-                .disableCachingNullValues();
-
-        Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
-        cacheConfigs.put("weather", weatherInfoCacheConfig);
-
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig)
-                .withInitialCacheConfigurations(cacheConfigs)
+        RedisSerializationContext<String, WeatherInfo> context = RedisSerializationContext
+                .<String, WeatherInfo>newSerializationContext(new StringRedisSerializer())
+                .value(jacksonSerializer)
                 .build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
     }
+
 }

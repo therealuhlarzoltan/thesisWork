@@ -17,7 +17,11 @@ public interface WeatherInfoCache {
     Mono<Void> cacheWeatherInfo(WeatherInfo weatherInfo);
     Mono<WeatherInfo> retrieveWeatherInfo(String stationName, LocalDateTime dateTime);
 
+    default String toKey(String stationName, LocalDateTime dateTime) {
+        return CACHE_PREFIX + ":" + stationName + ":" + dateTime.format(formatter);
+    }
+
     default String toKey(WeatherInfo weatherInfo) {
-        return CACHE_PREFIX + ":" + weatherInfo.getAddress() + ":"  + formatter.format(weatherInfo.getTime());
+        return toKey(weatherInfo.getAddress(), weatherInfo.getTime());
     }
 }
