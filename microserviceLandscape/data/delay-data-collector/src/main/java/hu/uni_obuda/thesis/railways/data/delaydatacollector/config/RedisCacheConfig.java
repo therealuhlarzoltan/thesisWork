@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
@@ -29,6 +30,18 @@ public class RedisCacheConfig {
 
         RedisSerializationContext<String, WeatherInfo> context = RedisSerializationContext
                 .<String, WeatherInfo>newSerializationContext(new StringRedisSerializer())
+                .value(jacksonSerializer)
+                .build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+    @Bean
+    public ReactiveRedisTemplate<String, GeocodingResponse> geocodingRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        Jackson2JsonRedisSerializer<GeocodingResponse> jacksonSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, GeocodingResponse.class);
+
+        RedisSerializationContext<String, GeocodingResponse> context = RedisSerializationContext
+                .<String, GeocodingResponse>newSerializationContext(new StringRedisSerializer())
                 .value(jacksonSerializer)
                 .build();
 

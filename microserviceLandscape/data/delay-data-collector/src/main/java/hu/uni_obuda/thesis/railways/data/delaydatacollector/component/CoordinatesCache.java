@@ -10,10 +10,12 @@ import java.time.format.DateTimeFormatter;
 public interface CoordinatesCache {
 
     String CACHE_PREFIX = "coordinates";
+    String KEY_SET_PREFIX = CACHE_PREFIX + ":" + "keys";
+
 
     Mono<Boolean> isCached(String stationName);
-    Mono<Void> cacheCoordinates(GeocodingResponse geocodingResponse);
-    Mono<GeocodingResponse> retrieveCoordinates(String stationName);
+    Mono<Void> cache(String stationName, GeocodingResponse coordinates);
+    Mono<GeocodingResponse> get(String stationName);
     Mono<Void> evict(String stationName);
     Mono<Void> evictAll();
 
