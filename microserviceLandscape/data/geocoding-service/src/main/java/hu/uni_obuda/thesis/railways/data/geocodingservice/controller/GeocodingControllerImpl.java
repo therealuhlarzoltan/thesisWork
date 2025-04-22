@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
-@RestController
+@RestController("coordinates")
 public class GeocodingControllerImpl implements GeocodingController {
 
     private final GeocodingService service;
