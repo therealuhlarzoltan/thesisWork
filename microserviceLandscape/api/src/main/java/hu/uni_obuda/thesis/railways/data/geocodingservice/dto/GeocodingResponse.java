@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class CoordinatesResponse {
-    private Long latitude;
-    private Long longitude;
+public class GeocodingResponse {
+    private Double latitude;
+    private Double longitude;
 }
