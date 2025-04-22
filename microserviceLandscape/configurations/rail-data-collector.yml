@@ -87,6 +87,9 @@ spring:
     username: ${RABBIT_MQ_USERNAME}
     password: ${RABBIT_MQ_PASSWORD}
 
+  redis:
+    host: localhost
+    port: 6380
 
   cloud:
     function:
