@@ -1,6 +1,5 @@
 package hu.uni_obuda.thesis.railways.data.weatherdatacollector.service;
 
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.gateway.MapsGateway;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.gateway.WeatherDataGateway;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.WeatherResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
@@ -16,15 +15,13 @@ import static hu.uni_obuda.thesis.railways.data.weatherdatacollector.util.Weathe
 @RequiredArgsConstructor
 public class WeatherDataServiceImpl implements WeatherDataService {
 
-    private final MapsGateway mapsGateway;
     private final WeatherDataGateway weatherGateway;
 
     @Override
-    public Mono<WeatherInfo> getWeatherInfoByAddress(String address, LocalDateTime dateTime) {
-        return mapsGateway.getCoordinates(address)
-                .flatMap(coordinates -> weatherGateway.getWeatherByCoordinates(coordinates.getLatitude(), coordinates.getLongitude(), dateTime.toLocalDate()))
-                .map(weatherResponse -> constructWeatherInfoFromResponse(weatherResponse, address, dateTime));
-
+    public Mono<WeatherInfo> getWeatherInfoByAddress(String address, Double latitude, Double longitude, LocalDateTime dateTime) {
+        return  weatherGateway.getWeatherByCoordinates(latitude, longitude, dateTime.toLocalDate())
+                .map(weatherResponse -> constructWeatherInfoFromResponse(weatherResponse, address, dateTime))
+                .onErrorResume(_ -> Mono.just(constructWeatherInfoFromResponse(WeatherResponse.builder().isPresent(false).build(), address, dateTime)));
     }
 
     private WeatherInfo constructWeatherInfoFromResponse(WeatherResponse weatherResponse, String address, LocalDateTime dateTime) {

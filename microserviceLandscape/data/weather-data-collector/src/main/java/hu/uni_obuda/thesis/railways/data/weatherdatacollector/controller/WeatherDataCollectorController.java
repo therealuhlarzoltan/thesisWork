@@ -15,7 +15,7 @@ public class WeatherDataCollectorController implements WeatherDataCollector {
     private final WeatherDataService service;
 
     @Override
-    public Mono<WeatherInfo> getWeatherInfo(String stationName, LocalDateTime dateTime) {
-        return service.getWeatherInfoByAddress(stationName, dateTime);
+    public Mono<WeatherInfo> getWeatherInfo(String stationName, Double latitude, Double longitude, LocalDateTime dateTime) {
+        return service.getWeatherInfoByAddress(stationName, latitude, longitude, dateTime);
     }
 }

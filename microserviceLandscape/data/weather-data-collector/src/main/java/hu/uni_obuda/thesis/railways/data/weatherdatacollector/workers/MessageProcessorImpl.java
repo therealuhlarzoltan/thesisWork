@@ -82,7 +82,7 @@ public class MessageProcessorImpl implements MessageProcessor {
         switch (eventType) {
             case GET -> {
                 WeatherInfoRequest request = crudEvent.getData();
-                Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getTime());
+                Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getLatitude(), request.getLongitude(), request.getTime());
                 weatherInfoMono
                         .onErrorResume(throwable -> {
                             LOG.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());
@@ -116,7 +116,7 @@ public class MessageProcessorImpl implements MessageProcessor {
         switch (eventType) {
             case GET -> {
                 WeatherInfoRequest request = crudEvent.getData();
-                Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getTime());
+                Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getLatitude(), request.getLongitude(), request.getTime());
                 weatherInfoMono
                         .onErrorResume(throwable -> {
                             LOG.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());

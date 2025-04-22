@@ -10,5 +10,5 @@ import java.time.LocalDateTime;
 
 public interface WeatherDataCollector {
     @GetMapping("/collect-weather-info")
-    Mono<WeatherInfo> getWeatherInfo(@RequestParam String stationName, @RequestParam LocalDateTime dateTime);
+    Mono<WeatherInfo> getWeatherInfo(@RequestParam String stationName, @RequestParam Double latitude, @RequestParam Double longitude, @RequestParam LocalDateTime dateTime);
 }
