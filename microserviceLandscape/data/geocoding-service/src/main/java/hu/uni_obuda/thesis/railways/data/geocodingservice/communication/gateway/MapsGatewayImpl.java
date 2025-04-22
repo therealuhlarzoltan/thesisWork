@@ -1,7 +1,7 @@
-package hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.gateway;
+package hu.uni_obuda.thesis.railways.data.geocodingservice.communication.gateway;
 
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.client.MapsWebClient;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.CoordinatesResponse;
+import hu.uni_obuda.thesis.railways.data.geocodingservice.communication.client.MapsWebClient;
+import hu.uni_obuda.thesis.railways.data.geocodingservice.communication.response.CoordinatesResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
@@ -15,17 +15,17 @@ import reactor.core.publisher.Mono;
 
 import java.net.MalformedURLException;
 
-@Component
 @RequiredArgsConstructor
+@Component
 public class MapsGatewayImpl implements MapsGateway {
 
-    private final MapsWebClient mapsClient;
+    private final MapsWebClient webClient;
 
     @CircuitBreaker(name = "geocodingApi", fallbackMethod = "handleGetCoordinatesFallback")
     @Retry(name = "geocodingApi")
     @Override
     public Mono<CoordinatesResponse> getCoordinates(String address) {
-        return mapsClient.getCoordinates(address);
+        return webClient.getCoordinates(address);
     }
 
     public Mono<CoordinatesResponse> handleGetCoordinatesFallback(String trainUri, Throwable throwable) throws MalformedURLException {
@@ -41,4 +41,5 @@ public class MapsGatewayImpl implements MapsGateway {
             return new InternalApiException("A runtime exception occurred", null);
         }
     }
+
 }

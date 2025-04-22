@@ -11,5 +11,7 @@ import java.time.LocalDateTime;
 @Data
 public class WeatherInfoRequest {
     private String stationName;
+    private Double latitude;
+    private Double longitude;
     private LocalDateTime time;
 }
