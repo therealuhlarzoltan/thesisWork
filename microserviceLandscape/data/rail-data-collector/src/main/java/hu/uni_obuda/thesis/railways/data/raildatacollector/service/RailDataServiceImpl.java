@@ -3,12 +3,15 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.WriteTimeoutException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,13 +34,32 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class RailDataServiceImpl implements RailDataService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RailDataServiceImpl.class);
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     private final RailDelayGateway gateway;
+    private final TimetableCache timetableCache;
 
     @Override
     public Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date) {
-        return gateway.getShortTimetable(from, to)
+        return  timetableCache.isCached(from, to, date)
+                .flatMap(isCached -> {
+                    if (Boolean.TRUE.equals(isCached)) {
+                        LOG.info("Timetable with start station {} and end station {} on date {} is already cached, reusing cached object", from, to, date);
+                        return timetableCache.get(from, to, date);
+                    } else {
+                        LOG.info("Getting timetable with start station {} and end station {} on date {}", from, to, date);
+                        return gateway.getShortTimetable(from, to, date)
+                                .flatMap(response -> {
+                                    if (!response.getTimetable().isEmpty()) {
+                                        return timetableCache.cache(from, to, date, response)
+                                                .thenReturn(response);
+                                    } else {
+                                        return Mono.just(response);
+                                    }
+                               });
+                    }
+                })
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
                 .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
