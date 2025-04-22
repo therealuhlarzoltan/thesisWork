@@ -5,5 +5,5 @@ import org.springframework.messaging.Message;
 
 import java.util.function.Consumer;
 
-public interface GeocodingResponseProcessor extends Consumer<Message<Event<?, ?>>> {
+public interface CoordinateProcessor extends Consumer<Message<Event<?, ?>>> {
 }
