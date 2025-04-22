@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 
 public interface WeatherDataService {
-    Mono<WeatherInfo> getWeatherInfoByAddress(String address, LocalDateTime dateTime);
+    Mono<WeatherInfo> getWeatherInfoByAddress(String address, Double latitude, Double longitude, LocalDateTime dateTime);
 }

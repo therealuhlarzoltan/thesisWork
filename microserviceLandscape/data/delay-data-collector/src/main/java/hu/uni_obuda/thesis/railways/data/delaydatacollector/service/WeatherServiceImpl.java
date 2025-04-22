@@ -36,7 +36,7 @@ public class WeatherServiceImpl implements WeatherService {
 
     private CrudEvent<String, WeatherInfoRequest> constructWeatherRequestEvent(String stationName, LocalDateTime dateTime) {
         String key = stationName + ":" + dateTime.toString();
-        WeatherInfoRequest request = new WeatherInfoRequest(stationName, dateTime);
+        WeatherInfoRequest request = new WeatherInfoRequest(stationName, null, null, dateTime);
         return new CrudEvent<>(CrudEvent.Type.GET, key, request);
     }
 }

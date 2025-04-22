@@ -1,11 +1,10 @@
-package hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.client;
+package hu.uni_obuda.thesis.railways.data.geocodingservice.communication.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.communication.response.CoordinatesResponse;
+import hu.uni_obuda.thesis.railways.data.geocodingservice.communication.response.CoordinatesResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -19,9 +18,9 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@RequiredArgsConstructor
 @Component
 public class MapsWebClientImpl implements MapsWebClient {
-
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
@@ -34,12 +33,7 @@ public class MapsWebClientImpl implements MapsWebClient {
     @Value("${maps.api.api-key}")
     private String apiKey;
 
-    @Autowired
-    public MapsWebClientImpl(@Qualifier("mapsWebClient") WebClient webClient, ObjectMapper objectMapper) {
-        this.webClient = webClient;
-        this.objectMapper = objectMapper;
-    }
-
+    @Override
     public Mono<CoordinatesResponse> getCoordinates(String address) {
         address = address.replaceAll(",", " ") + " " + countryCode;
         URI requestUri = URI.create(mapsBaseUrl + geocodingUri + "?address=" + URLEncoder.encode(address, StandardCharsets.UTF_8) + "&key=" + apiKey);
@@ -79,5 +73,4 @@ public class MapsWebClientImpl implements MapsWebClient {
             return null;
         }
     }
-
 }
