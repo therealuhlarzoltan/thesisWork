@@ -10,6 +10,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class GeocodingResponse {
+
     private Double latitude;
     private Double longitude;
+    private String address;
+
+    public boolean isEmpty() {
+        return latitude == null && longitude == null;
+    }
 }
