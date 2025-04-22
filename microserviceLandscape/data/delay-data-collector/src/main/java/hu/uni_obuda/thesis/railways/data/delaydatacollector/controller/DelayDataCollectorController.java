@@ -1,8 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.controller;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayFetcherService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.TrainDelayProcessor;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.scheduled.TrainDelayProcessor;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

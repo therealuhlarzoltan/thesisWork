@@ -3,7 +3,10 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.*;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.IncomingMessageSink;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.DelayInfoProcessorImpl;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.WeatherInfoProcessorImpl;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +45,11 @@ public class MessageProcessingConfig {
     @Bean
     public Consumer<Message<Event<?, ?>>> weatherInfoProcessor(WeatherInfoRegistry registry) {
         return new WeatherInfoProcessorImpl(objectMapper, registry, messageSink);
+    }
+
+    @Bean
+    public Consumer<Message<Event<?, ?>>> geocodingResponseProcessor() {
+        return null;
     }
 
     @Bean

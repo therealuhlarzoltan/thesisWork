@@ -1,13 +1,12 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.WeatherInfoCache;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.MessageSender;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.WeatherInfoRegistry;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfoRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
