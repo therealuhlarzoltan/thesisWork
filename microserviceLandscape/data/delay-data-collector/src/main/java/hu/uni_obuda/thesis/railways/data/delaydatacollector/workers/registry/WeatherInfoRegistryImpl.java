@@ -26,6 +26,7 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(WeatherInfoRegistryImpl.class);
 
     private final Map<String, MonoSink<WeatherInfo>> pending = new ConcurrentHashMap<>();
+    private final Map<String, Mono<WeatherInfo>> sharedMonos = new ConcurrentHashMap<>();
 
     private final WeatherInfoCache cache;
 
@@ -35,22 +36,29 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
     public Mono<WeatherInfo> waitForWeather(String stationName, LocalDateTime dateTime) {
         String key = stationName + ":" + dateTime.toString();
         LOG.info("Waiting for weather info with key {}", key);
-        return Mono.<WeatherInfo>create(sink -> pending.put(key, sink))
-                .timeout(Duration.ofSeconds(timeout))
-                .doOnError(TimeoutException.class, timeoutEx -> {
-                    LOG.error("Weather info response timed out with key {}, no longer waiting for it", key);
-                    pending.remove(key);
-                });
+
+        return sharedMonos.computeIfAbsent(key, k ->
+                Mono.<WeatherInfo>create(sink -> pending.put(k, sink))
+                        .timeout(Duration.ofSeconds(timeout))
+                        .doFinally(signal -> {
+                            pending.remove(k);
+                            sharedMonos.remove(k);
+                        })
+                        .cache()
+        );
     }
 
     public Mono<WeatherInfo> waitForWeather(String correlationId) {
         LOG.info("Waiting for weather info with correlationId {}", correlationId);
-        return Mono.<WeatherInfo>create(sink -> pending.put(correlationId, sink))
-                .timeout(Duration.ofSeconds(timeout))
-                .doOnError(TimeoutException.class, timeoutEx -> {
-                    LOG.error("Weather info response timed out with correlationId {}, no longer waiting for it", correlationId);
-                    pending.remove(correlationId);
-                });
+        return sharedMonos.computeIfAbsent(correlationId, k ->
+                Mono.<WeatherInfo>create(sink -> pending.put(k, sink))
+                        .timeout(Duration.ofSeconds(timeout))
+                        .doFinally(signal -> {
+                            pending.remove(k);
+                            sharedMonos.remove(k);
+                        })
+                        .cache()
+        );
     }
 
     public void onWeatherInfo(WeatherInfo info) {

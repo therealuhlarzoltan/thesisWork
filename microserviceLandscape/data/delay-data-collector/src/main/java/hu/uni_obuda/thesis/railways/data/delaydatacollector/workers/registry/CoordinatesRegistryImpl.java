@@ -25,6 +25,7 @@ public class CoordinatesRegistryImpl implements CoordinatesRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(CoordinatesRegistryImpl.class);
 
     private final Map<String, MonoSink<GeocodingResponse>> pending = new ConcurrentHashMap<>();
+    private final Map<String, Mono<GeocodingResponse>> sharedMonos = new ConcurrentHashMap<>();
 
     private final CoordinatesCache cache;
 
@@ -34,23 +35,29 @@ public class CoordinatesRegistryImpl implements CoordinatesRegistry {
     @Override
     public Mono<GeocodingResponse> waitForCoordinatesWithCorrelationId(String correlationId) {
         LOG.info("Waiting for coordinates with correlationId {}", correlationId);
-        return Mono.<GeocodingResponse>create(sink -> pending.put(correlationId, sink))
-                .timeout(Duration.ofSeconds(timeout))
-                .doOnError(TimeoutException.class, timeoutEx -> {
-                    LOG.error("Geocoding response timed out with correlationId {}, no longer waiting for it", correlationId);
-                    pending.remove(correlationId);
-                });
+        return sharedMonos.computeIfAbsent(correlationId, key ->
+                Mono.<GeocodingResponse>create(sink -> pending.put(key, sink))
+                        .timeout(Duration.ofSeconds(timeout))
+                        .doFinally(signal -> {
+                            pending.remove(key);
+                            sharedMonos.remove(key);
+                        })
+                        .cache()
+        );
     }
 
     @Override
     public Mono<GeocodingResponse> waitForCoordinates(String stationName) {
         LOG.info("Waiting for coordinates for station {}", stationName);
-        return Mono.<GeocodingResponse>create(sink -> pending.put(stationName, sink))
-                .timeout(Duration.ofSeconds(timeout))
-                .doOnError(TimeoutException.class, timeoutEx -> {
-                    LOG.error("Geocoding response timed out with key {}, no longer waiting for it", stationName);
-                    pending.remove(stationName);
-                });
+        return sharedMonos.computeIfAbsent(stationName, key ->
+                Mono.<GeocodingResponse>create(sink -> pending.put(key, sink))
+                        .timeout(Duration.ofSeconds(timeout))
+                        .doFinally(signal -> {
+                            pending.remove(key);
+                            sharedMonos.remove(key);
+                        })
+                        .cache()
+        );
     }
 
     @Override
