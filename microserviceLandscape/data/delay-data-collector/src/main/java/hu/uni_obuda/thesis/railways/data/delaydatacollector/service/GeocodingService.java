@@ -5,4 +5,5 @@ import reactor.core.publisher.Mono;
 
 public interface GeocodingService {
     Mono<GeocodingResponse> getCoordinatesByStation(String stationName);
+    Mono<Void> fetchCoordinatesForStation(String stationName, boolean overwrite);
 }
