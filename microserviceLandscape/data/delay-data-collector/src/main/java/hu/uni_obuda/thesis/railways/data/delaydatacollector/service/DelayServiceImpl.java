@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -100,8 +101,10 @@ public class DelayServiceImpl implements DelayService {
             .flatMap(tuple -> {
                 DelayInfo delayInfo = tuple.getT1();
                 GeocodingResponse geocodingResponse = tuple.getT2();
+                Double latitude = geocodingResponse != null ? geocodingResponse.getLatitude() : null;
+                Double longitude = geocodingResponse != null ? geocodingResponse.getLongitude() : null;
                 LOG.info("Getting weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
-                return weatherService.getWeatherInfo(delayInfo.getStationCode(), geocodingResponse.getLatitude(), geocodingResponse.getLongitude(), getTimeForWeatherForecast(delayInfo))
+                return weatherService.getWeatherInfo(delayInfo.getStationCode(), latitude, longitude, getTimeForWeatherForecast(delayInfo))
                         .flatMap(weatherInfo -> Mono.fromCallable(() -> {
                             DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
                             delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);
