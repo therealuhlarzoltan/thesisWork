@@ -38,11 +38,6 @@ public class DelayServiceImpl implements DelayService {
     private final DelayMapper mapper;
     private final Scheduler scheduler;
 
-    @Value("${messaging.geocoding.response-event.wait-duration}:30")
-    private Integer geocodingTimeout;
-    @Value("${messaging.weather.response-event.wait-duration}:30")
-    private Integer weatherTimeout;
-
     @Autowired
     public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
                             DelayMapper delayMapper, TrainStatusCache trainStatusCache, GeocodingService geocodingService,
