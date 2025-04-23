@@ -40,13 +40,34 @@ public class GeocodingServiceImpl implements GeocodingService {
                                         return cache.cache(stationName, coordinates).thenReturn(coordinates);
                                     } else {
                                         LOG.info("Coordinates for station {} are not found in the database, attempting to get them", stationName);
-                                        Mono<GeocodingResponse> responseMono = registry.waitForCoordinates(stationName);
-                                        messageSender.sendMessage("geocodingDataRequests-out-0", constructRequestEvent(stationName));
-                                        return responseMono;
+                                        return fetchCoordinates(stationName);
                                     }
                                 });
                         }
                 });
+    }
+
+    @Override
+    public Mono<Void> fetchCoordinatesForStation(String stationName, boolean overwrite) {
+        return repository.findById(stationName)
+            .flatMap(entity -> fetchCoordinates(stationName)
+                    .flatMap(coords -> {
+                        if (!coords.isEmpty()) {
+                            if (overwrite || (entity.getLatitude() == null && entity.getLongitude() == null)) {
+                                entity.setLatitude(coords.getLatitude());
+                                entity.setLongitude(coords.getLongitude());
+                                return repository.save(entity).then(); // save only if updated
+                            }
+                        }
+                        return Mono.empty(); // no need to save if nothing changed
+                    })
+            );
+    }
+
+    private Mono<GeocodingResponse> fetchCoordinates(String stationName) {
+        Mono<GeocodingResponse> responseMono = registry.waitForCoordinates(stationName);
+        messageSender.sendMessage("geocodingDataRequests-out-0", constructRequestEvent(stationName));
+        return responseMono;
     }
 
     private CrudEvent<String, GeocodingRequest> constructRequestEvent(String stationName) {

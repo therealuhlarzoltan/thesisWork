@@ -93,7 +93,7 @@ public class DelayServiceImpl implements DelayService {
                     geocodingService.getCoordinatesByStation(delayInfo.getStationCode())
                             .map(geocodingResponse -> Tuples.of(delayInfo, geocodingResponse))
                             .onErrorResume(ex -> {
-                                LOG.warn("Could not retrieve coordinates for station {}: {}, proceeding without them", delayInfo.getStationCode(), ex.getMessage());
+                                LOG.warn("Could not get coordinates for station {}: {}, proceeding without them", delayInfo.getStationCode(), ex.getMessage());
                                 return Mono.just(Tuples.of(delayInfo, GeocodingResponse.builder().latitude(null).longitude(null).build()));
                            })
 
@@ -110,7 +110,7 @@ public class DelayServiceImpl implements DelayService {
                             return delayEntity;
                         }))
                         .onErrorResume(throwable -> {
-                            LOG.warn("Could not get weather info for {}", delayInfo.getStationCode(), throwable);
+                            LOG.warn("Could not get weather info for {}, proceeding without it", delayInfo.getStationCode(), throwable);
                             return Mono.just(mapper.apiToEntity(delayInfo));
                         });
             })

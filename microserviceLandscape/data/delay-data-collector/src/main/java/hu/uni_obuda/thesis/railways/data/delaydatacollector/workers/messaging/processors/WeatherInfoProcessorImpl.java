@@ -94,6 +94,7 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
     private WeatherInfo retrieveWeatherInfo(HttpResponseEvent httpResponseEvent) {
         return deserializeObject(httpResponseEvent.getData().getMessage(), WeatherInfo.class);
     }
+
     private String retrieveErrorMessage(HttpResponseEvent httpResponseEvent) {
         if (httpResponseEvent.getEventType() == HttpResponseEvent.Type.ERROR && httpResponseEvent.getData().getMessage() != null) {
             Exception ex = deserializeObject(httpResponseEvent.getData().getMessage(), Exception.class);
