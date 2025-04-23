@@ -8,16 +8,19 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.DelayRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.util.StringUtils;
+import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
 
@@ -31,18 +34,20 @@ public class DelayServiceImpl implements DelayService {
     private final WeatherService weatherService;
     private final DelayInfoCache delayInfoCache;
     private final TrainStatusCache trainStatusCache;
+    private final GeocodingService geocodingService;
     private final DelayMapper mapper;
     private final Scheduler scheduler;
 
     @Autowired
     public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
-                            DelayMapper delayMapper, TrainStatusCache trainStatusCache,
+                            DelayMapper delayMapper, TrainStatusCache trainStatusCache, GeocodingService geocodingService,
                             @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
         this.delayRepository = delayRepository;
         this.stationRepository = stationRepository;
         this.weatherService = weatherService;
         this.delayInfoCache = delayInfoCache;
         this.trainStatusCache = trainStatusCache;
+        this.geocodingService = geocodingService;
         this.mapper = delayMapper;
         this.scheduler = scheduler;
     }
@@ -84,9 +89,20 @@ public class DelayServiceImpl implements DelayService {
                     return delayInfoCache.cacheDelay(delayInfo).thenReturn(delayInfo);
                 })
             )
-            .flatMap(delayInfo -> {
+            .flatMap(delayInfo ->
+                    geocodingService.getCoordinatesByStation(delayInfo.getStationCode())
+                            .map(geocodingResponse -> Tuples.of(delayInfo, geocodingResponse))
+                            .onErrorResume(ex -> {
+                                LOG.warn("Could not retrieve coordinates for station {}: {}, proceeding without them", delayInfo.getStationCode(), ex.getMessage());
+                                return Mono.just(Tuples.of(delayInfo, GeocodingResponse.builder().latitude(null).longitude(null).build()));
+                           })
+
+            )
+            .flatMap(tuple -> {
+                DelayInfo delayInfo = tuple.getT1();
+                GeocodingResponse geocodingResponse = tuple.getT2();
                 LOG.info("Getting weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
-                return weatherService.getWeatherInfo(delayInfo.getStationCode(), getTimeForWeatherForecast(delayInfo))
+                return weatherService.getWeatherInfo(delayInfo.getStationCode(), geocodingResponse.getLatitude(), geocodingResponse.getLongitude(), getTimeForWeatherForecast(delayInfo))
                         .flatMap(weatherInfo -> Mono.fromCallable(() -> {
                             DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
                             delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);

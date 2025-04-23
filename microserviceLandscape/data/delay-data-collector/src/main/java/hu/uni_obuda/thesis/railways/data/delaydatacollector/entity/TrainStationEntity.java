@@ -18,4 +18,10 @@ public class TrainStationEntity {
     @Id
     @Column("station_code")
     private String stationCode;
+
+    @Column("latitude")
+    private Double latitude;
+
+    @Column("longitude")
+    private Double longitude;
 }

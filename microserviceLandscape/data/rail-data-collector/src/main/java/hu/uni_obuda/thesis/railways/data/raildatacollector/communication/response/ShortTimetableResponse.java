@@ -1,16 +1,22 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class ShortTimetableResponse {
 
     @JsonProperty("timetable")
     private List<TimetableEntry> timetable;
 
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Data
     public static class TimetableEntry {
 
@@ -18,6 +24,8 @@ public class ShortTimetableResponse {
         private List<TrainDetail> details;
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Data
     public static class TrainDetail {
 
@@ -25,6 +33,8 @@ public class ShortTimetableResponse {
         private TrainInfo trainInfo;
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Data
     public static class TrainInfo {
 

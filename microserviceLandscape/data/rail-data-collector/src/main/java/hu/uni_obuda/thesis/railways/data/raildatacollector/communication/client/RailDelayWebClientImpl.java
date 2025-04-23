@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 
 @Component
 @RequiredArgsConstructor
@@ -39,10 +40,11 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
     private String trainDetailsGetterUri;
 
     @Override
-    public Mono<ShortTimetableResponse> getShortTimetable(String from, String to) {
+    public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
         URI timetableUri = UriComponentsBuilder.fromPath(timetableGetterUri)
                 .queryParam("from", from)
                 .queryParam("to", to)
+                .queryParam("date", date.toString())
                 .build().toUri();
         return webClient.get().uri(timetableUri.toString())
         .exchangeToMono(apiResponse -> {

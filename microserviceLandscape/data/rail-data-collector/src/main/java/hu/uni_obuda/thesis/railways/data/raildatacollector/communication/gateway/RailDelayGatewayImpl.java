@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -30,8 +31,8 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
 
     @CircuitBreaker(name = "getTimetableApi", fallbackMethod = "handleTimetableFallback")
     @Retry(name = "getTimetableApi")
-    public Mono<ShortTimetableResponse> getShortTimetable(String from, String to) {
-        return webClient.getShortTimetable(from, to);
+    public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
+        return webClient.getShortTimetable(from, to, date);
     }
 
     @CircuitBreaker(name = "getTrainDetailsApi", fallbackMethod = "handleDetailsFallback")
@@ -40,7 +41,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
         return webClient.getShortTrainDetails(trainUri);
     }
 
-    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, Throwable throwable) throws MalformedURLException {
+    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, LocalDate date, Throwable throwable) throws MalformedURLException {
         return Mono.error(resolveApiException(throwable));
     }
 

@@ -1,7 +1,9 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.IncomingMessageSink;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;

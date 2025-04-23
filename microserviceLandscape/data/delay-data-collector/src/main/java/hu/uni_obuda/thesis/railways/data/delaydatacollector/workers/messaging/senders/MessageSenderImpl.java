@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders;
 
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import lombok.RequiredArgsConstructor;
