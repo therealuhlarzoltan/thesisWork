@@ -88,7 +88,7 @@ public class MessageProcessorImpl implements MessageProcessor {
                             LOG.error("An error occurred: {}", throwable.getMessage());
                             LOG.warn("Sending error response message to delay data collector...");
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
-                            responseSender.sendResponseMessage("railDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getAddress(), responsePayload));
+                            responseSender.sendResponseMessage("geocodingDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getAddress(), responsePayload));
                         })
                         .onErrorResume(_ -> Mono.empty())
                         .subscribeOn(messageProcessingScheduler)
@@ -124,7 +124,7 @@ public class MessageProcessorImpl implements MessageProcessor {
                             LOG.error("An error occurred: {}", throwable.getMessage());
                             LOG.warn("Sending error response message to delay data collector...");
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
-                            responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getAddress(), responsePayload));
+                            responseSender.sendResponseMessage("geocodingDataResponses-out-0", correlationId, new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getAddress(), responsePayload));
                         })
                         .onErrorResume(_ -> Mono.empty())
                         .subscribeOn(messageProcessingScheduler)

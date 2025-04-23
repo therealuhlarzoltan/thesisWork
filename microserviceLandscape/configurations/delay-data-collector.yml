@@ -61,7 +61,7 @@ spring:
 
   cloud:
     function:
-      definition: delayInfoProcessor;weatherInfoProcessor
+      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor
 
     stream:
       defaultBinder: rabbit

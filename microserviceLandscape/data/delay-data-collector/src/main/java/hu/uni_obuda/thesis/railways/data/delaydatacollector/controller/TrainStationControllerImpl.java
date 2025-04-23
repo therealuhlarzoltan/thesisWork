@@ -5,12 +5,14 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResp
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.GeocodingService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.TrainStationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
-@RestController("train-stations")
+@RequestMapping("/train-stations")
+@RestController
 public class TrainStationControllerImpl implements TrainStationController {
 
     private final TrainStationService service;

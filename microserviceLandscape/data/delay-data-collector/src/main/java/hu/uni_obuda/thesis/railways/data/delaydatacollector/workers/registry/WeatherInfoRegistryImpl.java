@@ -30,7 +30,7 @@ public class WeatherInfoRegistryImpl implements WeatherInfoRegistry {
 
     private final WeatherInfoCache cache;
 
-    @Value("${messaging.weather.response-event.wait-duration}:30")
+    @Value("${messaging.weather.response-event.wait-duration:30}")
     private Integer timeout;
 
     public Mono<WeatherInfo> waitForWeather(String stationName, LocalDateTime dateTime) {

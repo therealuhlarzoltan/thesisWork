@@ -29,7 +29,7 @@ public class CoordinatesRegistryImpl implements CoordinatesRegistry {
 
     private final CoordinatesCache cache;
 
-    @Value("${messaging.geocoding.response-event.wait-duration}:30")
+    @Value("${messaging.geocoding.response-event.wait-duration:30}")
     private Integer timeout;
 
     @Override
