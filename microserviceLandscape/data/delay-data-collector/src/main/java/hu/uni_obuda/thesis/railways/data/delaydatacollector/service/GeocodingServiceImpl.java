@@ -15,9 +15,9 @@ import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
 @Service
-public class StationServiceImpl implements StationService {
+public class GeocodingServiceImpl implements GeocodingService {
 
-    private final static Logger LOG = LoggerFactory.getLogger(StationServiceImpl.class);
+    private final static Logger LOG = LoggerFactory.getLogger(GeocodingServiceImpl.class);
 
     private final CoordinatesCache cache;
     private final TrainStationRepository repository;

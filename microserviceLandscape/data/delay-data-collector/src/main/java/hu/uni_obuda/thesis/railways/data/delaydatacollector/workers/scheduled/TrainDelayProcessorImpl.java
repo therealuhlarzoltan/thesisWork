@@ -61,7 +61,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
                                         trainRoute.getTrainNumber(),
                                         trainRoute.getFrom(),
                                         trainRoute.getTo(),
-                                        LocalDate.now()
+                                        date
                                 )
                         );
                     }

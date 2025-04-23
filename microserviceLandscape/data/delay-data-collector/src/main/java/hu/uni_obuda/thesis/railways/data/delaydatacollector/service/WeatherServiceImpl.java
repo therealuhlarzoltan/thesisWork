@@ -21,21 +21,21 @@ public class WeatherServiceImpl implements WeatherService {
     private final WeatherInfoRegistry registry;
 
     @Override
-    public Mono<WeatherInfo> getWeatherInfo(String stationName, LocalDateTime dateTime) {
+    public Mono<WeatherInfo> getWeatherInfo(String stationName, Double latitude, Double longitude, LocalDateTime dateTime) {
         return cache.isCached(stationName, dateTime).flatMap(cached -> {
             if (Boolean.TRUE.equals(cached)) {
                 return cache.retrieveWeatherInfo(stationName, dateTime);
             } else {
                 Mono<WeatherInfo> responseMono = registry.waitForWeather(stationName, dateTime);
-                messageSender.sendMessage("weatherDataRequests-out-0", constructWeatherRequestEvent(stationName, dateTime));
+                messageSender.sendMessage("weatherDataRequests-out-0", constructWeatherRequestEvent(stationName, latitude, longitude, dateTime));
                 return responseMono;
             }
         });
     }
 
-    private CrudEvent<String, WeatherInfoRequest> constructWeatherRequestEvent(String stationName, LocalDateTime dateTime) {
+    private CrudEvent<String, WeatherInfoRequest> constructWeatherRequestEvent(String stationName, Double latitude, Double longitude, LocalDateTime dateTime) {
         String key = stationName + ":" + dateTime.toString();
-        WeatherInfoRequest request = new WeatherInfoRequest(stationName, null, null, dateTime);
+        WeatherInfoRequest request = new WeatherInfoRequest(stationName, latitude, longitude, dateTime);
         return new CrudEvent<>(CrudEvent.Type.GET, key, request);
     }
 }
