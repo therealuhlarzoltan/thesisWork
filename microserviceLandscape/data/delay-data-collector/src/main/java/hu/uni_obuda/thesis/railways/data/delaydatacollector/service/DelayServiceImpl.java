@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,6 +37,11 @@ public class DelayServiceImpl implements DelayService {
     private final GeocodingService geocodingService;
     private final DelayMapper mapper;
     private final Scheduler scheduler;
+
+    @Value("${messaging.geocoding.response-event.wait-duration}:30")
+    private Integer geocodingTimeout;
+    @Value("${messaging.weather.response-event.wait-duration}:30")
+    private Integer weatherTimeout;
 
     @Autowired
     public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
