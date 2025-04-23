@@ -9,4 +9,6 @@ public interface CoordinatesRegistry {
     Mono<GeocodingResponse> waitForCoordinates(String stationName);
     void onCoordinates(GeocodingResponse coordinates);
     void onCoordinatesWithCorrelationId(String correlationId, GeocodingResponse coordinates);
+    void onError(String stationName, Throwable throwable);
+    void onErrorWithCorrelationId(String correlationId, Throwable throwable);
 }

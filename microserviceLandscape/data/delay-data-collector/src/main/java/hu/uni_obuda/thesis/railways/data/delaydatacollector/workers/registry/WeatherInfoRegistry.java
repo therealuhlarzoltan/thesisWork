@@ -10,4 +10,6 @@ public interface WeatherInfoRegistry {
     Mono<WeatherInfo> waitForWeather(String stationName, LocalDateTime dateTime);
     void onWeatherInfo(WeatherInfo info);
     void onWeatherInfo(String correlationId, WeatherInfo info);
+    void onError(String stationName, LocalDateTime dateTime, Throwable throwable);
+    void onErrorWithCorrelationId(String correlationId, Throwable throwable);
 }

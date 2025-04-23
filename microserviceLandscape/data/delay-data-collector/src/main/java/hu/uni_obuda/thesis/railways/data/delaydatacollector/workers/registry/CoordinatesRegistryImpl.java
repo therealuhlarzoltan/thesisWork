@@ -4,6 +4,7 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.Coordinate
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.WeatherInfoCache;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ServiceResponseException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,5 +75,23 @@ public class CoordinatesRegistryImpl implements CoordinatesRegistry {
             sink.success(coordinates);
         }
         LOG.info("Registered coordinates with correlationId {}", correlationId);
+    }
+
+    @Override
+    public void onError(String stationName, Throwable throwable) {
+        MonoSink<GeocodingResponse> sink = pending.remove(stationName);
+        if (sink != null) {
+            LOG.warn("Cancelling wait for coordinates for station {} due to error: {}", stationName, throwable.getMessage());
+            sink.error(new ServiceResponseException("Unable to get geocoding response", throwable));
+        }
+    }
+
+    @Override
+    public void onErrorWithCorrelationId(String correlationId, Throwable throwable) {
+        MonoSink<GeocodingResponse> sink = pending.remove(correlationId);
+        if (sink != null) {
+            LOG.warn("Cancelling wait for coordinates with correlationId {} due to error: {}", correlationId, throwable.getMessage());
+            sink.error(new ServiceResponseException("Unable to get geocoding response", throwable));
+        }
     }
 }
