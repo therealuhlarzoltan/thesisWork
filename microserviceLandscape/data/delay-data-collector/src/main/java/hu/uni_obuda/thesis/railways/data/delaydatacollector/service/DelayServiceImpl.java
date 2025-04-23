@@ -92,19 +92,17 @@ public class DelayServiceImpl implements DelayService {
             .flatMap(delayInfo ->
                     geocodingService.getCoordinatesByStation(delayInfo.getStationCode())
                             .map(geocodingResponse -> Tuples.of(delayInfo, geocodingResponse))
-                            /*.onErrorResume(ex -> {
-                                LOG.warn("Could not retrieve coordinates for station {}: {}", delayInfo.getStationCode(), ex.getMessage());
-                                return Mono.just(Tuples.of(delayInfo, null));
+                            .onErrorResume(ex -> {
+                                LOG.warn("Could not retrieve coordinates for station {}: {}, proceeding without them", delayInfo.getStationCode(), ex.getMessage());
+                                return Mono.just(Tuples.of(delayInfo, GeocodingResponse.builder().latitude(null).longitude(null).build()));
                            })
-                            */
+
             )
             .flatMap(tuple -> {
                 DelayInfo delayInfo = tuple.getT1();
                 GeocodingResponse geocodingResponse = tuple.getT2();
-                Double latitude = geocodingResponse != null ? geocodingResponse.getLatitude() : null;
-                Double longitude = geocodingResponse != null ? geocodingResponse.getLongitude() : null;
                 LOG.info("Getting weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
-                return weatherService.getWeatherInfo(delayInfo.getStationCode(), latitude, longitude, getTimeForWeatherForecast(delayInfo))
+                return weatherService.getWeatherInfo(delayInfo.getStationCode(), geocodingResponse.getLatitude(), geocodingResponse.getLongitude(), getTimeForWeatherForecast(delayInfo))
                         .flatMap(weatherInfo -> Mono.fromCallable(() -> {
                             DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
                             delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);
