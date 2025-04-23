@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.IncomingMessageSink;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.CoordinateProcessorImpl;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.DelayInfoProcessorImpl;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.WeatherInfoProcessorImpl;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.CoordinatesRegistry;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +50,8 @@ public class MessageProcessingConfig {
     }
 
     @Bean
-    public Consumer<Message<Event<?, ?>>> geocodingResponseProcessor() {
-        return null;
+    public Consumer<Message<Event<?, ?>>> geocodingResponseProcessor(CoordinatesRegistry registry) {
+        return new CoordinateProcessorImpl(objectMapper, registry, messageSink);
     }
 
     @Bean
