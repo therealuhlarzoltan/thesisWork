@@ -24,6 +24,14 @@ caching:
   weather:
     cache-duration: 24
 
+messaging:
+  weather:
+    response-event:
+      wait-duration: 10
+  geocoding:
+    response-event:
+      wait-duration: 10
+
 spring:
 
   r2dbc:

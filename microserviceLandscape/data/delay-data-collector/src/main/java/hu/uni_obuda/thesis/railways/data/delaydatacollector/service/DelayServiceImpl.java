@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -91,11 +92,11 @@ public class DelayServiceImpl implements DelayService {
             .flatMap(delayInfo ->
                     geocodingService.getCoordinatesByStation(delayInfo.getStationCode())
                             .map(geocodingResponse -> Tuples.of(delayInfo, geocodingResponse))
-                            /*.onErrorResume(ex -> {
-                                LOG.warn("Could not retrieve coordinates for station {}: {}", delayInfo.getStationCode(), ex.getMessage());
-                                return Mono.just(Tuples.of(delayInfo, null));
+                            .onErrorResume(ex -> {
+                                LOG.warn("Could not retrieve coordinates for station {}: {}, proceeding without them", delayInfo.getStationCode(), ex.getMessage());
+                                return Mono.just(Tuples.of(delayInfo, GeocodingResponse.builder().latitude(null).longitude(null).build()));
                            })
-                            */
+
             )
             .flatMap(tuple -> {
                 DelayInfo delayInfo = tuple.getT1();
