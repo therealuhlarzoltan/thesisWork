@@ -14,12 +14,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+
+import java.time.Duration;
 
 public class MessageProcessorImpl implements MessageProcessor {
 
@@ -29,6 +32,11 @@ public class MessageProcessorImpl implements MessageProcessor {
     private final RailDataCollector railDataCollector;
     private final ResponseMessageSender responseSender;
     private final Scheduler messageProcessingScheduler;
+
+    @Value("${railway.api.rate.limit.delay-between-requests:1000}")
+    private Integer delayBetweenRequests;
+    @Value("${railway.api.rate.limit.number-of-concurrent-calls:3}")
+    private Integer numberOfConcurrentCalls;
 
     public MessageProcessorImpl(ObjectMapper objectMapper, RailDataCollector railDataCollector,
                                 ResponseMessageSender responseSender, Scheduler messageProcessingScheduler) {
@@ -84,12 +92,13 @@ public class MessageProcessorImpl implements MessageProcessor {
                 DelayInfoRequest request = crudEvent.getData();
                 Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
                 delayInfoFlux
+                        .delayElements(Duration.ofMillis(delayBetweenRequests))
                         .flatMap(delayInfo -> {
                             return Mono.fromCallable(() -> {
                                 ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
                                 return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
                             });
-                        })
+                        }, numberOfConcurrentCalls)
                         .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", event))
                         .doOnError((throwable) -> {
                             LOG.error("An error occurred: {}", throwable.getMessage());
@@ -120,12 +129,13 @@ public class MessageProcessorImpl implements MessageProcessor {
                 DelayInfoRequest request = crudEvent.getData();
                 Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
                 delayInfoFlux
+                    .delayElements(Duration.ofMillis(delayBetweenRequests))
                     .flatMap(delayInfo -> {
                        return Mono.fromCallable(() -> {
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
                             return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
                         });
-                    })
+                    }, numberOfConcurrentCalls)
                     .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, event))
                     .doOnError(throwable -> {
                         LOG.error("Skipped DelayInfo due to error: {}", throwable.getMessage());
