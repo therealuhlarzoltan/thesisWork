@@ -27,10 +27,10 @@ caching:
 messaging:
   weather:
     response-event:
-      wait-duration: 10
+      wait-duration: 45
   geocoding:
     response-event:
-      wait-duration: 10
+      wait-duration: 45
 
 spring:
 
