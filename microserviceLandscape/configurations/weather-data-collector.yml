@@ -133,6 +133,8 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: INFO
-    reactor.netty: DEBUG
-    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+    reactor.netty: INFO
+    reactor.netty.resources: INFO
+    org.springframework.web.reactive.function.client.ExchangeFunctions: INFO
     org.springframework.web.reactive.function.client.ExchangeFilterFunctions: DEBUG
+    org.springframework.web.reactive.function.client.WebClient: INFO

@@ -136,8 +136,7 @@ logging:
   level:
     root: INFO
     reactor.netty: INFO
+    reactor.netty.resources: INFO
     org.springframework.web.reactive.function.client.ExchangeFunctions: INFO
-    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: INFO
-    io.lettuce.core: DEBUG          # Logs Redis commands (for Lettuce)
-    org.springframework.data.redis: DEBUG  # Logs Spring Data Redis internal ops
-    org.springframework.data.redis.core.RedisTemplate: DEBUG
+    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: DEBUG
+    org.springframework.web.reactive.function.client.WebClient: INFO
