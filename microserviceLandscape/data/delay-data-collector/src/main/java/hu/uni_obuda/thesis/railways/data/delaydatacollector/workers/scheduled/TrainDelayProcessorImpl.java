@@ -47,6 +47,17 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
                 .subscribe();
     }
 
+    @Override
+    public void processTrainRoute(String trainNumber) {
+        LOG.info("Data fetch started for single train with train number: {}", trainNumber);
+        LocalDate today = LocalDate.now();
+
+        trainRouteRepository.findById(trainNumber)
+                .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, today))
+                .subscribeOn(scheduler)
+                .subscribe();
+    }
+
     private Mono<Void> processTrainIfIncomplete(TrainRouteEntity trainRoute, LocalDate date) {
         LOG.info("Fetching delay for train number {}", trainRoute.getTrainNumber());
         return trainStatusCache.isComplete(trainRoute.getTrainNumber(), date)

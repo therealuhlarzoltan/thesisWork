@@ -7,4 +7,5 @@ import reactor.core.publisher.Mono;
 public interface DelayDataCollector {
     Flux<DelayInfo> getTrainDelays();
     Mono<Void> fetchDelays();
+    Mono<Void> fetchDelay(String trainNumber);
 }

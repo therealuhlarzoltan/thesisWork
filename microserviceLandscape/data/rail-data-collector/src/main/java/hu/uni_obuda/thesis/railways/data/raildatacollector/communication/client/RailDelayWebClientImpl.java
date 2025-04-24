@@ -44,7 +44,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
         URI timetableUri = UriComponentsBuilder.fromPath(timetableGetterUri)
                 .queryParam("from", from)
                 .queryParam("to", to)
-                .queryParam("date", date.toString())
+                .queryParam("date", date.toString().replace("-", "."))
                 .build().toUri();
         return webClient.get().uri(timetableUri.toString())
         .exchangeToMono(apiResponse -> {

@@ -5,6 +5,7 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.scheduled.Tr
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,5 +27,12 @@ public class DelayDataCollectorController implements DelayDataCollector {
     @Override
     public Mono<Void> fetchDelays() {
         return Mono.fromRunnable(trainDelayProcessor::processTrainRoutes);
+    }
+
+    @GetMapping("fetch/{trainNumber}")
+
+    @Override
+    public Mono<Void> fetchDelay(@PathVariable String trainNumber) {
+        return Mono.fromRunnable(() -> trainDelayProcessor.processTrainRoute(trainNumber));
     }
 }

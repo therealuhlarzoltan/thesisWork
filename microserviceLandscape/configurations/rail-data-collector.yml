@@ -87,9 +87,10 @@ spring:
     username: ${RABBIT_MQ_USERNAME}
     password: ${RABBIT_MQ_PASSWORD}
 
-  redis:
-    host: localhost
-    port: 6380
+  data:
+    redis:
+      host: localhost
+      port: 6380
 
   cloud:
     function:
@@ -134,6 +135,9 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: INFO
-    reactor.netty: DEBUG
-    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
-    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: DEBUG
+    reactor.netty: INFO
+    org.springframework.web.reactive.function.client.ExchangeFunctions: INFO
+    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: INFO
+    io.lettuce.core: DEBUG          # Logs Redis commands (for Lettuce)
+    org.springframework.data.redis: DEBUG  # Logs Spring Data Redis internal ops
+    org.springframework.data.redis.core.RedisTemplate: DEBUG
