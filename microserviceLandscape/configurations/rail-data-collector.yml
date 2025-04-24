@@ -13,6 +13,11 @@ railway.api:
   timetable-getter-uri: /
   train-details-getter-uri: /details
 
+  rate:
+    limit:
+      delay-between-items: 200
+      number-of-concurrent-calls: 5
+
 tcp:
     connection:
       timeout-in-ms: 30000
