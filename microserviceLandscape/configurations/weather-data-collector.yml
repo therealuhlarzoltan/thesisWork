@@ -45,22 +45,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
-      geocodingApi:
-        allowHealthIndicatorToFail: false
-        registerHealthIndicator: true
-        slidingWindowType: COUNT_BASED
-        slidingWindowSize: 5
-        failureRateThreshold: 50
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 10000
-        recordExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
-          - org.springframework.web.reactive.function.client.WebClientRequestException
-        ignoreExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
-          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+
 
   retry:
     instances:
@@ -70,15 +55,8 @@ resilience4j:
         retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
-        ignoreExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
-          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-      geocodingApi:
-        maxAttempts: 3
-        waitDuration: 1000
-        retryExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
-          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datalollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
