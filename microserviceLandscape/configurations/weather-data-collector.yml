@@ -45,26 +45,11 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
-      geocodingApi:
-        allowHealthIndicatorToFail: false
-        registerHealthIndicator: true
-        slidingWindowType: COUNT_BASED
-        slidingWindowSize: 5
-        failureRateThreshold: 50
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 10000
-        recordExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
-          - org.springframework.web.reactive.function.client.WebClientRequestException
-        ignoreExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
-          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+
 
   retry:
     instances:
-      geocodingApi:
+      getWeatherDataApi:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
