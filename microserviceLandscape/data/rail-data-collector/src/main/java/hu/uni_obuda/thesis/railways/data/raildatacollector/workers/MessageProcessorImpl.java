@@ -33,11 +33,6 @@ public class MessageProcessorImpl implements MessageProcessor {
     private final ResponseMessageSender responseSender;
     private final Scheduler messageProcessingScheduler;
 
-    @Value("${railway.api.rate.limit.delay-between-requests:1000}")
-    private Integer delayBetweenRequests;
-    @Value("${railway.api.rate.limit.number-of-concurrent-calls:3}")
-    private Integer numberOfConcurrentCalls;
-
     public MessageProcessorImpl(ObjectMapper objectMapper, RailDataCollector railDataCollector,
                                 ResponseMessageSender responseSender, Scheduler messageProcessingScheduler) {
         this.objectMapper = objectMapper;
@@ -89,21 +84,21 @@ public class MessageProcessorImpl implements MessageProcessor {
         CrudEvent.Type eventType = crudEvent.getEventType();
         switch (eventType) {
             case GET -> {
-                Flux.just(crudEvent.getData())
-                .delayElements(Duration.ofMillis(delayBetweenRequests))
-                        .flatMap(request -> railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate()), numberOfConcurrentCalls)
+                DelayInfoRequest request = crudEvent.getData();
+                Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
+                delayInfoFlux
                         .flatMap(delayInfo -> {
                             return Mono.fromCallable(() -> {
                                 ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
-                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, delayInfo.getTrainNumber(), responsePayload);
+                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
                             });
-                        }, numberOfConcurrentCalls)
+                        })
                         .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", event))
                         .doOnError((throwable) -> {
                             LOG.error("An error occurred: {}", throwable.getMessage());
                             LOG.warn("Sending error response message to delay data collector...");
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
-                            responseSender.sendResponseMessage("railDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, crudEvent.getData().getTrainNumber(), responsePayload));
+                            responseSender.sendResponseMessage("railDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getTrainNumber(), responsePayload));
                         })
                         .onErrorResume(throwable -> Mono.empty())
                         .subscribeOn(messageProcessingScheduler)
@@ -128,23 +123,22 @@ public class MessageProcessorImpl implements MessageProcessor {
                 DelayInfoRequest request = crudEvent.getData();
                 Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
                 delayInfoFlux
-                    .delayElements(Duration.ofMillis(delayBetweenRequests))
-                    .flatMap(delayInfo -> {
-                       return Mono.fromCallable(() -> {
-                            ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
-                            return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
-                        });
-                    }, numberOfConcurrentCalls)
-                    .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, event))
-                    .doOnError(throwable -> {
-                        LOG.error("Skipped DelayInfo due to error: {}", throwable.getMessage());
-                        LOG.warn("Sending error response message to delay data collector...");
-                        ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
-                        responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getTrainNumber(), responsePayload));
-                    })
-                    .onErrorResume(throwable -> Mono.empty())
-                    .subscribeOn(messageProcessingScheduler)
-                    .subscribe();
+                        .flatMap(delayInfo -> {
+                            return Mono.fromCallable(() -> {
+                                ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
+                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
+                            });
+                        })
+                        .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, event))
+                        .doOnError(throwable -> {
+                            LOG.error("Skipped DelayInfo due to error: {}", throwable.getMessage());
+                            LOG.warn("Sending error response message to delay data collector...");
+                            ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
+                            responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getTrainNumber(), responsePayload));
+                        })
+                        .onErrorResume(throwable -> Mono.empty())
+                        .subscribeOn(messageProcessingScheduler)
+                        .subscribe();
             }
             case null, default -> handleIncorrectEventTypeError(crudEvent, correlationId);
         }

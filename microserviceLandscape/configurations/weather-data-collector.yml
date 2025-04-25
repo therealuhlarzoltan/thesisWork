@@ -55,7 +55,7 @@ resilience4j:
         retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
-          - hu.uni_obuda.thesis.railways.util.exception.datalollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
