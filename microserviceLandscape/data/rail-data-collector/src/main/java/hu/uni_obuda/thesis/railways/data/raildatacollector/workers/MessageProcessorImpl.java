@@ -89,14 +89,13 @@ public class MessageProcessorImpl implements MessageProcessor {
         CrudEvent.Type eventType = crudEvent.getEventType();
         switch (eventType) {
             case GET -> {
-                DelayInfoRequest request = crudEvent.getData();
-                Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
-                delayInfoFlux
-                        .delayElements(Duration.ofMillis(delayBetweenRequests))
+                Flux.just(crudEvent.getData())
+                .delayElements(Duration.ofMillis(delayBetweenRequests))
+                        .flatMap(request -> railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate()), numberOfConcurrentCalls)
                         .flatMap(delayInfo -> {
                             return Mono.fromCallable(() -> {
                                 ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
-                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
+                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, delayInfo.getTrainNumber(), responsePayload);
                             });
                         }, numberOfConcurrentCalls)
                         .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", event))
@@ -104,7 +103,7 @@ public class MessageProcessorImpl implements MessageProcessor {
                             LOG.error("An error occurred: {}", throwable.getMessage());
                             LOG.warn("Sending error response message to delay data collector...");
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(resolveException(throwable)), resolveHttpStatus(resolveException(throwable)));
-                            responseSender.sendResponseMessage("railDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, request.getTrainNumber(), responsePayload));
+                            responseSender.sendResponseMessage("railDataResponses-out-0", new HttpResponseEvent(HttpResponseEvent.Type.ERROR, crudEvent.getData().getTrainNumber(), responsePayload));
                         })
                         .onErrorResume(throwable -> Mono.empty())
                         .subscribeOn(messageProcessingScheduler)
