@@ -21,7 +21,7 @@ public class TrainRouteRequest {
     @NotNull(message = "Line number cannot be null")
     @NotBlank(message = "Line number cannot be blank")
     @Size(min = 1, message = "Line number must be at least 1 character long")
-    @Size(max = 16, message = "Line number must be maximum 16 characters long")
+    @Size(max = 64, message = "Line number must be maximum 64 characters long")
     private String lineNumber;
 
     @NotNull(message = "Start station cannot be null")
