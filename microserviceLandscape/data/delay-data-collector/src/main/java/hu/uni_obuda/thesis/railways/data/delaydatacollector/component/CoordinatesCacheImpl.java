@@ -38,6 +38,12 @@ public class CoordinatesCacheImpl implements CoordinatesCache {
         return coordinatesRedisTemplate.opsForValue().get(toKey(stationName));
     }
 
+    @Override
+    public Flux<GeocodingResponse> getAll() {
+        return keysRedisTemplate.opsForSet()
+                .members(KEY_SET_PREFIX)
+                .flatMap(key -> coordinatesRedisTemplate.opsForValue().get(key));
+    }
 
     @Override
     public Mono<Void> evict(String stationName) {

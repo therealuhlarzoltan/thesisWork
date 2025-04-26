@@ -2,6 +2,7 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.component;
 
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ public interface CoordinatesCache {
     String CACHE_PREFIX = "coordinates";
     String KEY_SET_PREFIX = CACHE_PREFIX + ":" + "keys";
 
-
+    Flux<GeocodingResponse> getAll();
     Mono<Boolean> isCached(String stationName);
     Mono<Void> cache(String stationName, GeocodingResponse coordinates);
     Mono<GeocodingResponse> get(String stationName);
