@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -29,15 +30,43 @@ public class TrainStatusCacheImpl implements TrainStatusCache {
 
     @Override
     public Mono<Void> markComplete(String trainNumber, LocalDate date) {
+        String key = toKey(trainNumber, date);
         return redisTemplate.opsForValue()
-                .set(toKey(trainNumber, date), "complete", Duration.ofDays(cacheDuration))
+                .set(key, "complete", Duration.ofDays(cacheDuration))
+                .then(redisTemplate.opsForSet().add(KEY_SET_PREFIX, key))
                 .then();
     }
 
     @Override
     public Mono<Void> markIncomplete(String trainNumber, LocalDate date) {
+        String key = toKey(trainNumber, date);
         return redisTemplate.opsForValue()
-                .set(toKey(trainNumber, date), "incomplete", Duration.ofHours(cacheDuration))
+                .set(key, "incomplete", Duration.ofHours(cacheDuration))
+                .then(redisTemplate.opsForSet().add(KEY_SET_PREFIX, key))
                 .then();
+    }
+
+    @Override
+    public Mono<Void> evict(String trainNumber, LocalDate date) {
+        String key = toKey(trainNumber, date);
+        return redisTemplate.opsForValue().delete(key)
+                .then(redisTemplate.opsForSet().remove(KEY_SET_PREFIX, key))
+                .then();
+    }
+
+    @Override
+    public Mono<Void> evictAll() {
+        return redisTemplate.opsForSet()
+                .members(KEY_SET_PREFIX)
+                .collectList()
+                .flatMap(keys -> {
+                    if (keys.isEmpty()) {
+                        return Mono.empty();
+                    } else {
+                        return redisTemplate.delete(Flux.fromIterable(keys))
+                                .then(redisTemplate.delete(KEY_SET_PREFIX))
+                                .then();
+                    }
+                });
     }
 }
