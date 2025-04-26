@@ -19,7 +19,7 @@ public class CacheEvictor {
     @Scheduled(cron = "0 0 2 * * *")
     public void evictCacheAt2AM() {
         LOG.info("Evicting timetable cache at 2 AM...");
-        timetableCache.evict()
+        timetableCache.evictAll()
                 .doOnSuccess(_ -> LOG.info("Timetable cache eviction completed."))
                 .doOnError(e -> LOG.error("Failed to evict timetable cache", e))
                 .subscribe();
