@@ -52,9 +52,11 @@ public class RailDataServiceImpl implements RailDataService {
                         return gateway.getShortTimetable(from, to, date)
                                 .flatMap(response -> {
                                     if (!response.getTimetable().isEmpty()) {
+                                        LOG.info("Caching timetable with start station {} and end station {} on date {}", from, to, date);
                                         return timetableCache.cache(from, to, date, response)
                                                 .thenReturn(response);
                                     } else {
+                                        LOG.warn("Got an empty timetable with start station {} and end station {} on date {}", from, to, date);
                                         return Mono.just(response);
                                     }
                                });
@@ -73,6 +75,7 @@ public class RailDataServiceImpl implements RailDataService {
     }
 
     private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber, LocalDate date) {
+        LOG.info("Extracting train URI for train number {} on date {}", trainNumber, date);
         return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
                 .flatMap(entry -> entry.getDetails().stream())
                 .filter(details -> details.getTrainInfo().getCode().equals(trainNumber))
@@ -84,6 +87,7 @@ public class RailDataServiceImpl implements RailDataService {
 
     private static Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
         if (response.getStations().getLast().getRealArrival() == null || response.getStations().getLast().getRealArrival().isBlank()) {
+            LOG.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
             return Mono.just(Collections.emptyList());
         }
         return Mono.just(response.getStations().stream().map(station -> mapStationInfoToDelayInfo(station, trainNumber, date)).toList());
