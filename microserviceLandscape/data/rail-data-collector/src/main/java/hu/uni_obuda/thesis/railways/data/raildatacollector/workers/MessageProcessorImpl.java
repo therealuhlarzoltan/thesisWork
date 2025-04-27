@@ -87,11 +87,9 @@ public class MessageProcessorImpl implements MessageProcessor {
                 DelayInfoRequest request = crudEvent.getData();
                 Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
                 delayInfoFlux
-                        .flatMap(delayInfo -> {
-                            return Mono.fromCallable(() -> {
-                                ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
-                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
-                            });
+                        .map(delayInfo -> {
+                            ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
+                            return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
                         })
                         .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", event))
                         .doOnError((throwable) -> {
@@ -123,11 +121,9 @@ public class MessageProcessorImpl implements MessageProcessor {
                 DelayInfoRequest request = crudEvent.getData();
                 Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
                 delayInfoFlux
-                        .flatMap(delayInfo -> {
-                            return Mono.fromCallable(() -> {
-                                ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
-                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
-                            });
+                        .map(delayInfo -> {
+                            ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
+                            return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getTrainNumber(), responsePayload);
                         })
                         .doOnNext(event -> responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, event))
                         .doOnError(throwable -> {

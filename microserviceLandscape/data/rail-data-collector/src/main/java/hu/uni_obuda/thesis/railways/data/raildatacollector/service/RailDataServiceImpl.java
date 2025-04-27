@@ -87,6 +87,7 @@ public class RailDataServiceImpl implements RailDataService {
 
     private static Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
         if (response.getStations().getLast().getRealArrival() == null || response.getStations().getLast().getRealArrival().isBlank()) {
+            LOG.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
             return Mono.just(Collections.emptyList());
         }
         return Mono.just(response.getStations().stream().map(station -> mapStationInfoToDelayInfo(station, trainNumber, date)).toList());

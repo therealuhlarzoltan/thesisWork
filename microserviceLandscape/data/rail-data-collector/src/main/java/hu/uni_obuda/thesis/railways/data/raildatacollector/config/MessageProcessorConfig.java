@@ -55,7 +55,7 @@ public class MessageProcessorConfig {
         return flux -> flux
                 .publishOn(messageProcessingScheduler())
                 .delayElements(Duration.ofMillis(delayBetweenRequests))
-                .flatMap(this::processSingleMessage, numberOfConcurrentCalls)
+                .flatMap(this::processSingleMessage)
                 .onErrorContinue((error, obj) -> {
                     LOG.error("Error during processing: {}", error.getMessage(), error);
                 })

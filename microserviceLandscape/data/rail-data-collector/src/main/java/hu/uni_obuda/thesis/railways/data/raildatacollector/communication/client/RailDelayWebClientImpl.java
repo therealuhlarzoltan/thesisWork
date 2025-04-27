@@ -67,6 +67,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
 
     @Override
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String thirdPartyUrl) {
+        LOG.debug("Getting train details on url {}", thirdPartyUrl);
         URI trainDetailsUri = URI.create(railwayBaseUrl + trainDetailsGetterUri + "?url=" + URLEncoder.encode(thirdPartyUrl, StandardCharsets.UTF_8));
         return webClient.get().uri(trainDetailsUri).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
@@ -74,6 +75,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
                         .flatMap(response -> {
                             try {
                                 ShortTrainDetailsResponse parsedResponse = objectMapper.readValue(response, ShortTrainDetailsResponse.class);
+                                LOG.debug("Got train details response!");
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
                                 return Mono.error(mapMappingExceptionToException(ioException, trainDetailsUri.toString()));
