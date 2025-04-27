@@ -10,6 +10,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -27,17 +29,21 @@ import java.util.concurrent.TimeoutException;
 @RequiredArgsConstructor
 public class RailDelayGatewayImpl implements RailDelayGateway {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RailDelayGatewayImpl.class);
+
     private final RailDelayWebClient webClient;
 
     @CircuitBreaker(name = "getTimetableApi", fallbackMethod = "handleTimetableFallback")
     @Retry(name = "getTimetableApi")
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
+        LOG.debug("Called timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getShortTimetable(from, to, date);
     }
 
     @CircuitBreaker(name = "getTrainDetailsApi", fallbackMethod = "handleDetailsFallback")
     @Retry(name = "getTrainDetailsApi")
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
+        LOG.debug("Called train details gateway with uri {}", trainUri);
         return webClient.getShortTrainDetails(trainUri);
     }
 

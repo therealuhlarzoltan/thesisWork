@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'hu.uni_obuda.thesis.railways.data'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.1'
 
 ext {
 	javaVersion = 22
@@ -43,7 +43,7 @@ dependencies {
 	//implementation 'org.springframework.cloud:spring-cloud-bus'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	//implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
 	compileOnly "org.projectlombok:lombok:${lombokVersion}"
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
