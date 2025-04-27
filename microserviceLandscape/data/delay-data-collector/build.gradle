@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'hu.uni_obuda.thesis.railways.data'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.1'
 
 java {
     toolchain {
@@ -43,15 +43,13 @@ dependencies {
     //implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
     implementation 'org.springframework.amqp:spring-rabbit-stream'
     implementation 'org.springframework.cloud:spring-cloud-bus'
-    //implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    //implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     compileOnly 'org.projectlombok:lombok'
-    //developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     //runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
