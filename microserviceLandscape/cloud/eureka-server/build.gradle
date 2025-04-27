@@ -5,11 +5,16 @@ plugins {
 }
 
 group = 'hu.uni_obuda.thesis.railways.cloud'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.1'
+
+ext {
+    javaVersion = 22
+    set('springCloudVersion', "2024.0.0")
+}
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(22)
+        languageVersion = JavaLanguageVersion.of(javaVersion)
     }
 }
 
@@ -23,16 +28,14 @@ repositories {
     mavenCentral()
 }
 
-ext {
-    set('springCloudVersion', "2024.0.0")
-}
-
 dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
-    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

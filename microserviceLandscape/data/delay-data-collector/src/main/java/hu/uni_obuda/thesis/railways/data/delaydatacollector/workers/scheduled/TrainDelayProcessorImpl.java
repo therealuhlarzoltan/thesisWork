@@ -45,7 +45,6 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
                 .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, today))
                 .subscribeOn(scheduler)
                 .subscribe();
-
     }
 
     @Override
