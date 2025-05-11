@@ -102,7 +102,7 @@ venv.bak/
 
 # IDEs and editors
 .vscode/
-.idea/
+../.idea/
 
 # macOS
 .DS_Store
