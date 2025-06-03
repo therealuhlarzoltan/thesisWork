@@ -5,16 +5,21 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatu
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.IncomingMessageSink;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.CoordinateProcessorImpl;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.DataRequestProcessorImpl;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.DelayInfoProcessorImpl;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.WeatherInfoProcessorImpl;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.CoordinatesRegistry;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.Message;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -28,6 +33,8 @@ public class MessageProcessingConfig {
     private final ObjectMapper objectMapper;
     private final IncomingMessageSink messageSink;
     private final TrainStatusCache trainStatusCache;
+    private final DelayService delayService;
+    private final MessageSender messageSender;
 
     @Value("${app.messaging.processing.threadPoolSize:10}")
     Integer threadPoolSize;
@@ -52,6 +59,13 @@ public class MessageProcessingConfig {
     @Bean
     public Consumer<Message<Event<?, ?>>> geocodingResponseProcessor(CoordinatesRegistry registry) {
         return new CoordinateProcessorImpl(objectMapper, registry, messageSink);
+    }
+
+    @DependsOn("messageProcessingScheduler")
+    @Lazy
+    @Bean
+    public Consumer<Message<Event<?, ?>>> dataRequestProcessor(@Qualifier("messageProcessingScheduler") Scheduler messageProcessingScheduler) {
+        return new DataRequestProcessorImpl(delayService, messageSender, messageProcessingScheduler);
     }
 
     @Bean

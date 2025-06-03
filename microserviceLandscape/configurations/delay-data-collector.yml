@@ -1,4 +1,5 @@
-app:
+
+pp:
   messaging:
     sending:
       threadPoolSize: 24
@@ -62,7 +63,7 @@ spring:
 
   cloud:
     function:
-      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor
+      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor;dataRequestProcessor
 
     stream:
       defaultBinder: rabbit
@@ -94,6 +95,14 @@ spring:
         geocodingResponseProcessor-in-0:
           destination: geocodingDataResponses
           contentType: application/json
+        dataRequestProcessor-in-0:
+          destination: dataRequests
+          group: dataRequestsGroup
+          content-type: application/json
+        dataResponses-out-0:
+          destination: dataResponses
+          producer:
+            required-groups: auditGroup
 
 spring.cloud.stream.bindings.delayInfoProcessor-in-0.consumer:
   maxAttempts: 3
@@ -123,6 +132,10 @@ spring.cloud.stream.bindings.geocodingResponseProcessor-in-0.consumer:
 
 spring.cloud.stream.rabbit.bindings.geocodingResponseProcessor-in-0.consumer:
   autoBindDlq: true
+  republishToDlq: true
+
+spring.cloud.stream.rabbit.bindings.dataRequestProcessor-in-0.consumer:
+  atoBindDlg: true
   republishToDlq: true
 
 springdoc:

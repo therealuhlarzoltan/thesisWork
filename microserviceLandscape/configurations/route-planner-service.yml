@@ -1,30 +1,27 @@
-app:
-  threadPoolSize: 24
-  taskQueueSize: 750
-
-
 server:
-  port: 8000
+  port: 8005
   error.include-message: always
   forward-headers-strategy: framework
 
 railway.api:
-  base-url: http://apiv2.oroszi.net/elvira
-  timetable-getter-uri: /
-  train-details-getter-uri: /details
+  base-url: http://rail-data-collector
+  timetable-getter-uri: /route
 
-  rate:
-    limit:
-      delay-between-requests: 400
-      number-of-concurrent-calls: 24
+weather.api:
+  base-url: http://weather-data-collector
+  forecast-uri: /forecast
+
+station.api:
+  base-url: http://delay-data-collector
+  coordinates-uri: /station/coordinates
 
 tcp:
-    connection:
+  connection:
+    timeout-in-ms: 30000
+    read:
       timeout-in-ms: 30000
-      read:
-        timeout-in-ms: 30000
-      write:
-        timeout-in-ms: 30000
+    write:
+      timeout-in-ms: 30000
 
 resilience4j:
   circuitbreaker:
@@ -91,46 +88,6 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.TrainNotInServiceException
-
-spring:
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: ${RABBIT_MQ_USERNAME}
-    password: ${RABBIT_MQ_PASSWORD}
-
-  data:
-    redis:
-      host: localhost
-      port: 6380
-
-  cloud:
-    function:
-      definition: messageProcessor
-
-    stream:
-      defaultBinder: rabbit
-      default.contentType: application/json
-      bindings:
-        railDataResponses-out-0:
-          destination: railDataResponses
-          producer:
-            required-groups: auditGroup, delayDataCollectorsGroup
-        messageProcessor-in-0:
-          destination: railDataRequests
-          group: railDataCollectorsGroup
-          contentType: application/json
-
-
-  spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
-    maxAttempts: 3
-    backOffInitialInterval: 500
-    backOffMaxInterval: 1000
-    backOffMultiplier: 2.0
-
-  spring.cloud.stream.rabbit.bindings.messageProcessor-in-0.consumer:
-    autoBindDlq: true
-    republishToDlq: true
 
 springdoc:
   swagger-ui:

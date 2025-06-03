@@ -41,7 +41,7 @@ dependencies {
 	//implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	//implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 	//implementation 'org.springframework.cloud:spring-cloud-bus'
-	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+	implementation "io.github.resilience4j:resilience4j-reactor:1.7.0"
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
