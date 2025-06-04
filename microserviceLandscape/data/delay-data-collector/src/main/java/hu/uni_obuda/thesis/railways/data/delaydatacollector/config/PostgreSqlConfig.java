@@ -2,6 +2,7 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.JsonToWeatherInfoConverter;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.JsonWeatherInfoConverter;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.WeatherInfoToJsonConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +24,8 @@ public class PostgreSqlConfig {
                 CustomConversions.StoreConversions.NONE,
                 List.of(
                         new WeatherInfoToJsonConverter(objectMapper),
-                        new JsonToWeatherInfoConverter(objectMapper)
+                        new JsonToWeatherInfoConverter(objectMapper),
+                        new JsonWeatherInfoConverter(objectMapper)
                 )
         );
     }

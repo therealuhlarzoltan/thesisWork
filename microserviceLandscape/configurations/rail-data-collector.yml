@@ -15,7 +15,7 @@ railway.api:
 
   rate:
     limit:
-      delay-between-requests: 400
+      delay-between-requests: 1800
       number-of-concurrent-calls: 24
 
 tcp:

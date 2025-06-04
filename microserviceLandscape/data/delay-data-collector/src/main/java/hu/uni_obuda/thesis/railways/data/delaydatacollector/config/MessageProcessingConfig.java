@@ -33,7 +33,6 @@ public class MessageProcessingConfig {
     private final ObjectMapper objectMapper;
     private final IncomingMessageSink messageSink;
     private final TrainStatusCache trainStatusCache;
-    private final DelayService delayService;
     private final MessageSender messageSender;
 
     @Value("${app.messaging.processing.threadPoolSize:10}")
@@ -64,7 +63,7 @@ public class MessageProcessingConfig {
     @DependsOn("messageProcessingScheduler")
     @Lazy
     @Bean
-    public Consumer<Message<Event<?, ?>>> dataRequestProcessor(@Qualifier("messageProcessingScheduler") Scheduler messageProcessingScheduler) {
+    public Consumer<Message<Event<?, ?>>> dataRequestProcessor(@Qualifier("messageProcessingScheduler") Scheduler messageProcessingScheduler, DelayService delayService) {
         return new DataRequestProcessorImpl(delayService, messageSender, messageProcessingScheduler);
     }
 

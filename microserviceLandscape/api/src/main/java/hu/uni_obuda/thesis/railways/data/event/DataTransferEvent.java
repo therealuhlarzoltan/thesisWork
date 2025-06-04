@@ -10,26 +10,27 @@ public class DataTransferEvent<T> extends Event<String, T> {
         COMPLETE
     }
 
-    private final Type type;
-    private final List<T> data;
+    private final Type eventType;
+    private final List<T> payload;
 
-    public DataTransferEvent(Type type, String key, List<T> data) {
+    public DataTransferEvent() {
+        super();
+        eventType = null;
+        payload = null;
+    }
+
+    public DataTransferEvent(Type eventType, String key, List<T> payload) {
         super(key, null);
-        this.type = type;
-        this.data = data;
+        this.eventType = eventType;
+        this.payload = payload;
     }
 
     public List<T> getPayload() {
-        return data;
+        return payload;
     }
 
     @Override
     public Type getEventType() {
-        return type;
-    }
-
-    @Override
-    public T getData() {
-        throw new UnsupportedOperationException();
+        return eventType;
     }
 }

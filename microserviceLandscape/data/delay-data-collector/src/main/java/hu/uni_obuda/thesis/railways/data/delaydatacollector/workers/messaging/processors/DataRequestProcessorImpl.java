@@ -24,7 +24,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
     private final MessageSender responseSender;
     private final Scheduler messageProcessingScheduler;
 
-    @Value("{app.messaging.batch.size:200}")
+    @Value("${app.messaging.batch.size:200}")
     private Integer batchSize;
 
     @Override
@@ -63,12 +63,10 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
             case REQUEST -> {
                 Flux<DataTransferEvent<DelayRecord>> dataTransferFlux = delayService.getBatches(batchSize, dataTransferEvent.getKey());
                 dataTransferFlux
-                        .doOnNext(event -> responseSender.sendMessage("dataResponses-out-0", event))
-                        .doOnError((throwable) -> {
-                            LOG.error("Skipped DelayRecord due to error: {}", throwable.getMessage());
-                            LOG.error("Was unable to send message to dataResponses-out-0");
+                        .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", event))
+                        .onErrorContinue((throwable, badValue) -> {
+                            LOG.error("Could not map one DelayEntity → DelayRecord, skipping: {}", throwable.getStackTrace());
                         })
-                        .onErrorResume(throwable -> Mono.empty())
                         .subscribeOn(messageProcessingScheduler)
                         .subscribe();
             }
@@ -90,7 +88,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
             case REQUEST -> {
                 Flux<DataTransferEvent<DelayRecord>> dataTransferFlux = delayService.getBatches(batchSize, dataTransferEvent.getKey());
                 dataTransferFlux
-                        .doOnNext(event -> responseSender.sendMessage("dataResponses-out-0", correlationId, event))
+                        .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", correlationId, event))
                         .doOnError(throwable -> {
                             LOG.error("Skipped DelayRecord due to error: {}", throwable.getMessage());
                             LOG.error("Was unable to send message to dataResponses-out-0 with correlationId {}", correlationId);

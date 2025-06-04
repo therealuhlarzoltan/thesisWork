@@ -45,7 +45,7 @@ public class DelayServiceImpl implements DelayService {
     @Autowired
     public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
                             DelayMapper delayMapper, DelayRecordMapper recordMapper, TrainStatusCache trainStatusCache, GeocodingService geocodingService,
-                            @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
+                           @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
         this.delayRepository = delayRepository;
         this.stationRepository = stationRepository;
         this.weatherService = weatherService;

@@ -23,7 +23,6 @@ public class MessageSenderImpl implements MessageSender {
         Message message = MessageBuilder.withPayload(event)
                 .setHeader("partitionKey", event.getKey())
                 .build();
-
         if (!streamBridge.send(bindingName, message)) {
             LOG.error("Failed to send the message to {}", bindingName);
         } else {
