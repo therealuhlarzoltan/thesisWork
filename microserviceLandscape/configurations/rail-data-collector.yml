@@ -15,7 +15,7 @@ railway.api:
 
   rate:
     limit:
-      delay-between-requests: 1800
+      delay-between-requests: 750
       number-of-concurrent-calls: 24
 
 tcp:
@@ -115,10 +115,10 @@ spring:
         railDataResponses-out-0:
           destination: railDataResponses
           producer:
-            required-groups: auditGroup, delayDataCollectorsGroup
+            required-groups: auditGroup
         messageProcessor-in-0:
           destination: railDataRequests
-          group: railDataCollectorsGroup
+          group: railDataRequestsGroup
           contentType: application/json
 
 

@@ -11,22 +11,15 @@ public class DataTransferEvent<T> extends Event<String, T> {
     }
 
     private final Type eventType;
-    private final List<T> payload;
 
     public DataTransferEvent() {
         super();
         eventType = null;
-        payload = null;
     }
 
-    public DataTransferEvent(Type eventType, String key, List<T> payload) {
-        super(key, null);
+    public DataTransferEvent(Type eventType, String key, T data) {
+        super(key, data);
         this.eventType = eventType;
-        this.payload = payload;
-    }
-
-    public List<T> getPayload() {
-        return payload;
     }
 
     @Override

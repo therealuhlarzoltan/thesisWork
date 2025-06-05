@@ -25,6 +25,7 @@ import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 
 @Service
@@ -126,7 +127,7 @@ public class DelayServiceImpl implements DelayService {
 
 
     @Override
-    public Flux<DataTransferEvent<DelayRecord>> getBatches(int batchSize, String routingKey) {
+    public Flux<DataTransferEvent<List<DelayRecord>>> getBatches(int batchSize, String routingKey) {
         Mono<TreeMap<String, TrainStationEntity>> stationMapMono = retrieveStationMapMono();
 
         Flux<DelayEntity> delayFlux = delayRepository.findAll()
@@ -172,7 +173,7 @@ public class DelayServiceImpl implements DelayService {
                 });
     }
 
-    private DataTransferEvent<DelayRecord> constructTerminationEvent(String key) {
+    private DataTransferEvent<List<DelayRecord>> constructTerminationEvent(String key) {
         return new DataTransferEvent<>(
                 DataTransferEvent.Type.COMPLETE,
                 key,

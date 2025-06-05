@@ -38,7 +38,6 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     @Scheduled(fixedDelay = PROCESSING_INTERVAL_IN_MILLIS)
     @Override
     public void processTrainRoutes() {
-        /*
         LOG.info("Data fetch started...");
         LocalDate today = LocalDate.now();
 
@@ -46,7 +45,6 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
                 .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, today))
                 .subscribeOn(scheduler)
                 .subscribe();
-         */
     }
 
     @Override

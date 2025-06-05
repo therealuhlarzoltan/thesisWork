@@ -80,10 +80,10 @@ spring:
         weatherDataResponses-out-0:
           destination: weatherDataResponses
           producer:
-            required-groups: auditGroup, delayDataCollectorsGroup
+            required-groups: auditGroup
         messageProcessor-in-0:
           destination: weatherDataRequests
-          group: weatherDataCollectorsGroup
+          group: weatherDataRequestsGroup
           contentType: application/json
 
 spring.cloud.stream.bindings.messageProcessor-in-0.consumer:

@@ -86,14 +86,15 @@ spring:
           content-type: application/json
         delayInfoProcessor-in-0:
           destination: railDataResponses
-          group: delayDataCollectorsGroup
+          group: railDataResponsesGroup
           contentType: application/json
         weatherInfoProcessor-in-0:
           destination:  weatherDataResponses
-          group: delayDataCollectorsGroup
+          group: weatherDateResponsesGroup
           contentType: application/json
         geocodingResponseProcessor-in-0:
           destination: geocodingDataResponses
+          group: geocodingDataResponsesGroup
           contentType: application/json
         dataRequestProcessor-in-0:
           destination: dataRequests

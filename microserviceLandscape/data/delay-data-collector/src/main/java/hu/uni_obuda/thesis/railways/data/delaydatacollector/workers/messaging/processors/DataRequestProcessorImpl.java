@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class DataRequestProcessorImpl implements DataRequestProcessor {
@@ -38,7 +39,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
     }
 
     @SuppressWarnings("unchecked")
-    private DataTransferEvent<DelayRecord> retrieveDataTransferEvent(Event<?, ?> genericEvent) {
+    private DataTransferEvent<List<DelayRecord>> retrieveDataTransferEvent(Event<?, ?> genericEvent) {
         if (!(genericEvent instanceof DataTransferEvent<?> dataTransferEvent)) {
             LOG.error("Unexpected event parameters, expected a DataTransferEvent");
             return null;
@@ -53,7 +54,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
 
     private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {
         LOG.info("Processing message created at {} with no correlationId...", message.getPayload().getEventCreatedAt());
-        DataTransferEvent<DelayRecord> dataTransferEvent = retrieveDataTransferEvent(message.getPayload());
+        DataTransferEvent<List<DelayRecord>> dataTransferEvent = retrieveDataTransferEvent(message.getPayload());
         if (dataTransferEvent == null) {
             handleIncorrectEventParametersError(message.getPayload(), null);
             return;
@@ -61,11 +62,11 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
         DataTransferEvent.Type eventType = dataTransferEvent.getEventType();
         switch (eventType) {
             case REQUEST -> {
-                Flux<DataTransferEvent<DelayRecord>> dataTransferFlux = delayService.getBatches(batchSize, dataTransferEvent.getKey());
+                Flux<DataTransferEvent<List<DelayRecord>>> dataTransferFlux = delayService.getBatches(batchSize, dataTransferEvent.getKey());
                 dataTransferFlux
                         .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", event))
                         .onErrorContinue((throwable, badValue) -> {
-                            LOG.error("Could not map one DelayEntity → DelayRecord, skipping: {}", throwable.getStackTrace());
+                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping: {}", throwable.getStackTrace());
                         })
                         .subscribeOn(messageProcessingScheduler)
                         .subscribe();
@@ -78,7 +79,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
     private void processMessageWithCorrelationId(Message<Event<?, ?>> message) {
         String correlationId = message.getHeaders().get("correlationId").toString();
         LOG.info("Processing message created at {} with correlationId {}...", message.getPayload().getEventCreatedAt(), correlationId);
-        DataTransferEvent<DelayRecord> dataTransferEvent = retrieveDataTransferEvent(message.getPayload());
+        DataTransferEvent<List<DelayRecord>> dataTransferEvent = retrieveDataTransferEvent(message.getPayload());
         if (dataTransferEvent == null) {
             handleIncorrectEventParametersError(message.getPayload(), correlationId);
             return;
@@ -86,11 +87,11 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
         DataTransferEvent.Type eventType = dataTransferEvent.getEventType();
         switch (eventType) {
             case REQUEST -> {
-                Flux<DataTransferEvent<DelayRecord>> dataTransferFlux = delayService.getBatches(batchSize, dataTransferEvent.getKey());
+                Flux<DataTransferEvent<List<DelayRecord>>> dataTransferFlux = delayService.getBatches(batchSize, dataTransferEvent.getKey());
                 dataTransferFlux
                         .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", correlationId, event))
                         .doOnError(throwable -> {
-                            LOG.error("Skipped DelayRecord due to error: {}", throwable.getMessage());
+                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping: {}", throwable.getStackTrace());
                             LOG.error("Was unable to send message to dataResponses-out-0 with correlationId {}", correlationId);
                         })
                         .onErrorResume(throwable -> Mono.empty())
@@ -103,17 +104,17 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
 
     private void handleIncorrectEventParametersError(Event<?, ?> event, String correlationId) {
         if (correlationId != null) {
-            LOG.error("Event received with correlationId {} was not of type DataTransferEvent<DelayRecord>", correlationId);
+            LOG.error("Event received with key {} and correlationId {} was not of type DataTransferEvent<List<DelayRecord>>", event.getKey(), correlationId);
         } else {
-            LOG.error("Event received with key {} was not of type DataTransferEvent<DelayRecord>", event.getKey());
+            LOG.error("Event received with key {} was not of type DataTransferEvent<List<DelayRecord>>", event.getKey());
         }
     }
 
     private void handleIncorrectEventTypeError(DataTransferEvent<?> dataTransferEvent, String correlationId) {
         if (correlationId != null) {
-            LOG.error("The received DataTransferEvent with correlationId {} did not contain an expected event type", correlationId);
+            LOG.error("The received DataTransferEvent with key {} and correlationId {} did not contain an expected event type", dataTransferEvent.getKey(), correlationId);
         } else {
-            LOG.error("The received DataTransferEvent did not contain an expected event type");
+            LOG.error("The received DataTransferEvent with key {} did not contain an expected event type", dataTransferEvent.getKey());
         }
     }
 }
