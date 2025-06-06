@@ -1,7 +1,5 @@
 package hu.uni_obuda.thesis.railways.data.event;
 
-import java.util.List;
-
 public class DataTransferEvent<T> extends Event<String, T> {
 
     public enum Type {
