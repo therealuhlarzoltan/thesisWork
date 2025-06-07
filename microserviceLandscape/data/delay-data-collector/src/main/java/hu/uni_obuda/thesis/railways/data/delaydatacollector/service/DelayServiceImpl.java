@@ -67,7 +67,7 @@ public class DelayServiceImpl implements DelayService {
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos
             .flatMap(delayInfo -> {
-                LOG.info("Processing delay {}", delayInfo);
+                LOG.info("Processing delay info {}", delayInfo);
                 if (StringUtils.isText(delayInfo.getStationCode()) && !stationRepository.existsById(delayInfo.getStationCode()).block()) {
                     stationRepository.insertStation(delayInfo.getStationCode()).block();
                     LOG.info("Inserted station: {}", delayInfo.getStationCode());
@@ -75,7 +75,6 @@ public class DelayServiceImpl implements DelayService {
                 return Mono.just(delayInfo);
             })
             .flatMap(delayInfo -> {
-                LOG.info("Checking if delay {} has been processed", delayInfo);
                 if (!StringUtils.isAnyText(delayInfo.getActualArrival(), delayInfo.getActualDeparture())) {
                     LOG.warn("Train haven't finished its journey {}", delayInfo.getTrainNumber());
                     return trainStatusCache
@@ -91,7 +90,6 @@ public class DelayServiceImpl implements DelayService {
             })
             .flatMap(delayInfo -> delayInfoCache.isDuplicate(delayInfo)
                 .flatMap(duplicate -> {
-                    LOG.info("Checking if delay {} is duplicate", duplicate);
                     if (duplicate) {
                         LOG.info("Train delay already recorded for train {} at station {} on date {}", delayInfo.getTrainNumber(), delayInfo.getStationCode(), delayInfo.getDate());
                         return Mono.empty();
