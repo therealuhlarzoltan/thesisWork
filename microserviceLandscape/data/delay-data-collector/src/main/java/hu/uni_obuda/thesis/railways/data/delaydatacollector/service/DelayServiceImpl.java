@@ -24,6 +24,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -66,6 +67,7 @@ public class DelayServiceImpl implements DelayService {
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos
             .flatMap(delayInfo -> {
+                LOG.info("Processing delay {}", delayInfo);
                 if (StringUtils.isText(delayInfo.getStationCode()) && !stationRepository.existsById(delayInfo.getStationCode()).block()) {
                     stationRepository.insertStation(delayInfo.getStationCode()).block();
                     LOG.info("Inserted station: {}", delayInfo.getStationCode());
@@ -73,6 +75,7 @@ public class DelayServiceImpl implements DelayService {
                 return Mono.just(delayInfo);
             })
             .flatMap(delayInfo -> {
+                LOG.info("Checking if delay {} has been processed", delayInfo);
                 if (!StringUtils.isAnyText(delayInfo.getActualArrival(), delayInfo.getActualDeparture())) {
                     LOG.warn("Train haven't finished its journey {}", delayInfo.getTrainNumber());
                     return trainStatusCache
@@ -88,6 +91,7 @@ public class DelayServiceImpl implements DelayService {
             })
             .flatMap(delayInfo -> delayInfoCache.isDuplicate(delayInfo)
                 .flatMap(duplicate -> {
+                    LOG.info("Checking if delay {} is duplicate", duplicate);
                     if (duplicate) {
                         LOG.info("Train delay already recorded for train {} at station {} on date {}", delayInfo.getTrainNumber(), delayInfo.getStationCode(), delayInfo.getDate());
                         return Mono.empty();
@@ -149,12 +153,10 @@ public class DelayServiceImpl implements DelayService {
     }
 
     private LocalDateTime getTimeForWeatherForecast(DelayInfo delayInfo) {
-        if (delayInfo.getActualArrival() != null && delayInfo.getActualArrival().contains(":")) {
-            String[] split = delayInfo.getActualArrival().split(":");
-            return delayInfo.getDate().atTime(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
-        } else if (delayInfo.getActualDeparture() != null && delayInfo.getActualDeparture().contains(":")) {
-            String[] split = delayInfo.getActualDeparture().split(":");
-            return delayInfo.getDate().atTime(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        if (delayInfo.getActualArrival() != null && !delayInfo.getActualArrival().isBlank()) {
+            return LocalDateTime.parse(delayInfo.getActualArrival(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } else if (delayInfo.getActualDeparture() != null && !delayInfo.getActualDeparture().isBlank()) {
+           return LocalDateTime.parse(delayInfo.getActualDeparture(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } else {
             throw new RuntimeException("Could not retrieve time from delay info for weather forecast");
         }

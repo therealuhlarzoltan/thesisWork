@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
@@ -23,9 +24,13 @@ import reactor.core.publisher.Mono;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +41,7 @@ public class RailDataServiceImpl implements RailDataService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RailDataServiceImpl.class);
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+    private static final int EARLY_ARRIVAL_THRESHOLD_HOURS = 12;
 
     private final RailDelayGateway gateway;
     private final TimetableCache timetableCache;
@@ -85,65 +91,153 @@ public class RailDataServiceImpl implements RailDataService {
                 : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
     }
 
-    private static Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
+    private Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
         if (response.getStations().getLast().getRealArrival() == null || response.getStations().getLast().getRealArrival().isBlank()) {
             LOG.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
             return Mono.just(Collections.emptyList());
         }
-        return Mono.just(response.getStations().stream().map(station -> mapStationInfoToDelayInfo(station, trainNumber, date)).toList());
+        String startTime = response.getStations().getFirst().getScheduledDeparture();
+        LocalTime localStartTime;
+        try {
+            localStartTime = LocalTime.parse(startTime);
+        } catch (DateTimeParseException e) {
+            LOG.error("Could not parse scheduled departure at first stop for train {}", trainNumber);
+            return Mono.error(e);
+        }
+        List<DelayInfo> delayInfos = new ArrayList<>();
+
+        LocalDate currentRealArrivalDate = date;
+        LocalDate currentRealDepartureDate = date;
+        LocalDate currentScheduledArrivalDate = date;
+        LocalDate currentScheduledDepartureDate = date;
+
+        LocalTime previousRealArrivalTime = null;
+        LocalTime previousRealDepartureTime = null;
+        LocalTime previousScheduledArrivalTime = null;
+        LocalTime previousScheduledDepartureTime = null;
+
+        for (var station : response.getStations()) {
+            DelayInfo delayInfo = DelayInfo.builder()
+                    .stationCode(station.getCode())
+                    .thirdPartyStationUrl(station.getGetUrl().split("=")[1])
+                    .officialStationUrl(station.getUrl())
+                    .trainNumber(trainNumber)
+                    .date(date)
+                    .build();
+
+            // --- Scheduled Arrival ---
+            String schedArr = station.getScheduledArrival();
+            if (schedArr != null && !schedArr.isBlank()) {
+                LocalTime schedArrTime = parseTimeSafe(schedArr);
+                if (previousScheduledArrivalTime != null && schedArrTime.isBefore(previousScheduledArrivalTime)) {
+                    currentScheduledArrivalDate = currentScheduledArrivalDate.plusDays(1);
+                }
+                previousScheduledArrivalTime = schedArrTime;
+                delayInfo.setScheduledArrival(schedArrTime.atDate(currentScheduledArrivalDate).toString());
+            }
+
+            // --- Scheduled Departure ---
+            String schedDep = station.getScheduledDeparture();
+            if (schedDep != null && !schedDep.isBlank()) {
+                LocalTime schedDepTime = parseTimeSafe(schedDep);
+                if (previousScheduledDepartureTime != null && schedDepTime.isBefore(previousScheduledDepartureTime)) {
+                    currentScheduledDepartureDate = currentScheduledDepartureDate.plusDays(1);
+                }
+                previousScheduledDepartureTime = schedDepTime;
+                delayInfo.setScheduledDeparture(schedDepTime.atDate(currentScheduledDepartureDate).toString());
+            }
+
+            // --- Real Arrival ---
+            String realArr = station.getRealArrival();
+            if (realArr != null && !realArr.isBlank()) {
+                LocalTime realArrTime = parseTimeSafe(realArr);
+                if (previousRealArrivalTime != null) {
+                    if (realArrTime.isBefore(previousRealArrivalTime)) {
+                        currentRealArrivalDate = currentRealArrivalDate.plusDays(1);
+                    }
+                } else if (previousScheduledArrivalTime != null) {
+                    // Handle delayed trains arriving next day
+                    if (realArrTime.isBefore(previousScheduledArrivalTime)) {
+                        currentRealArrivalDate = currentRealArrivalDate.plusDays(1);
+                    } else {
+                        Duration diff = Duration.between(previousScheduledArrivalTime, realArrTime);
+                        if (diff.toMinutes() >= EARLY_ARRIVAL_THRESHOLD_HOURS * 60) {  // tweak threshold if needed
+                            currentRealArrivalDate = currentRealArrivalDate.plusDays(1);
+                        }
+                    }
+                }
+                previousRealArrivalTime = realArrTime;
+                delayInfo.setActualArrival(realArrTime.atDate(currentRealArrivalDate).toString());
+            }
+
+            // --- Real Departure ---
+            String realDep = station.getRealDeparture();
+            if (realDep != null && !realDep.isBlank()) {
+                LocalTime realDepTime = parseTimeSafe(realDep);
+                if (previousRealDepartureTime != null) {
+                    if (realDepTime.isBefore(previousRealDepartureTime)) {
+                        currentRealDepartureDate = currentRealDepartureDate.plusDays(1);
+                    }
+                } else if (previousScheduledDepartureTime != null) {
+                    // Handle delayed departures next day
+                    if (realDepTime.isBefore(previousScheduledDepartureTime)) {
+                        currentRealDepartureDate = currentRealDepartureDate.plusDays(1);
+                    } else {
+                        Duration diff = Duration.between(previousScheduledDepartureTime, realDepTime);
+                        if (diff.toHours() >= EARLY_ARRIVAL_THRESHOLD_HOURS * 60) {
+                            currentRealDepartureDate = currentRealDepartureDate.plusDays(1);
+                        }
+                    }
+                }
+                previousRealDepartureTime = realDepTime;
+                delayInfo.setActualDeparture(realDepTime.atDate(currentRealDepartureDate).toString());
+            }
+
+            // --- Delay calculation ---
+            delayInfo.setArrivalDelay(calculateDelay(delayInfo.getScheduledArrival(), delayInfo.getActualArrival()));
+            delayInfo.setDepartureDelay(calculateDelay(delayInfo.getScheduledDeparture(), delayInfo.getActualDeparture()));
+
+            delayInfos.add(delayInfo);
+        }
+        return Mono.just(delayInfos);
     }
 
-    private static DelayInfo mapStationInfoToDelayInfo(ShortTrainDetailsResponse.Station station, String trainNumber, LocalDate date) {
-        Integer arrivalDelay;
-        Integer departureDelay;
-        if (station.getRealArrival() == null && station.getRealDeparture() == null) {
-            arrivalDelay = null;
-            departureDelay = null;
-        } else {
-            if (station.getRealArrival() != null && station.getScheduledArrival() != null) {
-                arrivalDelay = calculateArrivalDelay(station.getScheduledArrival(), station.getRealArrival());
+    private static LocalTime parseTimeSafe(String timeStr) {
+        return LocalTime.parse(timeStr.equals("24:00") ? "00:00" : timeStr);
+    }
+
+    private LocalDateTime toLocalDateTime(String scheduled, String actual, LocalDate date) {
+        if (scheduled == null || scheduled.isBlank() || actual == null || actual.isBlank() || date == null) {
+            return null;
+        }
+        try {
+            LocalDateTime actualDate = LocalDateTime.of(date, LocalTime.parse(actual));
+            LocalDateTime scheduledDate = LocalDateTime.of(date, LocalTime.parse(scheduled));
+            if (!actualDate.isBefore(scheduledDate)) {
+                //On-time or late (same day) arrival/departure
+                return actualDate;
             } else {
-                arrivalDelay = null;
+                // Early or late (different day) arrival/departure
+                Duration duration = Duration.between(actualDate, scheduledDate);
+                return duration.toMinutes() < EARLY_ARRIVAL_THRESHOLD_HOURS * 60 ? actualDate : actualDate.plusDays(1);
             }
-            if (station.getRealDeparture() != null && station.getScheduledDeparture() != null) {
-                departureDelay = calculateDepartureDelay(station.getScheduledDeparture(), station.getRealDeparture());
-            } else {
-                departureDelay = null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Integer calculateDelay(String scheduled, String actual) {
+        if (scheduled == null || scheduled.isBlank() || actual == null || actual.isBlank()) {
+            return null;
+        } else {
+            try {
+                LocalDateTime scheduledDate = LocalDateTime.parse(scheduled, DateTimeFormatter.ISO_DATE_TIME);
+                LocalDateTime actualDate = LocalDateTime.parse(actual, DateTimeFormatter.ISO_DATE_TIME);
+                return (int) Duration.between(scheduledDate, actualDate).toMinutes();
+            } catch (DateTimeParseException e) {
+                return null;
             }
         }
-
-        return DelayInfo.builder().stationCode(station.getCode()).thirdPartyStationUrl(station.getGetUrl().split("=")[1])
-                .officialStationUrl(station.getUrl())
-                .trainNumber(trainNumber)
-                .scheduledDeparture(station.getScheduledDeparture())
-                .scheduledArrival(station.getScheduledArrival())
-                .actualArrival(station.getRealArrival())
-                .actualDeparture(station.getRealDeparture())
-                .arrivalDelay(arrivalDelay)
-                .departureDelay(departureDelay)
-                .date(date)
-                .build();
-    }
-
-    private static Integer calculateArrivalDelay(String scheduledArrival, String realArrival) {
-       if (!scheduledArrival.isBlank() && !realArrival.isBlank()) {
-           return convertToMinutes(realArrival) - convertToMinutes(scheduledArrival);
-       } else {
-            return null;
-       }
-    }
-
-    private static Integer calculateDepartureDelay(String scheduledDeparture, String realDeparture) {
-        if (!scheduledDeparture.isBlank() && !realDeparture.isBlank()) {
-            return convertToMinutes(realDeparture) - convertToMinutes(scheduledDeparture);
-        } else {
-            return null;
-        }
-    }
-
-    private static int convertToMinutes(String time) {
-        LocalTime localTime = LocalTime.parse(time, dateTimeFormatter);
-        return localTime.getHour() * 60 + localTime.getMinute();
     }
 
     private ExternalApiException mapNotFoundToExternalApiException(WebClientResponseException.NotFound notFound) {
