@@ -1,20 +1,24 @@
-from django.apps import AppConfig
-
 import os
-import threading
 import json
-import uuid
-import time
+import threading
 import pika
+import pandas as pd
 
+from collections import defaultdict
+from django.apps import AppConfig
+from sklearn.model_selection import train_test_split
+
+# Avoid importing Django models or app-dependent pipelines at module level
+# Delay import inside methods
 class MessagingConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'messaging'
 
     def ready(self):
-
         if os.environ.get('RUN_MAIN') != 'true':
             return
+
+        self.batch_storage = defaultdict(list)  # instance variable now
 
         t1 = threading.Thread(target=self._publish_initial_batch_request, daemon=True)
         t1.start()
@@ -30,9 +34,9 @@ class MessagingConfig(AppConfig):
             channel.exchange_declare(exchange='dataRequests', exchange_type='direct', passive=True)
 
             body = {
-                "type": "DataTransferEvent",  # <-- must match @JsonSubTypes name
-                "key": "myUniqueRoutingKey123",  # <-- will be passed into getBatches(...)
-                "eventType": "REQUEST",  # <-- enum name (REQUEST/DATA_TRANSFER/COMPLETE)
+                "type": "DataTransferEvent",
+                "key": "myUniqueRoutingKey123",
+                "eventType": "REQUEST",
                 "data": []
             }
 
@@ -47,44 +51,31 @@ class MessagingConfig(AppConfig):
 
             channel.basic_publish(
                 exchange='dataRequests',
-                routing_key='',  # Spring is bound to "" by default
+                routing_key='',
                 body=json.dumps(body),
                 properties=props
             )
 
             print(f"▶️ Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
             connection.close()
+
         except Exception as e:
-            # If RabbitMQ isn't up yet, we might fail. You could retry or just log.
             print("❌ Failed to publish batch request on startup:", e)
 
     def _consume_batch_responses(self):
-        """
-        Connect to RabbitMQ, passively declare the existing queue "dataResponses.auditGroup",
-        then consume messages. Spring has already created and bound this queue.
-        """
         try:
             connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
             channel = connection.channel()
 
-            # Passive‐declare the queue that Spring’s binder already created
-            #channel.queue_declare(
-            #    queue='dataResponses.auditGroup',
-            #    passive=True,  # do not create it if it doesn't exist
-            #    durable=True  # must match Spring’s durability
-            #)
-
             channel.exchange_declare(exchange='dataResponses', exchange_type='topic', durable=True, passive=True)
 
+            queue_name = 'dataResponses.dataResponsesGroup'
+            queue_result = channel.queue_declare(queue=queue_name, durable=True, passive=True)
+            print("reached queue, result: " + queue_result)
+            queue_binding_result = channel.queue_bind(exchange='dataResponses', queue=queue_name, routing_key='#')
+            print("reached queue binding, result: " + queue_binding_result)
 
-            # Create a temporary queue and bind it to the exchange
-            result = channel.queue_declare(queue='dataResponses.dataResponsesGroup', durable=True)
-            queue_name = result.method.queue
-            channel.queue_bind(exchange='dataResponses', queue=queue_name, routing_key='#')
-
-
-
-            print(f"🟢 Listening for responses on dataResponses.{queue_name}…")
+            print(f"🟢 Listening for responses on {queue_name}…")
 
             def on_message(ch, method, properties, body):
                 try:
@@ -93,9 +84,33 @@ class MessagingConfig(AppConfig):
                     print("❌ JSON parse error:", ex, "raw body:", body)
                     return
 
-                print(f"📬 Received data-response on {queue_name}:")
-                print(json.dumps(message, indent=2, sort_keys=True))
-                print("―――――――――――――――――――――――――――――")
+                event_type = message.get("eventType")
+                routing_key = message.get("key")
+                data = message.get("data", [])
+
+                if not routing_key:
+                    print("⚠️ Missing routing key — skipping message.")
+                    return
+
+                if event_type == "DATA_TRANSFER":
+                    print(f"📦 Received batch for key {routing_key} with {len(data)} records.")
+                    self.batch_storage[routing_key].extend(data)
+
+                elif event_type == "COMPLETE":
+                    print(f"✅ COMPLETE event received for key {routing_key}. Training model…")
+                    records = self.batch_storage.pop(routing_key, [])
+                    if not records:
+                        print("⚠️ No data was collected for this key.")
+                        return
+
+                    try:
+                        df = pd.DataFrame(records)
+                        self._start_training_in_background(df)
+                    except Exception as e:
+                        print("❌ Failed to train or save model:", e)
+
+                else:
+                    print(f"ℹ️ Unknown eventType: {event_type}")
 
             channel.basic_consume(
                 queue=queue_name,
@@ -106,3 +121,59 @@ class MessagingConfig(AppConfig):
 
         except Exception as e:
             print(f"❌ Failed to start consuming from {queue_name}:", e)
+
+    def _train_model_with_logging(self, data_frame):
+        try:
+            from model.pipelines.clean import cleaning_pipeline
+            from model.pipelines.predict import xgb_pipeline
+            from model.pipelines.preprocess import processor_pipeline
+            from model.utils import save_xgb_regressor_model
+
+            print("🔧 Cleaning...")
+            df_cleaned = cleaning_pipeline.fit_transform(data_frame)
+            y = df_cleaned.pop('arrival_delay')
+            X = df_cleaned
+
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+            print("🔄 Preprocessing...")
+            X_train_proc = processor_pipeline.fit_transform(X_train)
+            X_test_proc = processor_pipeline.transform(X_test)
+
+            print("🚀 Training...")
+            xgb_pipeline.fit(X_train_proc, y_train, verbose=True)
+            save_xgb_regressor_model(xgb_pipeline.named_steps['xgb'])
+
+            y_pred = xgb_pipeline.predict(X_test_proc)
+
+            from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+            import numpy as np
+            import pandas as pd
+
+            mae = mean_absolute_error(y_test, y_pred)
+            mse = mean_squared_error(y_test, y_pred)
+            rmse = np.sqrt(mse)
+            r2 = r2_score(y_test, y_pred)
+
+            metrics_df = pd.DataFrame({
+                'MAE': [mae],
+                'MSE': [mse],
+                'RMSE': [rmse],
+                'R²': [r2],
+            })
+            print("✅ Model training complete.")
+            print(metrics_df)
+
+        except Exception as e:
+            import traceback
+            print("❌ Training failed:", str(e))
+            print(traceback.format_exc())
+
+
+    def _start_training_in_background(self, df):
+        threading.Thread(
+            target=self._train_model_with_logging,
+            args=(df,),
+            daemon=True
+        ).start()
+

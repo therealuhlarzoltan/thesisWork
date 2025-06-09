@@ -50,8 +50,10 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
                     return;
                 }
                 var result = messageSink.getDelaySink().tryEmitNext(response);
-                LOG.info("Added delay info {}, to message sink for train {} and station {}", response, response.getTrainNumber(), response.getStationCode());
-                LOG.info("Operation succeeded: {}", result.isSuccess());
+                if (result.isSuccess())
+                    LOG.info("Added delay info {}, to message sink for train {} and station {}", response, response.getTrainNumber(), response.getStationCode());
+                else
+                    LOG.error("Could not add delay info {}, to message sink for train {}", response, response.getTrainNumber());
             }
             case ERROR -> {
                 LOG.error("Received an error response for id: {}", responseEvent.getKey());
@@ -84,8 +86,11 @@ public class DelayInfoProcessorImpl implements DelayInfoProcessor {
                     LOG.error("Could not retrieve delay info from event: {}", responseEvent);
                     return;
                 }
-                messageSink.getDelaySink().tryEmitNext(response);
-                LOG.info("Added delay info to message sink for train {} and station {}", response.getTrainNumber(), response.getStationCode());
+                var result = messageSink.getDelaySink().tryEmitNext(response);
+                if (result.isSuccess())
+                    LOG.info("Added delay info to message sink for train {} and station {}", response.getTrainNumber(), response.getStationCode());
+                else
+                    LOG.error("Could not add delay info to message sink for train {} and station {} with correlationId {}", response.getTrainNumber(), response.getStationCode(), correlationId);
             }
             case ERROR -> {
                 LOG.error("Received an error response for correlationId: {}", correlationId);
