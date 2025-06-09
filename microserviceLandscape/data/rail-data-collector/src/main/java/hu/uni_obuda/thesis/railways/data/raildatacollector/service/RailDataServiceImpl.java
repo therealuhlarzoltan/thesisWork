@@ -3,8 +3,11 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
+import hu.uni_obuda.thesis.railways.route.dto.RouteResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -74,6 +77,19 @@ public class RailDataServiceImpl implements RailDataService {
                 .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
                 .flatMap(shortTrainDetailsResponse ->  mapToDelayInfo(shortTrainDetailsResponse, trainNumber, date))
                 .flatMapMany(Flux::fromIterable);
+    }
+
+    @Override
+    public Flux<RouteResponse> planRoute(String from, String to, LocalDate date) {
+        return gateway.getTimetable(from, to, date)
+                .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
+                .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
+                .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
+                .flatMap(timetableResponse ->  mapToRouteResponse(timetableResponse, date))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    private Mono<List<RouteResponse>> mapToRouteResponse(TimetableResponse timetableResponse, LocalDate date) {
     }
 
     private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber, LocalDate date) {
@@ -159,6 +175,38 @@ public class RailDataServiceImpl implements RailDataService {
     }
 
     private int findRolloverIndex(List<ShortTrainDetailsResponse.Station> stations, LocalTime startTime, Function<ShortTrainDetailsResponse.Station, String> propertyGetter) {
+        LocalTime previousTime = startTime;
+        for (int i = 0; i < stations.size(); i++) {
+            ShortTrainDetailsResponse.Station currentStation = stations.get(i);
+            String timeProperty = propertyGetter.apply(currentStation);
+            if (timeProperty != null && !timeProperty.isBlank()) {
+                LocalTime currentTime = parseTimeSafe(timeProperty);
+                if (currentTime.isBefore(previousTime)) {
+                    return i;
+                }
+                previousTime = parseTimeSafe(timeProperty);
+            }
+        }
+        return -1;
+    }
+
+    private int findScheduledRolloverIndex(List<ShortTrainDetailsResponse.Station> stations, LocalTime startTime, Function<ShortTrainDetailsResponse.Station, String> propertyGetter) {
+        LocalTime previousTime = startTime;
+        for (int i = 0; i < stations.size(); i++) {
+            ShortTrainDetailsResponse.Station currentStation = stations.get(i);
+            String timeProperty = propertyGetter.apply(currentStation);
+            if (timeProperty != null && !timeProperty.isBlank()) {
+                LocalTime currentTime = parseTimeSafe(timeProperty);
+                if (currentTime.isBefore(previousTime)) {
+                    return i;
+                }
+                previousTime = parseTimeSafe(timeProperty);
+            }
+        }
+        return -1;
+    }
+
+    private int findActualRolloverIndex(List<ShortTrainDetailsResponse.Station> stations, LocalTime startTime, Function<ShortTrainDetailsResponse.Station, String> propertyGetter) {
         LocalTime previousTime = startTime;
         for (int i = 0; i < stations.size(); i++) {
             ShortTrainDetailsResponse.Station currentStation = stations.get(i);
