@@ -12,8 +12,5 @@ import java.time.LocalDate;
 public interface RailDelayGateway {
     Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date);
     Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri);
-
-    @CircuitBreaker(name = "getFullTimetableApi", fallbackMethod = "handleTimetableFallback")
-    @Retry(name = "getFullTimetableApi")
     Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date);
 }

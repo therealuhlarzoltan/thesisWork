@@ -1,7 +1,10 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.serializer.TimetableResponseDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +20,7 @@ public class TimetableResponse {
     @JsonProperty("timetable")
     private List<TimetableEntry> timetable;
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
@@ -50,6 +54,7 @@ public class TimetableResponse {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
@@ -68,6 +73,7 @@ public class TimetableResponse {
         private TrainInfo trainInfo;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @NoArgsConstructor
     @AllArgsConstructor
     @Data

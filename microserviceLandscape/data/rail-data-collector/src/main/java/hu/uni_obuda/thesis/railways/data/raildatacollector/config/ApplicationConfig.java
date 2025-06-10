@@ -2,7 +2,10 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.serializer.TimetableResponseDeserializer;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -34,6 +37,15 @@ public class ApplicationConfig {
                 .defaultHeader("Content-Type", "application/json")
                 .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
                 .build();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule timetableModule = new SimpleModule();
+        timetableModule.addDeserializer(TimetableResponse.class, new TimetableResponseDeserializer());
+        mapper.registerModule(timetableModule);
+        return mapper;
     }
 
     private HttpClient createHttpClient(int connectionTimeoutInMs, int connectionReadTimeoutInMs, int connectionWriteTimeoutInMs) {

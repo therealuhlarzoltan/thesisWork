@@ -5,14 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-@Builder
 public class TrainRouteResponse {
-
+    /*
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
@@ -35,4 +29,5 @@ public class TrainRouteResponse {
         private LocalDateTime scheduledDepartureTime;
         private LocalDateTime actualDepartureTime;
     }
+    */
 }
