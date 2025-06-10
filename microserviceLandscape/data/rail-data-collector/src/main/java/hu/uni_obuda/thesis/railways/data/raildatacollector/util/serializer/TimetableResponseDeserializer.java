@@ -19,17 +19,30 @@ public class TimetableResponseDeserializer extends JsonDeserializer<TimetableRes
         JsonNode root = mapper.readTree(p);
 
         JsonNode timetableNode = root.get("timetable");
-        List<TimetableResponse.TimetableEntry> passengerEntries = new ArrayList<>();
+        List<TimetableResponse.TimetableEntry> filteredEntries = new ArrayList<>();
 
         if (timetableNode != null && timetableNode.isArray()) {
             for (JsonNode entryNode : timetableNode) {
-                String type = entryNode.path("type").asText();
-                if ("passenger".equals(type)) {
+                boolean hasLocalTransport = false;
+
+                JsonNode detailsNode = entryNode.get("details");
+                if (detailsNode != null && detailsNode.isArray()) {
+                    for (JsonNode detailNode : detailsNode) {
+                        boolean isLocal = detailNode.path("is_local_transport").asBoolean(false);
+                        if (isLocal) {
+                            hasLocalTransport = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasLocalTransport) {
                     TimetableResponse.TimetableEntry entry = mapper.treeToValue(entryNode, TimetableResponse.TimetableEntry.class);
-                    passengerEntries.add(entry);
+                    filteredEntries.add(entry);
                 }
             }
         }
-        return new TimetableResponse(passengerEntries);
+
+        return new TimetableResponse(filteredEntries);
     }
 }
