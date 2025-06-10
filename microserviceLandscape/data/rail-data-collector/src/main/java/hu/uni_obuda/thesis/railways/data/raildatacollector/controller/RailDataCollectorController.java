@@ -22,7 +22,7 @@ public class RailDataCollectorController implements RailDataCollector {
     }
 
     @Override
-    public Flux<RouteResponse> planRoute(String from, String to, LocalDate date) {
+    public Flux<TrainRouteResponse> planRoute(String from, String to, LocalDate date) {
         return service.planRoute(from, to, date);
     }
 }

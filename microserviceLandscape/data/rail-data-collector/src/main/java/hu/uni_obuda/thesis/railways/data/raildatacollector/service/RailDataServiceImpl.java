@@ -7,7 +7,6 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respons
 import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
-import hu.uni_obuda.thesis.railways.route.dto.RouteResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -81,7 +80,7 @@ public class RailDataServiceImpl implements RailDataService {
     }
 
     @Override
-    public Flux<RouteResponse> planRoute(String from, String to, LocalDate date) {
+    public Flux<TrainRouteResponse> planRoute(String from, String to, LocalDate date) {
         return gateway.getTimetable(from, to, date)
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
@@ -90,8 +89,8 @@ public class RailDataServiceImpl implements RailDataService {
                 .flatMapMany(Flux::fromIterable);
     }
 
-    private Mono<List<RouteResponse>> mapToRouteResponse(TimetableResponse timetableResponse, LocalDate date) {
-        List<RouteResponse> routes = new ArrayList<>();
+    private Mono<List<TrainRouteResponse>> mapToRouteResponse(TimetableResponse timetableResponse, LocalDate date) {
+        List<TrainRouteResponse> routes = new ArrayList<>();
         for (var entry : timetableResponse.getTimetable()) {
             if (entry.getTrainSegments().size() == 1) {
                 String scheduledDep = entry.getDetails().getFirst().getDep();
@@ -120,7 +119,7 @@ public class RailDataServiceImpl implements RailDataService {
                 if (scheduledArrivalTime.isBefore(scheduledDepartureTime)) {
                     scheduledArrivalTime = scheduledArrivalTime.plusDays(1);
                 }
-               var train = RouteResponse.Train.builder()
+               var train = TrainRouteResponse.Train.builder()
                     .trainNumber(entry.getTrainSegments().getFirst().getCode())
                     .lineNumber(entry.getTrainSegments().getFirst().getVszCode())
                     .fromStation(entry.getDetails().getFirst().getFrom())
@@ -130,10 +129,10 @@ public class RailDataServiceImpl implements RailDataService {
                     .toTimeScheduled(scheduledArrivalTime.toString())
                     .toTimeActual(Objects.toString(actualArrivalTime, ""))
                                 .build();
-                var route = new RouteResponse(List.of(train));
+                var route = new TrainRouteResponse(List.of(train));
                 routes.add(route);
             } else {
-                List<RouteResponse.Train> trains = new ArrayList<>();
+                List<TrainRouteResponse.Train> trains = new ArrayList<>();
                 int scheduledDepartureTimeRolloverIndex = findRolloverIndexForRoutes(entry.getDetails(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.JourneyElement::getDep);
                 int scheduledArrivalRolloverIndex = findRolloverIndexForRoutes(entry.getTransferStations(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.TransferStation::getScheduledArrival);
                 int actualDepartureTimeRolloverIndex = findRolloverIndexForRoutes(entry.getDetails(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.JourneyElement::getDep);
@@ -183,7 +182,7 @@ public class RailDataServiceImpl implements RailDataService {
                                 scheduledArrivalTime = scheduledArrivalTime.plusDays(1);
                             }
                         }
-                        var train = RouteResponse.Train.builder()
+                        var train = TrainRouteResponse.Train.builder()
                                 .trainNumber(entry.getTrainSegments().get(i).getCode())
                                 .lineNumber(entry.getTrainSegments().get(i).getVszCode())
                                 .fromStation(entry.getDetails().get(i * 2).getFrom())
@@ -199,7 +198,7 @@ public class RailDataServiceImpl implements RailDataService {
                     LOG.error("An error occurred while processing route", e);
                     continue;
                 }
-                routes.add(new RouteResponse(trains));
+                routes.add(new TrainRouteResponse(trains));
             }
         }
         return Mono.just(routes);

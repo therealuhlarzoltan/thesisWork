@@ -5,17 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
 public class TrainRouteResponse {
-    /*
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    @Builder
-    public static class Station {
-        private String stationName;
-        private LocalDateTime scheduledArrivalTime;
-        private LocalDateTime actualArrivalTime;
-    }
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -24,10 +20,14 @@ public class TrainRouteResponse {
     public static class Train {
         private String trainNumber;
         private String lineNumber;
-        private String from;
-        private String to;
-        private LocalDateTime scheduledDepartureTime;
-        private LocalDateTime actualDepartureTime;
+        private String fromStation;
+        private String toStation;
+        private String fromTimeScheduled;
+        private String toTimeScheduled;
+        private String  fromTimeActual;
+        private String toTimeActual;
     }
-    */
+
+    private List<Train> trains;
+
 }

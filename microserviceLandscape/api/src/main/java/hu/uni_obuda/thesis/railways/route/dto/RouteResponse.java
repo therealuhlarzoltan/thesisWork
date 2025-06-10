@@ -27,6 +27,8 @@ public class RouteResponse {
         private String toTimeScheduled;
         private String  fromTimeActual;
         private String toTimeActual;
+        private String fromTimePredicted;
+        private String toTimePredicted;
     }
 
     private List<Train> trains;

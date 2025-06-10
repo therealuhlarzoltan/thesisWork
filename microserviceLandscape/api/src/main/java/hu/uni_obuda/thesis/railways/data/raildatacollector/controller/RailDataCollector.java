@@ -13,5 +13,5 @@ public interface RailDataCollector {
     @GetMapping("/collect-delay")
     Flux<DelayInfo> getDelayInfo(@RequestParam String trainNumber, @RequestParam String from, @RequestParam String to, @RequestParam LocalDate date);
     @GetMapping("/plan-route")
-    Flux<RouteResponse> planRoute(@RequestParam String from, @RequestParam String to, @RequestParam LocalDate date);
+    Flux<TrainRouteResponse> planRoute(@RequestParam String from, @RequestParam String to, @RequestParam LocalDate date);
 }
