@@ -89,7 +89,7 @@ spring:
           contentType: application/json
         weatherInfoProcessor-in-0:
           destination:  weatherDataResponses
-          group: weatherDateResponsesGroup
+          group: weatherDataResponsesGroup
           contentType: application/json
         geocodingResponseProcessor-in-0:
           destination: geocodingDataResponses
@@ -154,13 +154,3 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: INFO
-    #org.springframework.integration: DEBUG
-    #org.springframework.messaging.converter: DEBUG
-    #org.springframework.cloud.stream:       DEBUG
-    #org.springframework.amqp:               DEBUG
-    #hu.uni_obuda.thesis.railways.data.delaydatacollector: TRACE
-    #io.netty: TRACE
-    #io.r2dbc.postgresql.message: TRACE
-    #reactor.core: TRACE
-    #org.springframework.cloud.stream.binding.BindingService: DEBUG
-    #org.springframework.cloud.stream.binder: DEBUG

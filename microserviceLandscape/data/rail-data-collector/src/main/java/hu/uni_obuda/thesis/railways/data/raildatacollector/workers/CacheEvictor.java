@@ -15,10 +15,10 @@ public class CacheEvictor {
 
     private final TimetableCache timetableCache;
 
-    // Runs every day at 2 AM server time
-    @Scheduled(cron = "0 0 2 * * *")
+    // Runs every day at 3 AM server time
+    @Scheduled(cron = "0 0 3 * * *")
     public void evictCacheAt2AM() {
-        LOG.info("Evicting timetable cache at 2 AM...");
+        LOG.info("Evicting timetable cache at 3 AM...");
         timetableCache.evictAll()
                 .doOnSuccess(_ -> LOG.info("Timetable cache eviction completed."))
                 .doOnError(e -> LOG.error("Failed to evict timetable cache", e))

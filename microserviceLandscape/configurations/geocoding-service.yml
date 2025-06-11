@@ -74,10 +74,10 @@ spring:
         geocodingDataResponses-out-0:
           destination: geocodingDataResponses
           producer:
-            required-groups: auditGroup, delayDataCollectorsGroup
+            required-groups: auditGroup
         messageProcessor-in-0:
           destination: geocodingDataRequests
-          group: geocodingServicesGroup
+          group: geocodingDataRequestsGroup
           contentType: application/json
 
 spring.cloud.stream.bindings.messageProcessor-in-0.consumer:

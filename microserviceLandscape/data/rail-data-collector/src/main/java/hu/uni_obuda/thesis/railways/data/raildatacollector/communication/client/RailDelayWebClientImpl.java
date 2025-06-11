@@ -87,6 +87,31 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
         });
     }
 
+    @Override
+    public Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date) {
+        URI timetableUri = UriComponentsBuilder.fromPath(timetableGetterUri)
+                .queryParam("from", from)
+                .queryParam("to", to)
+                .queryParam("date", date.toString().replace("-", "."))
+                .build().toUri();
+        return webClient.get().uri(timetableUri.toString())
+                .exchangeToMono(apiResponse -> {
+                    if (apiResponse.statusCode().is2xxSuccessful()) {
+                        return Mono.from(apiResponse.bodyToMono(String.class))
+                                .flatMap(response -> {
+                                    try {
+                                        TimetableResponse parsedResponse = objectMapper.readValue(response, TimetableResponse.class);
+                                        return Mono.just(parsedResponse);
+                                    } catch (IOException ioException) {
+                                        return Mono.error(mapMappingExceptionToException(ioException, timetableUri.toString()));
+                                    }
+                                });
+                    } else {
+                        return Mono.error(mapApiResponseToException(apiResponse));
+                    }
+                });
+    }
+
     private RuntimeException mapApiResponseToException(ClientResponse clientResponse) {
         return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(clientResponse.request().getURI().toString()));
     }

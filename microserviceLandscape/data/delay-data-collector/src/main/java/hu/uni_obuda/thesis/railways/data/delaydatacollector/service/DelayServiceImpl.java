@@ -2,20 +2,21 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.DelayInfoCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.DelayRecord;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.DelayEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainStationEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayMapper;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayRecordMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.DelayRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.util.StringUtils;
+import hu.uni_obuda.thesis.railways.data.event.DataTransferEvent;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,6 +24,10 @@ import reactor.core.scheduler.Scheduler;
 import reactor.util.function.Tuples;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 
 @Service
 public class DelayServiceImpl implements DelayService {
@@ -35,31 +40,34 @@ public class DelayServiceImpl implements DelayService {
     private final DelayInfoCache delayInfoCache;
     private final TrainStatusCache trainStatusCache;
     private final GeocodingService geocodingService;
-    private final DelayMapper mapper;
+    private final DelayMapper delayMapper;
+    private final DelayRecordMapper recordMapper;
     private final Scheduler scheduler;
 
     @Autowired
     public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
-                            DelayMapper delayMapper, TrainStatusCache trainStatusCache, GeocodingService geocodingService,
-                            @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
+                            DelayMapper delayMapper, DelayRecordMapper recordMapper, TrainStatusCache trainStatusCache, GeocodingService geocodingService,
+                           @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
         this.delayRepository = delayRepository;
         this.stationRepository = stationRepository;
         this.weatherService = weatherService;
         this.delayInfoCache = delayInfoCache;
         this.trainStatusCache = trainStatusCache;
         this.geocodingService = geocodingService;
-        this.mapper = delayMapper;
+        this.delayMapper = delayMapper;
+        this.recordMapper = recordMapper;
         this.scheduler = scheduler;
     }
 
     @Override
     public Flux<DelayInfo> getTrainDelays() {
-        return delayRepository.findAll().map(mapper::entityToApi);
+        return delayRepository.findAll().map(delayMapper::entityToApi);
     }
 
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos
             .flatMap(delayInfo -> {
+                LOG.info("Processing delay info {}", delayInfo);
                 if (StringUtils.isText(delayInfo.getStationCode()) && !stationRepository.existsById(delayInfo.getStationCode()).block()) {
                     stationRepository.insertStation(delayInfo.getStationCode()).block();
                     LOG.info("Inserted station: {}", delayInfo.getStationCode());
@@ -104,14 +112,14 @@ public class DelayServiceImpl implements DelayService {
                 LOG.info("Getting weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
                 return weatherService.getWeatherInfo(delayInfo.getStationCode(), geocodingResponse.getLatitude(), geocodingResponse.getLongitude(), getTimeForWeatherForecast(delayInfo))
                         .flatMap(weatherInfo -> Mono.fromCallable(() -> {
-                            DelayEntity delayEntity = mapper.apiToEntity(delayInfo);
-                            delayEntity = mapper.addWeatherData(delayEntity, weatherInfo);
+                            DelayEntity delayEntity = delayMapper.apiToEntity(delayInfo);
+                            delayEntity = delayMapper.addWeatherData(delayEntity, weatherInfo);
                             LOG.info("Received weather info for train {} at station {}", delayInfo.getTrainNumber(), delayInfo.getStationCode());
                             return delayEntity;
                         }))
                         .onErrorResume(throwable -> {
                             LOG.warn("Could not get weather info for {}, proceeding without it", delayInfo.getStationCode(), throwable);
-                            return Mono.just(mapper.apiToEntity(delayInfo));
+                            return Mono.just(delayMapper.apiToEntity(delayInfo));
                         });
             })
             .flatMap(delayRepository::save)
@@ -119,15 +127,57 @@ public class DelayServiceImpl implements DelayService {
             .subscribe();
     }
 
+
+    @Override
+    public Flux<DataTransferEvent<List<DelayRecord>>> getBatches(int batchSize, String routingKey) {
+        Mono<TreeMap<String, TrainStationEntity>> stationMapMono = retrieveStationMapMono();
+
+        Flux<DelayEntity> delayFlux = delayRepository.findAll()
+                .subscribeOn(scheduler);
+
+        return stationMapMono.flatMapMany(stationMap ->
+                delayFlux
+                        .map(delayEntity -> {
+                            TrainStationEntity stationEntity = stationMap.get(delayEntity.getStationCode());
+                            return recordMapper.entitiesToApi(delayEntity, stationEntity);
+                        })
+                        .buffer(batchSize)
+                        .map(recordList -> new DataTransferEvent<>(
+                                DataTransferEvent.Type.DATA_TRANSFER,
+                                routingKey,
+                                recordList))
+                        .concatWith(Mono.just(constructTerminationEvent(routingKey)))
+        );
+    }
+
     private LocalDateTime getTimeForWeatherForecast(DelayInfo delayInfo) {
-        if (delayInfo.getActualArrival() != null && delayInfo.getActualArrival().contains(":")) {
-            String[] split = delayInfo.getActualArrival().split(":");
-            return delayInfo.getDate().atTime(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
-        } else if (delayInfo.getActualDeparture() != null && delayInfo.getActualDeparture().contains(":")) {
-            String[] split = delayInfo.getActualDeparture().split(":");
-            return delayInfo.getDate().atTime(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        if (delayInfo.getActualArrival() != null && !delayInfo.getActualArrival().isBlank()) {
+            return LocalDateTime.parse(delayInfo.getActualArrival(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } else if (delayInfo.getActualDeparture() != null && !delayInfo.getActualDeparture().isBlank()) {
+           return LocalDateTime.parse(delayInfo.getActualDeparture(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } else {
             throw new RuntimeException("Could not retrieve time from delay info for weather forecast");
         }
+    }
+
+    private Mono<TreeMap<String, TrainStationEntity>> retrieveStationMapMono() {
+        return stationRepository.findAll()
+                .collectList()
+                .publishOn(scheduler)
+                .map(listOfStations -> {
+                    TreeMap<String, TrainStationEntity> map = new TreeMap<>();
+                    for (TrainStationEntity entity : listOfStations) {
+                        map.put(entity.getStationCode(), entity);
+                    }
+                    return map;
+                });
+    }
+
+    private DataTransferEvent<List<DelayRecord>> constructTerminationEvent(String key) {
+        return new DataTransferEvent<>(
+                DataTransferEvent.Type.COMPLETE,
+                key,
+                new ArrayList<>()
+        );
     }
 }
