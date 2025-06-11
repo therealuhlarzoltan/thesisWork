@@ -28,8 +28,8 @@ public class TimetableResponseDeserializer extends JsonDeserializer<TimetableRes
                 JsonNode detailsNode = entryNode.get("details");
                 if (detailsNode != null && detailsNode.isArray()) {
                     for (JsonNode detailNode : detailsNode) {
-                        boolean isLocal = detailNode.path("is_local_transport").asBoolean(false);
-                        if (isLocal) {
+                        JsonNode trainInfoNode = detailNode.get("train_info");
+                        if (trainInfoNode != null && trainInfoNode.path("is_local_transport").asBoolean(false)) {
                             hasLocalTransport = true;
                             break;
                         }
@@ -37,7 +37,8 @@ public class TimetableResponseDeserializer extends JsonDeserializer<TimetableRes
                 }
 
                 if (!hasLocalTransport) {
-                    TimetableResponse.TimetableEntry entry = mapper.treeToValue(entryNode, TimetableResponse.TimetableEntry.class);
+                    TimetableResponse.TimetableEntry entry =
+                            mapper.treeToValue(entryNode, TimetableResponse.TimetableEntry.class);
                     filteredEntries.add(entry);
                 }
             }

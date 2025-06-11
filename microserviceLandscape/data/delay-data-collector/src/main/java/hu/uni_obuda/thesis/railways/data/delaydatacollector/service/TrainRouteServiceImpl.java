@@ -15,32 +15,36 @@ import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
 @Service
-public class TrainRoutServiceImpl implements TrainRouteService {
+public class TrainRouteServiceImpl implements TrainRouteService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TrainRoutServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TrainRouteServiceImpl.class);
 
     private final TrainRouteMapper mapper;
     private final TrainRouteRepository repository;
 
     @Override
     public Mono<TrainRouteResponse> getTrainRoute(String trainNumber) {
+        LOG.info("Getting train route for train number {}", trainNumber);
         return repository.findById(trainNumber)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException(trainNumber, TrainRouteEntity.class))).map(mapper::entityToApi);
     }
 
     @Override
     public Flux<TrainRouteResponse> getAllTrainRoutes() {
+        LOG.info("Getting all train routes");
         return repository.findAll().map(mapper::entityToApi);
     }
 
     @Override
     public Mono<TrainRouteResponse> createTrainRoute(TrainRouteRequest trainRouteRequest) {
+        LOG.info("Creating train route {}", trainRouteRequest);
         var entity = mapper.apiToEntity(trainRouteRequest);
         return repository.insertTrain(entity.getTrainNumber(), entity.getLineNumber(), entity.getFrom(), entity.getTo()).map(mapper::entityToApi);
     }
 
     @Override
     public Mono<TrainRouteResponse> updateTrainRoute(TrainRouteRequest trainRouteRequest) {
+        LOG.info("Updating train route {}", trainRouteRequest);
         TrainRouteEntity existing = repository.findById(trainRouteRequest.getTrainNumber()).block();
         if (existing == null) {
             return Mono.error(new EntityNotFoundException(trainRouteRequest.getTrainNumber(), TrainRouteEntity.class));
@@ -51,6 +55,7 @@ public class TrainRoutServiceImpl implements TrainRouteService {
 
     @Override
     public Mono<Void> deleteTrainRoute(String trainNumber) {
+        LOG.info("Deleting train route {}", trainNumber);
         if (!repository.existsById(trainNumber).block().booleanValue()) {
             return Mono.error(new EntityNotFoundException(trainNumber, TrainRouteEntity.class));
         }

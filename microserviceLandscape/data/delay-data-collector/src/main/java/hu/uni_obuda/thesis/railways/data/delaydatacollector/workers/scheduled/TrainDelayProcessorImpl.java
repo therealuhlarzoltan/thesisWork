@@ -25,7 +25,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     private  final Scheduler scheduler;
     private final TrainRouteRepository trainRouteRepository;
     private final DelayFetcherService delayFetcherService;
-    private final TrainStatusCache trainStatusCache;;
+    private final TrainStatusCache trainStatusCache;
 
     @Autowired
     public TrainDelayProcessorImpl(@Qualifier("trainDelayProcessorScheduler") Scheduler scheduler, TrainRouteRepository trainRouteRepository,
@@ -39,6 +39,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     @Scheduled(fixedDelay = PROCESSING_INTERVAL_IN_MILLIS)
     @Override
     public void processTrainRoutes() {
+        /*
         LOG.info("Data fetch started...");
         LocalDateTime now = LocalDateTime.now();
 
@@ -46,6 +47,8 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
                 .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, resolveOperationalDate(now)))
                 .subscribeOn(scheduler)
                 .subscribe();
+
+         */
     }
 
     @Override

@@ -2,10 +2,13 @@ package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
+import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
 import hu.uni_obuda.thesis.railways.route.dto.RouteResponse;
-import hu.uni_obuda.thesis.railways.route.routeplannerservice.mapper.RouteResponseMapper;
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.helper.TimetableProcessingHelper;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -13,8 +16,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Primary
@@ -30,55 +33,146 @@ public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
     private final StationService stationService;
     private final WeatherService weatherService;
     private final PredictionService predictionService;
-    private final RouteResponseMapper mapper;
+    private final TimetableProcessingHelper helper;
+
+    public ReactiveHttpRoutePlannerService(@Qualifier("reactiveHttpTimetableService") TimetableService timetableService,
+                                           @Qualifier("reactiveHttpStationService") StationService stationService,
+                                           @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
+                                           @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
+                                           TimetableProcessingHelper helper) {
+        this.timetableService = timetableService;
+        this.stationService = stationService;
+        this.weatherService = weatherService;
+        this.predictionService = predictionService;
+        this.helper = helper;
+    }
 
     @Override
-    public Flux<RouteResponse> planRoute(@NonNull String from, @NonNull String to, @NonNull LocalDateTime dateTime) {
-       if (from.isBlank()) {
-           return Flux.error(new InvalidInputDataException("from.empty"));
-       }
-       if (to.isBlank()) {
-           return Flux.error(new InvalidInputDataException("to.empty"));
-       }
-       if (dateTime.isBefore(LocalDateTime.now())) {
-           return Flux.error(new InvalidInputDataException("date.before.now"));
-       }
+    public Flux<RouteResponse> planRoute(@NonNull String from, @NonNull String to, LocalDateTime departureTime, LocalDateTime arrivalTime, Integer maxChanges) {
+        if (from.isBlank()) {
+            log.error("From station is blank");
+            return Flux.error(new InvalidInputDataException("from.empty"));
+        }
+        if (to.isBlank()) {
+            log.error("To station is blank");
+            return Flux.error(new InvalidInputDataException("to.empty"));
+        }
+        if (departureTime == null && arrivalTime == null) {
+            log.error("Nor arrival or departure time provided");
+            return Flux.error(new InvalidInputDataException("date.missing"));
+        }
+        if (arrivalTime != null && arrivalTime.isBefore(LocalDateTime.now())) {
+            log.error("Arrival date was before now()");
+            return Flux.error(new InvalidInputDataException("arrival.date.before.now"));
+        }
+        if (arrivalTime != null && departureTime != null && arrivalTime.isBefore(departureTime)) {
+            log.error("Arrival date was before departure date");
+            return Flux.error(new InvalidInputDataException("arrival.date.before.departure"));
+        }
+        if (maxChanges != null && maxChanges < 0) {
+            log.error("Max changes were negative");
+            return Flux.error(new InvalidInputDataException("changes.negative"));
+        }
 
         String adjustedFrom = adjustStationCodeFormat(from);
         String adjustedTo = adjustStationCodeFormat(to);
+        log.debug("Adjusted from station to {}", adjustedFrom);
+        log.debug("Adjusted to station to {}", adjustedTo);
 
-        Mono<TrainStationResponse> fromMono = stationService.getStation(adjustedFrom);
-        Mono<TrainStationResponse> toMono = stationService.getStation(adjustedTo);
+        log.info("Getting possible routes from {} to {} with departure time {} and arrival time {} and max changes {}", from, to, departureTime, arrivalTime, maxChanges);
+        return timetableService.getTimetable(adjustedFrom, adjustedTo, departureTime != null ? departureTime.toLocalDate() : arrivalTime.toLocalDate())
+                .transform(flux -> {
+                    if (departureTime != null)
+                        return helper.filterByDeparture(departureTime, flux);
+                    return flux;
+                })
+                .transform(flux -> {
+                    if (arrivalTime != null)
+                        return helper.filterByArrival(arrivalTime, flux);
+                    return flux;
+                })
+                .transform(flux -> {
+                    if (maxChanges != null)
+                        return helper.filterByChanges(maxChanges, flux);
+                    return flux;
+                })
+                .flatMap(route -> Flux.fromIterable(route.getTrains())
+                    .flatMap(train -> {
+                        boolean hasActuals = train.getFromTimeActual() != null && !train.getFromTimeActual().isBlank() && train.getToTimeActual() != null && !train.getToTimeActual().isBlank();
+                        if (hasActuals) {
+                            log.info("Train {} is already en route, not attempting to make predictions", train.getTrainNumber());
+                            return Mono.just(RouteResponse.Train.builder()
+                                    .trainNumber(train.getTrainNumber())
+                                    .lineNumber(train.getLineNumber())
+                                    .fromStation(train.getFromStation())
+                                    .toStation(train.getToStation())
+                                    .fromTimeScheduled(train.getFromTimeScheduled())
+                                    .toTimeScheduled(train.getToTimeScheduled())
+                                    .fromTimeActual(train.getFromTimeActual())
+                                    .toTimeActual(train.getToTimeActual())
+                                    .build());
+                        }
+                        return stationService.getRoute(train.getTrainNumber())
+                                .filter(Objects::nonNull)
+                                .flatMapMany(routeInfo -> Flux.zip(
+                                        stationService.getStation(routeInfo.getStartStation()),
+                                        stationService.getStation(routeInfo.getEndStation())
+                                ))
+                                .filter(tuple -> tuple.getT1() != null && tuple.getT2() != null &&
+                                        tuple.getT1().getLatitude() != null && tuple.getT2().getLatitude() != null)
+                                .flatMap(tuple -> {
+                                    TrainStationResponse fromStation = tuple.getT1();
+                                    TrainStationResponse toStation = tuple.getT2();
+                                    log.info("Retrieved coordinates for station {}: ({}, {})", fromStation.getStationCode(), fromStation.getLatitude(), fromStation.getLongitude());
+                                    log.info("Retrieved coordinates for station {}: ({}, {})", toStation.getStationCode(), toStation.getLatitude(), toStation.getLongitude());
 
-        return Mono.zip(fromMono, toMono)
-                .flatMapMany(tuple -> {
-                    TrainStationResponse fromStation = tuple.getT1();
-                    TrainStationResponse toStation = tuple.getT2();
+                                    log.info("Attempting to get weatherInfos for stations {} and {}", fromStation.getStationCode(), toStation.getStationCode());
+                                    Mono<WeatherInfo> fromWeather = weatherService.getWeather(fromStation.getStationCode(), fromStation.getLatitude(), fromStation.getLongitude(), parseTime(train.getFromTimeScheduled()));
+                                    Mono<WeatherInfo> toWeather = weatherService.getWeather(toStation.getStationCode(), toStation.getLatitude(), toStation.getLongitude(), parseTime(train.getToTimeScheduled()));
+                                    log.info("Got weatherInfos for stations {} and {}", fromStation.getStationCode(), toStation.getStationCode());
 
-                    return timetableService.(fromStation, toStation, dateTime)
-                            .flatMap(train -> {
-                                // Fetch weather forecasts at from/to locations
-                                Mono<WeatherInfo> departureWeather = weatherService.getWeather(fromStation.getLatitude(), fromStation.getLongitude(), dateTime);
-                                Mono<WeatherInfo> arrivalWeather = weatherService.getWeather(toStation.getLatitude(), toStation.getLongitude(), dateTime.plusMinutes(train.getDurationMinutes()));
+                                    log.info("Attempting to make predictions...");
+                                    Mono<DelayPredictionResponse> fromDelay = fromWeather.flatMap(weather -> predictionService.predictDepartureDelay(
+                                            DelayPredictionRequest.builder()
+                                                    .stationCode(fromStation.getStationCode())
+                                                    .trainNumber(train.getTrainNumber())
+                                                    .stationLatitude(fromStation.getLatitude())
+                                                    .stationLongitude(fromStation.getLongitude())
+                                                    .scheduledDeparture(parseTime(train.getFromTimeScheduled()))
+                                                    .date(parseTime(train.getFromTimeScheduled()).toLocalDate())
+                                                    .weather(weather)
+                                                    .build()
+                                    ));
 
-                                // Use weather to predict delays
-                                return Mono.zip(departureWeather, arrivalWeather)
-                                        .flatMap(weatherTuple -> {
-                                            Mono<Prediction> departurePrediction = predictionService.predictDelay(train, weatherTuple.getT1(), true);
-                                            Mono<Prediction> arrivalPrediction = predictionService.predictDelay(train, weatherTuple.getT2(), false);
+                                    Mono<DelayPredictionResponse> toDelay = toWeather.flatMap(weather -> predictionService.predictArrivalDelay(
+                                            DelayPredictionRequest.builder()
+                                                    .stationCode(toStation.getStationCode())
+                                                    .trainNumber(train.getTrainNumber())
+                                                    .stationLatitude(toStation.getLatitude())
+                                                    .stationLongitude(toStation.getLongitude())
+                                                    .scheduledArrival(parseTime(train.getToTimeScheduled()))
+                                                    .date(parseTime(train.getToTimeScheduled()).toLocalDate())
+                                                    .weather(weather)
+                                                    .build()
+                                    ));
 
-                                            return Mono.zip(departurePrediction, arrivalPrediction)
-                                                    .map(delayTuple -> mapper.mapToResponse(
-                                                            train,
-                                                            fromStation,
-                                                            toStation,
-                                                            delayTuple.getT1(), // departure delay
-                                                            delayTuple.getT2()  // arrival delay
-                                                    ));
-                                        });
-                            });
-                });
+                                    return Mono.zip(fromDelay, toDelay).map(delays -> RouteResponse.Train.builder()
+                                            .trainNumber(train.getTrainNumber())
+                                            .lineNumber(train.getLineNumber())
+                                            .fromStation(train.getFromStation())
+                                            .toStation(train.getToStation())
+                                            .fromTimeScheduled(train.getFromTimeScheduled())
+                                            .toTimeScheduled(train.getToTimeScheduled())
+                                            .fromTimePredicted(addDelay(train.getFromTimeScheduled(), delays.getT1().getPredictedDelay()))
+                                            .toTimePredicted(addDelay(train.getToTimeScheduled(), delays.getT2().getPredictedDelay()))
+                                            .build());
+                                });
+                    })
+                    .collectList()
+                    .map(trains -> RouteResponse.builder().trains(trains).build())
+                );
     }
+
 
     private String adjustStationCodeFormat(@NonNull String stationCode) {
         for (int i = 0; i < stationCode.length(); i++) {
@@ -87,5 +181,13 @@ public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
             }
         }
         return stationCode;
+    }
+
+    private LocalDateTime parseTime(String timeStr) {
+        return LocalDateTime.parse(timeStr); // assuming ISO format, adjust if needed
+    }
+
+    private String addDelay(String timeStr, Double delayMinutes) {
+        return parseTime(timeStr).plusMinutes(delayMinutes.longValue()).toString();
     }
 }
