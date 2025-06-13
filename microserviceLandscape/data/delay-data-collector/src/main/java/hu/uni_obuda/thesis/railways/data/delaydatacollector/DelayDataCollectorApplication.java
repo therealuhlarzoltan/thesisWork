@@ -6,7 +6,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 
 @EnableDiscoveryClient
-@SpringBootApplication(scanBasePackages = {"hu.uni_obuda.thesis.railways"})
+@SpringBootApplication(scanBasePackages = {"hu.uni_obuda.thesis.railways.util", "hu.uni_obuda.thesis.railways.data.delaydatacollector"})
 public class DelayDataCollectorApplication {
 
     public static void main(String[] args) {

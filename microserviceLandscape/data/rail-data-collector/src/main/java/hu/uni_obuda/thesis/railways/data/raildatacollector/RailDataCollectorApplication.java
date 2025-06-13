@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @EnableDiscoveryClient
-@SpringBootApplication(scanBasePackages = {"hu.uni_obuda.thesis.railways"})
+@SpringBootApplication(scanBasePackages = {"hu.uni_obuda.thesis.railways.util", "hu.uni_obuda.thesis.railways.data.raildatacollector"})
 public class RailDataCollectorApplication {
 
     public static void main(String[] args) {

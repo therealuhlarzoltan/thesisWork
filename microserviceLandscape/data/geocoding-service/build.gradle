@@ -43,7 +43,7 @@ dependencies {
     implementation "io.github.resilience4j:resilience4j-spring-boot3"
     implementation "io.github.resilience4j:resilience4j-reactor:1.7.0"
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-stream'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
