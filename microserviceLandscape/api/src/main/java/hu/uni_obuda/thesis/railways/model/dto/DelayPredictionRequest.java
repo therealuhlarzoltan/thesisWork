@@ -18,8 +18,6 @@ import java.time.LocalDateTime;
 @Builder
 public class DelayPredictionRequest {
     private String stationCode;
-    private String thirdPartyStationUrl;
-    private String officialStationUrl;
     private String trainNumber;
     private LocalDateTime scheduledDeparture;
     private LocalDateTime scheduledArrival;
