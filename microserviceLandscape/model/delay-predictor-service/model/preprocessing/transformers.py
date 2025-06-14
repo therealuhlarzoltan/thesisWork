@@ -20,7 +20,13 @@ categorical_features = [
     'is_origin','is_terminus','is_weekend','is_holiday'
 ]
 
-preprocessor = ColumnTransformer([
+arrival_preprocessor = ColumnTransformer([
+    ('num', StandardScaler(), numeric_features),
+    ('cat', OneHotEncoder(handle_unknown='ignore'),
+           categorical_features),
+])
+
+departure_preprocessor = ColumnTransformer([
     ('num', StandardScaler(), numeric_features),
     ('cat', OneHotEncoder(handle_unknown='ignore'),
            categorical_features),
