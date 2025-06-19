@@ -18,8 +18,6 @@ def drop_null_coordinates_func(df):
 def fill_delay_nans_func(df):
     return df.fillna({'arrival_delay': 0, 'departure_delay': 0})
 
-def drop_null_actual_func(df):
-    return df[df[['actual_departure', 'actual_arrival']].notna().all(axis=1)].reset_index(drop=True)
 
 def rename_weather_cols_func(df):
     return df.rename(columns=camel_to_snake)
@@ -44,13 +42,6 @@ def fix_scheduled(df):
     df2.loc[mask_t, 'scheduled_departure'] = df2.loc[mask_t, 'scheduled_arrival']
     return df2
 
-def fix_actual(df):
-    df2 = df.copy()
-    mask_o = df2['is_origin']
-    mask_t = df2['is_terminus']
-    df2.loc[mask_o, 'actual_arrival'] = df2.loc[mask_o, 'actual_departure']
-    df2.loc[mask_t, 'actual_departure'] = df2.loc[mask_t, 'actual_arrival']
-    return df2
 
 def add_date_features(df):
     df2 = df.copy()

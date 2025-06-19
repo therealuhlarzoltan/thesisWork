@@ -9,7 +9,6 @@ from .functions import (
     drop_null_weather_func,
     drop_null_coordinates_func,
     fill_delay_nans_func,
-    drop_null_actual_func,
     rename_weather_cols_func,
     drop_actuals_arrival_func,
     drop_actuals_departure_func,
@@ -29,11 +28,8 @@ make_flags = FunctionTransformer(create_flags, validate=False)
 
 fix_sched = FunctionTransformer(fix_scheduled, validate=False)
 
-fix_act = FunctionTransformer(fix_actual, validate=False)
-
 fill_delay_nans = FunctionTransformer(fill_delay_nans_func, validate=False)
 
-drop_null_actual = FunctionTransformer(drop_null_actual_func, validate=False)
 
 add_date_feats = FunctionTransformer(add_date_features, validate=False)
 

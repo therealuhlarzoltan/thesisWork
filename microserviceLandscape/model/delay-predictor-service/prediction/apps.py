@@ -14,6 +14,10 @@ class PredictionConfig(AppConfig):
     name = 'prediction'
 
     def ready(self):
+        if os.environ.get('RUN_MAIN') != 'true':
+            return
+
+
         hostname = socket.gethostname()
         ip = socket.gethostbyname(hostname)
 
@@ -39,3 +43,6 @@ class PredictionConfig(AppConfig):
         atexit.register(eureka_shutdown_handler)
         signal.signal(signal.SIGINT, eureka_shutdown_handler)
         signal.signal(signal.SIGTERM, eureka_shutdown_handler)
+
+        from prediction.tasks import reload_models
+        reload_models.delay()

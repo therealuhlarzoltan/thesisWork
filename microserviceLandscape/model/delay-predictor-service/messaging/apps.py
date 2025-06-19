@@ -20,19 +20,22 @@ class MessagingConfig(AppConfig):
     name = 'messaging'
 
     def ready(self):
+        return
         try:
-            if os.environ.get("RUN_MAIN") != "true":
-                return
+            print('MessagingConfig ready method called')
+            #if os.environ.get("RUN_MAIN") != "true":
+            #    return
 
             self.batch_storage = defaultdict(list)
 
+            print("Launching threads")
             t1 = threading.Thread(target=self._publish_initial_batch_request, daemon=True)
             t1.start()
 
             t2 = threading.Thread(target=self._consume_batch_responses, daemon=False)  # non-daemon!
             t2.start()
 
-            threading.Thread(target=lambda: threading.Event().wait(), daemon=True).start()
+            threading.Thread(target=lambda: threading.Event().wait(), daemon=False).start()
         except Exception as e:
             import traceback
             print("❌ Messaging app failed to start:", str(e))
@@ -62,12 +65,12 @@ class MessagingConfig(AppConfig):
             )
 
 
-            #channel.basic_publish(
-            #    exchange='dataRequests',
-            #    routing_key='',
-            #    body=json.dumps(body),
-            #    properties=props
-            #)
+            channel.basic_publish(
+                exchange='dataRequests',
+                routing_key='',
+                body=json.dumps(body),
+                properties=props
+            )
 
             print(f"▶️ Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
             connection.close()
@@ -186,7 +189,7 @@ class MessagingConfig(AppConfig):
         threading.Thread(
             target=self._train_arrival_model_with_logging,
             args=(df,),
-            daemon=True
+            daemon=False,
         ).start()
 
     def _train_departure_model_with_logging(self, data_frame):
@@ -239,7 +242,7 @@ class MessagingConfig(AppConfig):
         threading.Thread(
             target=self._train_departure_model_with_logging,
             args=(df,),
-            daemon=True
+            daemon=False
         ).start()
 
     def camel_to_snake(self, name):
