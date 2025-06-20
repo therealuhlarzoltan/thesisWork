@@ -162,11 +162,11 @@ server.port: 8080
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://postgresql:5432/${POSTGRES_DB_NAME}
+    url: r2dbc:postgresql://postgresql-1:5432/${POSTGRES_DB_NAME}
   flyway:
-    url: jdbc:postgresql://postgresql:5432/${POSTGRES_DB_NAME}
+    url: jdbc:postgresql://postgresql-1:5432/${POSTGRES_DB_NAME}
   data:
     redis:
-      host: redis
+      host: redis-1
       port: 6379
 

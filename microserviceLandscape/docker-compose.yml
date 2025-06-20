@@ -36,12 +36,30 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      postgresql:
+      postgresql-1:
         condition: service_healthy
 
-  postgresql:
+  delay-predictor-service:
+    build: model/delay-predictor-service
+    mem_limit: 4096m
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgresql-2:
+        condition: service_healthy
+      redis-3:
+        condition: service_healthy
+
+
+  route-planner-service:
+    build: route/route-planner-service
+    mem_limit: 3048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  postgresql-1:
     image: postgres:15.2
-    mem_limit: 2048m
+    mem_limit: 4096m
     ports:
       - "5432:5432"
     environment:
@@ -53,6 +71,54 @@ services:
       interval: 20s
       timeout: 3s
       retries: 10
+
+  postgresql-2:
+    image: postgres:latest
+    mem_limit: 2048m
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_DJANGO}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_DJANGO}
+      POSTGRES_DB: ${POSTGRES_DB_DJANGO}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER_DJANGO}" ]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+
+  redis-1:
+    image: redis:7.2-alpine
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-2:
+    image: redis:7.2-alpine
+    container_name: redis-2
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-3:
+    image: redis:7.2-alpine
+    container_name: redis-3
+    ports:
+      - "6381:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   eureka-server:
     build: spring-cloud/eureka-server
