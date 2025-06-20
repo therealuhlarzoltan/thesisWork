@@ -26,5 +26,4 @@ public class DelayRecord {
     private Integer departureDelay;
     private LocalDate date;
     private WeatherInfo weather;
-
 }

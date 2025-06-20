@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
@@ -24,5 +25,7 @@ public class DelayPredictionRequest {
     private LocalDate date;
     private Double stationLatitude;
     private Double stationLongitude;
-    private WeatherInfo weather;
+
+    @JsonProperty("weather")
+    private WeatherInfoSnakeCase weatherWrapper;
 }
