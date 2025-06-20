@@ -62,7 +62,7 @@ spring:
 
   cloud:
     function:
-      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor
+      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor;dataRequestProcessor
 
     stream:
       defaultBinder: rabbit
@@ -85,14 +85,24 @@ spring:
           content-type: application/json
         delayInfoProcessor-in-0:
           destination: railDataResponses
-          group: delayDataCollectorsGroup
+          group: railDataResponsesGroup
           contentType: application/json
         weatherInfoProcessor-in-0:
           destination:  weatherDataResponses
-          group: delayDataCollectorsGroup
+          group: weatherDataResponsesGroup
           contentType: application/json
         geocodingResponseProcessor-in-0:
           destination: geocodingDataResponses
+          group: geocodingDataResponsesGroup
+          contentType: application/json
+        dataRequestProcessor-in-0:
+          destination: dataRequests
+          group: dataRequestsGroup
+          contentType: application/json
+        dataRequestProcessor-out-0:
+          destination: dataResponses
+          producer:
+            required-groups: auditGroup
           contentType: application/json
 
 spring.cloud.stream.bindings.delayInfoProcessor-in-0.consumer:
@@ -123,6 +133,10 @@ spring.cloud.stream.bindings.geocodingResponseProcessor-in-0.consumer:
 
 spring.cloud.stream.rabbit.bindings.geocodingResponseProcessor-in-0.consumer:
   autoBindDlq: true
+  republishToDlq: true
+
+spring.cloud.stream.rabbit.bindings.dataRequestProcessor-in-0.consumer:
+  atoBindDlg: true
   republishToDlq: true
 
 springdoc:

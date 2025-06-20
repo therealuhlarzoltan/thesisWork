@@ -1,0 +1,248 @@
+server:
+  port: 8005
+  error.include-message: always
+  forward-headers-strategy: framework
+
+railway.api:
+  base-url: http://rail-data-collector
+  timetable-getter-uri: /route
+
+weather.api:
+  base-url: http://weather-data-collector
+  forecast-uri: /forecast
+
+station.api:
+  base-url: http://delay-data-collector
+  coordinates-uri: /station/coordinates
+
+tcp:
+  connection:
+    timeout-in-ms: 30000
+    read:
+      timeout-in-ms: 30000
+    write:
+      timeout-in-ms: 30000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      getTimetable:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+      getTrainRoute:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+      getTrainStation:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+      getWeatherInfo:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+      getArrivalDelay:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+      getDepartureDelay:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+  retry:
+    instances:
+      getTimetableApi:
+        maxAttempts: 3
+        waitDuration: 1000
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+      getTrainRoute:
+        maxAttempts: 3
+        waitDuration: 1000
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+        ignoreExceptions:
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+      getTrainStation:
+        maxAttempts: 3
+        waitDuration: 1000
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+        ignoreExceptions:
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+      getWeatherInfo:
+        maxAttempts: 3
+        waitDuration: 1000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+      getArrivalDelay:
+        maxAttempts: 3
+        waitDuration: 1000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+      getDepartureDelay:
+        maxAttempts: 3
+        waitDuration: 1000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+
+
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/api-docs
+  paths-to-match: /**
+  packages-to-scan:
+    - hu.uni_obuda.thesis.railways.route.routeplannerservice
+
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
+logging:
+  level:
+    root: INFO
+    reactor.netty: INFO
+    reactor.netty.resources: INFO
+    org.springframework.web.reactive.function.client.ExchangeFunctions: INFO
+    org.springframework.web.reactive.function.client.ExchangeFilterFunctions: DEBUG
+    org.springframework.web.reactive.function.client.WebClient: INFO

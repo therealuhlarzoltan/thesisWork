@@ -2,6 +2,9 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gatewa
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -9,4 +12,5 @@ import java.time.LocalDate;
 public interface RailDelayGateway {
     Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date);
     Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri);
+    Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date);
 }
