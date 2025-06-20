@@ -8,7 +8,10 @@ import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiExc
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
+import io.github.resilience4j.reactor.ratelimiter.operator.RateLimiterOperator;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -29,10 +32,12 @@ public class MapsGatewayImpl implements MapsGateway {
     private final MapsWebClient webClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
+    private final RateLimiterRegistry rateLimiterRegistry;
 
     @Override
     public Mono<CoordinatesResponse> getCoordinates(String address) {
         return webClient.getCoordinates(address)
+                .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("geocodingApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("geocodingApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("geocodingApi")))
                 .onErrorResume(this::handleFallback);
@@ -41,6 +46,8 @@ public class MapsGatewayImpl implements MapsGateway {
     private <T> Mono<T> handleFallback(Throwable throwable) {
         if (throwable instanceof CallNotPermittedException callNotPermittedException) {
             log.error("Circuit breaker is open", callNotPermittedException);
+        } else if (throwable instanceof RequestNotPermitted requestNotPermittedException) {
+            log.error("Rate limit is exceeded", requestNotPermittedException);
         }
         ApiException apiException;
         try {
