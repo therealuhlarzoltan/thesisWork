@@ -26,17 +26,9 @@ public class ApplicationConfig {
     @Value("${maps.api.base-url}")
     private String mapsApiUrl;
 
-    @Bean(name = "weatherWebClient")
-    public WebClient weatherWebClient(WebClient.Builder builder) {
+    @Bean
+    public WebClient webClient(WebClient.Builder builder) {
         return builder.baseUrl(weatherApiUrl)
-                .defaultHeader("Content-Type", "application/json")
-                .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
-                .build();
-    }
-
-    @Bean(name = "mapsWebClient")
-    public WebClient mapsWebClient(WebClient.Builder builder) {
-        return builder.baseUrl(mapsApiUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
                 .build();

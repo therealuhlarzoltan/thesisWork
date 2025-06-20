@@ -34,7 +34,8 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10000
         recordExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
           - org.springframework.web.reactive.function.client.WebClientRequestException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
@@ -47,13 +48,20 @@ resilience4j:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
-          - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+
+  ratelimiter:
+    instances:
+      geocodingApi:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 15s
 
 spring:
   rabbitmq:

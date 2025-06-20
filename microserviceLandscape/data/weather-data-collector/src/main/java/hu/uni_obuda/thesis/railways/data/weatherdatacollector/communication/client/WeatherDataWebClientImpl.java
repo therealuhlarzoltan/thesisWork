@@ -35,7 +35,7 @@ public class WeatherDataWebClientImpl implements WeatherDataWebClient {
     private String timeZone;
 
     @Autowired
-    public WeatherDataWebClientImpl(@Qualifier("weatherWebClient") WebClient webClient, ObjectMapper objectMapper) {
+    public WeatherDataWebClientImpl(WebClient webClient, ObjectMapper objectMapper) {
         this.webClient = webClient;
         this.objectMapper = objectMapper;
     }
