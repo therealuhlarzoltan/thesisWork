@@ -62,7 +62,7 @@ public class ReactiveStationWebClient implements StationWebClient {
                                         );
 
                                         if (parsedList.isEmpty()) {
-                                            return Mono.error(new EntityNotFoundException());
+                                            return Mono.error(new EntityNotFoundException(stationCode, TrainStationResponse.class));
                                         } else {
                                             return Mono.just(parsedList.getFirst());
                                         }
@@ -97,7 +97,7 @@ public class ReactiveStationWebClient implements StationWebClient {
                                         );
 
                                         if (parsedList.isEmpty()) {
-                                            return Mono.error(new EntityNotFoundException());
+                                            return Mono.error(new EntityNotFoundException(trainNumber, TrainRouteResponse.class));
                                         } else {
                                             return Mono.just(parsedList.getFirst());
                                         }
@@ -114,7 +114,7 @@ public class ReactiveStationWebClient implements StationWebClient {
 
     private RuntimeException mapApiResponseToException(ClientResponse clientResponse) {
         if (clientResponse.statusCode().equals(HttpStatusCode.valueOf(404))) {
-            return new EntityNotFoundException();
+            return new EntityNotFoundException("", Object.class);
         }
         return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(clientResponse.request().getURI().toString()));
     }

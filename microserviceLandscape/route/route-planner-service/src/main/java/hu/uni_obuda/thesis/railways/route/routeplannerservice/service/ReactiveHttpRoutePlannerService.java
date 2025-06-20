@@ -4,6 +4,7 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResp
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
+import hu.uni_obuda.thesis.railways.model.dto.WeatherInfoSnakeCase;
 import hu.uni_obuda.thesis.railways.route.dto.RouteResponse;
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.helper.TimetableProcessingHelper;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
@@ -140,7 +141,7 @@ public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
                                                     .stationLongitude(fromStation.getLongitude())
                                                     .scheduledDeparture(parseTime(train.getFromTimeScheduled()))
                                                     .date(parseTime(train.getFromTimeScheduled()).toLocalDate())
-                                                    .weather(weather)
+                                                    .weatherWrapper(new WeatherInfoSnakeCase(weather))
                                                     .build()
                                     ));
 
@@ -152,7 +153,7 @@ public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
                                                     .stationLongitude(toStation.getLongitude())
                                                     .scheduledArrival(parseTime(train.getToTimeScheduled()))
                                                     .date(parseTime(train.getToTimeScheduled()).toLocalDate())
-                                                    .weather(weather)
+                                                    .weatherWrapper(new WeatherInfoSnakeCase(weather))
                                                     .build()
                                     ));
 
@@ -166,7 +167,32 @@ public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
                                             .fromTimePredicted(addDelay(train.getFromTimeScheduled(), delays.getT1().getPredictedDelay()))
                                             .toTimePredicted(addDelay(train.getToTimeScheduled(), delays.getT2().getPredictedDelay()))
                                             .build());
-                                });
+                                })
+                                .switchIfEmpty(Mono.fromCallable(() -> {
+                                    if (hasActuals) {
+                                        log.warn("Train {} is already enroute, but not found in database, not attempting to make predictions", train.getTrainNumber());
+                                        return RouteResponse.Train.builder()
+                                                .trainNumber(train.getTrainNumber())
+                                                .lineNumber(train.getLineNumber())
+                                                .fromStation(train.getFromStation())
+                                                .toStation(train.getToStation())
+                                                .fromTimeScheduled(train.getFromTimeScheduled())
+                                                .toTimeScheduled(train.getToTimeScheduled())
+                                                .fromTimeActual(train.getFromTimeActual())
+                                                .toTimeActual(train.getToTimeActual())
+                                                .build();
+                                    } else {
+                                        log.warn("Train {} is not en route, but not found in database, not attempting to make predictions", train.getTrainNumber());
+                                        return RouteResponse.Train.builder()
+                                                .trainNumber(train.getTrainNumber())
+                                                .lineNumber(train.getLineNumber())
+                                                .fromStation(train.getFromStation())
+                                                .toStation(train.getToStation())
+                                                .fromTimeScheduled(train.getFromTimeScheduled())
+                                                .toTimeScheduled(train.getToTimeScheduled())
+                                                .build();
+                                    }
+                                }));
                     })
                     .collectList()
                     .map(trains -> RouteResponse.builder().trains(trains).build())

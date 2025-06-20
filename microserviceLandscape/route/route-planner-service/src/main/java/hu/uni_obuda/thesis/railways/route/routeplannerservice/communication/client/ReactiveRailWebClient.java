@@ -56,7 +56,7 @@ public class ReactiveRailWebClient implements RailWebClient {
 
     private RuntimeException mapApiResponseToException(ClientResponse clientResponse) {
         if (clientResponse.statusCode().equals(HttpStatusCode.valueOf(404))) {
-            return new EntityNotFoundException();
+            return new EntityNotFoundException("", Object.class);
         }
         return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(clientResponse.request().getURI().toString()));
     }
