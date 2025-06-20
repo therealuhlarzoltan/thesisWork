@@ -17,7 +17,7 @@ class ArrivalDelayPredictorView(APIView):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        print("📩 Got arrival delay prediction request:\n" + json.dumps(request.data, indent=2))
+        print("Got arrival delay prediction request:\n" + json.dumps(request.data, indent=2))
         serializer = DelayPredictionRequestSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data

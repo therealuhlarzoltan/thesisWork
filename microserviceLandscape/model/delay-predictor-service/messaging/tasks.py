@@ -31,4 +31,4 @@ def publish_initial_batch_request():
         print(f"▶️ Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
         connection.close()
     except Exception as e:
-        print("❌ Failed to publish batch request:", e)
+        print("Failed to publish batch request:", e)

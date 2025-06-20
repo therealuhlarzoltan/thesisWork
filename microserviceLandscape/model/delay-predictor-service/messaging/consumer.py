@@ -24,7 +24,7 @@ def start_consuming():
             try:
                 message = json.loads(body)
             except json.JSONDecodeError as ex:
-                print("❌ JSON decode error:", ex)
+                print("JSON decode error:", ex)
                 return
 
             routing_key = message.get("key")
@@ -32,18 +32,18 @@ def start_consuming():
             data = message.get("data", [])
 
             if not routing_key:
-                print("⚠️ Missing routing key — skipping.")
+                print("Missing routing key — skipping.")
                 return
 
             if event_type == "DATA_TRANSFER":
-                print(f"📦 Received batch for key {routing_key} with {len(data)} records.")
+                print(f"Received batch for key {routing_key} with {len(data)} records.")
                 batch_storage[routing_key].extend(data)
 
             elif event_type == "COMPLETE":
-                print(f"✅ COMPLETE event for key {routing_key}")
+                print(f"COMPLETE event for key {routing_key}")
                 records = batch_storage.pop(routing_key, [])
                 if not records:
-                    print("⚠️ No records collected.")
+                    print("No records collected.")
                     return
                 df = pd.DataFrame(convert_keys_to_snake_case(records))
                 start_training_for_routing_key(df)
@@ -60,4 +60,4 @@ def start_consuming():
         channel.start_consuming()
 
     except Exception as e:
-        print("❌ Error in consumer:", e)
+        print("Error in consumer:", e)

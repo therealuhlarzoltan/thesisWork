@@ -5,5 +5,5 @@ class Command(BaseCommand):
     help = 'Start RabbitMQ consumer for batch responses'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write(self.style.SUCCESS("🟢 Starting RabbitMQ response listener..."))
+        self.stdout.write(self.style.SUCCESS("Starting RabbitMQ response listener..."))
         start_consuming()
