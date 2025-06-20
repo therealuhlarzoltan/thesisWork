@@ -14,13 +14,15 @@ class PredictionConfig(AppConfig):
     name = 'prediction'
 
     def ready(self):
-        if os.environ.get('RUN_MAIN') != 'true':
+        # Avoid running during management commands like migrate or collectstatic
+        import sys
+        if 'runserver' not in sys.argv and 'celery' not in sys.argv:
             return
-
 
         hostname = socket.gethostname()
         ip = socket.gethostbyname(hostname)
 
+        print('Registering app to eureka server...')
         eureka_client.init(
             eureka_server="localhost:8761",
             eureka_protocol="http",
@@ -44,5 +46,26 @@ class PredictionConfig(AppConfig):
         signal.signal(signal.SIGINT, eureka_shutdown_handler)
         signal.signal(signal.SIGTERM, eureka_shutdown_handler)
 
-        from prediction.tasks import reload_models
-        reload_models.delay()
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from apscheduler.triggers.interval import IntervalTrigger
+        from django_apscheduler.jobstores import DjangoJobStore
+        from prediction.scheduler import reload_models
+        print('Loading models...')
+        scheduler = BackgroundScheduler()
+        scheduler.add_jobstore(DjangoJobStore(), "default")
+
+        scheduler.add_job(
+            reload_models,
+            trigger=IntervalTrigger(hours=2),
+            id="reload_models",
+            name="Reload ML models from DB every 2 hours",
+            replace_existing=True,
+        )
+
+        scheduler.start()
+        print("📅 APScheduler started")
+
+        print("🚀 Running reload_models() immediately at startup")
+        reload_models()
+
+        atexit.register(lambda: scheduler.shutdown())

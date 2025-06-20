@@ -50,7 +50,7 @@ class DepartureDelayPredictorView(APIView):
 
             df = pd.DataFrame([data])
             departure_delay = int(round(departure_model.predict(df)[0]))
-            print("Predicted arrival delay: " + str(departure_delay))
+            print("Departure arrival delay: " + str(departure_delay))
             return Response({'trainNumber': data['train_number'], 'stationCode': data['station_code'],
                              'predictedDelay': departure_delay}, status=status.HTTP_200_OK)
         else:
