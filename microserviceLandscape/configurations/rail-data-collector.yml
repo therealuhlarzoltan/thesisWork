@@ -122,6 +122,21 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
 
+  ratelimiter:
+    instances:
+      getTimetableApi:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 15s
+      getTrainDetailsApi:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 15s
+      getFullTimetableApi:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 15s
+
 spring:
   rabbitmq:
     host: 127.0.0.1

@@ -9,7 +9,10 @@ import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiExc
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
+import io.github.resilience4j.reactor.ratelimiter.operator.RateLimiterOperator;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.RetryRegistry;
 import lombok.RequiredArgsConstructor;
@@ -32,11 +35,13 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     private final RailDelayWebClient webClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
+    private final RateLimiterRegistry rateLimiterRegistry;
 
     @Override
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
         LOG.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getShortTimetable(from, to, date)
+                .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTimetableApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTimetableApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getTimetableApi")))
                 .onErrorResume(this::handleFallback);
@@ -46,6 +51,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
         LOG.debug("Called train details gateway with uri {}", trainUri);
         return webClient.getShortTrainDetails(trainUri)
+                .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTrainDetailsApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTrainDetailsApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getTrainDetailsApi")))
                 .onErrorResume(this::handleFallback);
@@ -55,6 +61,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     public Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date) {
         LOG.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getTimetable(from, to, date)
+                .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getFullTimetableApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getFullTimetableApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getFullTimetableApi")))
                 .onErrorResume(this::handleFallback);
@@ -63,6 +70,8 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     private <T> Mono<T> handleFallback(Throwable throwable) {
         if (throwable instanceof CallNotPermittedException callNotPermittedException) {
             LOG.error("Circuit breaker is open", callNotPermittedException);
+        } else if (throwable instanceof RequestNotPermitted requestNotPermittedException) {
+            LOG.error("Rate limit is exceeded", requestNotPermittedException);
         }
         ApiException apiException;
         try {
