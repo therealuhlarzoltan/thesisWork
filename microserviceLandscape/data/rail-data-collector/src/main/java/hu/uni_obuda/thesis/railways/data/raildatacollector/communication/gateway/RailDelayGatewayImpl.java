@@ -79,6 +79,10 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
             return new ExternalApiException(response.getStatusCode(), response.getRequest().getURI().toURL());
         } else if (throwable instanceof WebClientRequestException request) {
             return new InternalApiException(request.getMessage(), request.getUri().toURL());
+        } else if (throwable instanceof ExternalApiException externalApiException) {
+            return externalApiException;
+        } else if (throwable instanceof InternalApiException internalApiException) {
+            return internalApiException;
         } else {
             return new InternalApiException("A runtime exception occurred", null);
         }
