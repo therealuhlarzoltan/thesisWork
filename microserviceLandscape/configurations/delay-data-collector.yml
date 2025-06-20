@@ -154,3 +154,19 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: INFO
+
+---
+spring.activate.on-profile: docker
+
+server.port: 8080
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://postgresql:5432/${POSTGRES_DB_NAME}
+  flyway:
+    url: jdbc:postgresql://postgresql:5432/${POSTGRES_DB_NAME}
+  data:
+    redis:
+      host: redis
+      port: 6379
+

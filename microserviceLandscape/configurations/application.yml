@@ -32,3 +32,11 @@ eureka:
     leaseRenewalIntervalInSeconds: 5
     leaseExpirationDurationInSeconds: 5
     preferIpAddress: true
+
+---
+spring.config.activate.on-profile: docker
+
+app:
+  eureka.server: eureka-server
+
+spring.rabbitmq.host: rabbitmq
