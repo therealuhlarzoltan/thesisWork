@@ -13,7 +13,7 @@ public interface TimetableCache {
     Mono<Boolean> isCached(String from, String to, LocalDate date);
     Mono<Void> cache(String from, String to, LocalDate date, ShortTimetableResponse timetable);
     Mono<ShortTimetableResponse> get(String from, String to, LocalDate date);
-    Mono<Void> evict();
+    Mono<Void> evictAll();
 
     default String toKey(String from, String to, LocalDate date) {
         return CACHE_PREFIX + ":" + from + ":" + to + ":" + date.toString();

@@ -39,12 +39,9 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10000
         recordExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
-        ignoreExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
-          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
 
 
   retry:
@@ -53,13 +50,9 @@ resilience4j:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
-          - hu.uni_obuda.thesis.railways.util.exception.datalollectors.ExternalApiException
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
-        ignoreExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
-          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
 
 spring:
   rabbitmq:
@@ -80,10 +73,10 @@ spring:
         weatherDataResponses-out-0:
           destination: weatherDataResponses
           producer:
-            required-groups: auditGroup, delayDataCollectorsGroup
+            required-groups: auditGroup
         messageProcessor-in-0:
           destination: weatherDataRequests
-          group: weatherDataCollectorsGroup
+          group: weatherDataRequestsGroup
           contentType: application/json
 
 spring.cloud.stream.bindings.messageProcessor-in-0.consumer:

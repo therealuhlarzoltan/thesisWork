@@ -42,7 +42,7 @@ public class TimetableCacheImpl implements TimetableCache {
     }
 
     @Override
-    public Mono<Void> evict() {
+    public Mono<Void> evictAll() {
         return keysRedisTemplate
                 .opsForSet()
                 .members(KEY_SET_PREFIX)

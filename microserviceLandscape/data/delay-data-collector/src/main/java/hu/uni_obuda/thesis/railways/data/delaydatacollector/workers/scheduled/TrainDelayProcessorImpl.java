@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Component
 public class TrainDelayProcessorImpl implements TrainDelayProcessor {
@@ -24,7 +25,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     private  final Scheduler scheduler;
     private final TrainRouteRepository trainRouteRepository;
     private final DelayFetcherService delayFetcherService;
-    private final TrainStatusCache trainStatusCache;;
+    private final TrainStatusCache trainStatusCache;
 
     @Autowired
     public TrainDelayProcessorImpl(@Qualifier("trainDelayProcessorScheduler") Scheduler scheduler, TrainRouteRepository trainRouteRepository,
@@ -39,10 +40,11 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     @Override
     public void processTrainRoutes() {
         LOG.info("Data fetch started...");
-        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
 
         trainRouteRepository.findAll()
-                .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, today))
+                .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, resolveOperationalDate(now)))
                 .subscribeOn(scheduler)
                 .subscribe();
 
@@ -51,10 +53,10 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
     @Override
     public void processTrainRoute(String trainNumber) {
         LOG.info("Data fetch started for single train with train number: {}", trainNumber);
-        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
 
         trainRouteRepository.findById(trainNumber)
-                .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, today))
+                .flatMap(trainRoute -> processTrainIfIncomplete(trainRoute, resolveOperationalDate(now)))
                 .subscribeOn(scheduler)
                 .subscribe();
     }
@@ -78,5 +80,11 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
                         );
                     }
                 });
+    }
+
+    private LocalDate resolveOperationalDate(LocalDateTime date) {
+        if (date.getHour() < 3)
+            return date.toLocalDate().minusDays(1);
+        return date.toLocalDate();
     }
 }

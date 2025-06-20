@@ -2,8 +2,10 @@ package hu.uni_obuda.thesis.railways.data.weatherdatacollector;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication
+@EnableDiscoveryClient
+@SpringBootApplication(scanBasePackages = {"hu.uni_obuda.thesis.railways.util", "hu.uni_obuda.thesis.railways.data.weatherdatacollector"})
 public class WeatherDataCollectorApplication {
 
 	public static void main(String[] args) {

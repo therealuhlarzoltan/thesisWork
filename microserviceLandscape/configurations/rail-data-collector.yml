@@ -15,8 +15,8 @@ railway.api:
 
   rate:
     limit:
-      delay-between-requests: 2000
-      number-of-concurrent-calls: 4
+      delay-between-requests: 750
+      number-of-concurrent-calls: 24
 
 tcp:
     connection:
@@ -39,8 +39,9 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10000
         recordExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
           - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
@@ -56,41 +57,70 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10000
         recordExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
           - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
           - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+      getFullTimetableApi:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
-          - hu.uni-obuda.thesis.railways.util.exception.datacollectors.TrainNotInServiceException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
   retry:
     instances:
       getTimetableApi:
         maxAttempts: 3
         waitDuration: 1000
-        retryExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
+        recordExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni-obuda.thesis.railways.util.exception.datacollectors.TrainNotInServiceException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
       getTrainDetailsApi:
         maxAttempts: 3
         waitDuration: 1000
-        retryExceptions:
-          - org.springframework.web.reactive.function.client.WebClientResponseException
+        recordExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
-          - hu.uni-obuda.thesis.railways.util.exception.datacollectors.TrainNotInServiceException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+      getFullTimetableApi:
+        maxAttempts: 3
+        waitDuration: 1000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
 
 spring:
   rabbitmq:
@@ -115,10 +145,10 @@ spring:
         railDataResponses-out-0:
           destination: railDataResponses
           producer:
-            required-groups: auditGroup, delayDataCollectorsGroup
+            required-groups: auditGroup
         messageProcessor-in-0:
           destination: railDataRequests
-          group: railDataCollectorsGroup
+          group: railDataRequestsGroup
           contentType: application/json
 
 

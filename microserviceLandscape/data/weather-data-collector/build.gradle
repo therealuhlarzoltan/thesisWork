@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'hu.uni_obuda.thesis.railways.data'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.1'
 
 ext {
 	javaVersion = 22
@@ -37,13 +37,14 @@ dependencies {
 	//implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 	//implementation 'io.micrometer:micrometer-tracing-bridge-brave'
 	//implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 	//implementation 'org.springframework.cloud:spring-cloud-bus'
-	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+	implementation "io.github.resilience4j:resilience4j-spring-boot3"
+	implementation "io.github.resilience4j:resilience4j-reactor:1.7.0"
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	//implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
 	compileOnly "org.projectlombok:lombok:${lombokVersion}"
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

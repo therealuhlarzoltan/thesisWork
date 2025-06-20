@@ -3,50 +3,75 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gatewa
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.RailDelayWebClient;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
+import io.github.resilience4j.reactor.retry.RetryOperator;
+import io.github.resilience4j.retry.RetryRegistry;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.LocalDate;
-import java.util.concurrent.TimeoutException;
 
 @Component
 @RequiredArgsConstructor
 public class RailDelayGatewayImpl implements RailDelayGateway {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RailDelayGatewayImpl.class);
+
     private final RailDelayWebClient webClient;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
+    private final RetryRegistry retryRegistry;
 
-    @CircuitBreaker(name = "getTimetableApi", fallbackMethod = "handleTimetableFallback")
-    @Retry(name = "getTimetableApi")
+    @Override
     public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
-        return webClient.getShortTimetable(from, to, date);
+        LOG.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
+        return webClient.getShortTimetable(from, to, date)
+                .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTimetableApi")))
+                .transformDeferred(RetryOperator.of(retryRegistry.retry("getTimetableApi")))
+                .onErrorResume(this::handleFallback);
     }
 
-    @CircuitBreaker(name = "getTrainDetailsApi", fallbackMethod = "handleDetailsFallback")
-    @Retry(name = "getTrainDetailsApi")
+    @Override
     public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
-        return webClient.getShortTrainDetails(trainUri);
+        LOG.debug("Called train details gateway with uri {}", trainUri);
+        return webClient.getShortTrainDetails(trainUri)
+                .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTrainDetailsApi")))
+                .transformDeferred(RetryOperator.of(retryRegistry.retry("getTrainDetailsApi")))
+                .onErrorResume(this::handleFallback);
     }
 
-    public Mono<ShortTimetableResponse> handleTimetableFallback(String from, String to, LocalDate date, Throwable throwable) throws MalformedURLException {
-        return Mono.error(resolveApiException(throwable));
+    @Override
+    public Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date) {
+        LOG.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
+        return webClient.getTimetable(from, to, date)
+                .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getFullTimetableApi")))
+                .transformDeferred(RetryOperator.of(retryRegistry.retry("getFullTimetableApi")))
+                .onErrorResume(this::handleFallback);
     }
 
-    public Mono<ShortTrainDetailsResponse> handleDetailsFallback(String trainUri, Throwable throwable) throws MalformedURLException {
-        return Mono.error(resolveApiException(throwable));
+    private <T> Mono<T> handleFallback(Throwable throwable) {
+        if (throwable instanceof CallNotPermittedException callNotPermittedException) {
+            LOG.error("Circuit breaker is open", callNotPermittedException);
+        }
+        ApiException apiException;
+        try {
+            apiException = resolveApiException(throwable);
+        } catch (MalformedURLException e) {
+            LOG.error("Encountered a Malformed URL while trying to resolve API Exception", e);
+            apiException = new InternalApiException("Encountered a Malformed URL while trying to resolve API Exception", null);
+        }
+        return Mono.error(apiException);
     }
 
     private ApiException resolveApiException(Throwable throwable) throws MalformedURLException {
@@ -54,6 +79,10 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
             return new ExternalApiException(response.getStatusCode(), response.getRequest().getURI().toURL());
         } else if (throwable instanceof WebClientRequestException request) {
             return new InternalApiException(request.getMessage(), request.getUri().toURL());
+        } else if (throwable instanceof ExternalApiException externalApiException) {
+            return externalApiException;
+        } else if (throwable instanceof InternalApiException internalApiException) {
+            return internalApiException;
         } else {
             return new InternalApiException("A runtime exception occurred", null);
         }

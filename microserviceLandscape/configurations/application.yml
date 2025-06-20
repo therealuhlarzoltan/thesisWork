@@ -1,2 +1,34 @@
-spring.mvc.format.date-time=iso
-spring.web.encoding.charset=UTF-8
+
+spring:
+  mvc.format.date-time=iso:
+  web.encoding.charset: UTF-8
+
+app:
+  rail-data-collector-url: http://rail-data-collector
+  rail-data-collector-route-planner-uri: /plan-route
+  weather-data-collector-url: http://weather-data-collector
+  weather-data-collector-collect-weather-uri: /collect-weather-info
+  geocoding-service-url: http://geocoding-service
+  delay-data-collector-url: http://delay-data-collector
+  delay-data-collector-train-route-uri: /train-routes
+  delay-data-collector-train-station-uri: /train-stations
+  delay-predictor-service-url: http://delay-predictor-service
+  delay-predictor-service-arrival-uri: /prediction/delay/arrival
+  delay-predictor-service-departure-uri: /prediction/delay/departure
+  health-check-path: /actuator/health
+  eureka:
+    username: ${EUREKA_USERNAME}
+    password: ${EUREKA_PASSWORD}
+    server: localhost
+
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: "http://${app.eureka.username}:${app.eureka.password}@${app.eureka.server}:8761/eureka/"
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    registryFetchIntervalSeconds: 5
+  instance:
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 5
+    preferIpAddress: true
