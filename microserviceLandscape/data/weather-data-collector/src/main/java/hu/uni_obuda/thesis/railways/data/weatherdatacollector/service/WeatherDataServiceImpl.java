@@ -20,14 +20,16 @@ public class WeatherDataServiceImpl implements WeatherDataService {
     @Override
     public Mono<WeatherInfo> getWeatherInfoByAddress(String address, Double latitude, Double longitude, LocalDateTime dateTime) {
         return  weatherGateway.getWeatherByCoordinates(latitude, longitude, dateTime.toLocalDate())
-                .map(weatherResponse -> constructWeatherInfoFromResponse(weatherResponse, address, dateTime))
-                .onErrorResume(_ -> Mono.just(constructWeatherInfoFromResponse(WeatherResponse.builder().isPresent(false).build(), address, dateTime)));
+                .map(weatherResponse -> constructWeatherInfoFromResponse(weatherResponse, address, latitude, longitude, dateTime))
+                .onErrorResume(_ -> Mono.just(constructWeatherInfoFromResponse(WeatherResponse.builder().isPresent(false).build(), address, latitude, longitude, dateTime)));
     }
 
-    private WeatherInfo constructWeatherInfoFromResponse(WeatherResponse weatherResponse, String address, LocalDateTime dateTime) {
+    private WeatherInfo constructWeatherInfoFromResponse(WeatherResponse weatherResponse, String address, Double latitude, Double longitude, LocalDateTime dateTime) {
         if (!weatherResponse.isPresent()) {
             return WeatherInfo.builder()
                     .address(address)
+                    .latitude(latitude)
+                    .longitude(longitude)
                     .time(dateTime)
                     .build();
         } else {
