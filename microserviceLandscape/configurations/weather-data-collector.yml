@@ -54,6 +54,13 @@ resilience4j:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
 
+  ratelimiter:
+    instances:
+      getWeatherDataApi:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 15s
+
 spring:
   rabbitmq:
     host: 127.0.0.1
