@@ -21,11 +21,13 @@ public class TrainStationServiceImpl implements TrainStationService {
 
     @Override
     public Flux<TrainStationResponse> getTrainStations() {
+        LOG.info("Getting all train stations");
         return repository.findAll().map(mapper::entityToApi);
     }
 
     @Override
     public Mono<TrainStationResponse> getTrainStationById(String id) {
+        LOG.info("Getting train station with station code {}", id);
         return repository.findById(id).map(mapper::entityToApi);
     }
 }

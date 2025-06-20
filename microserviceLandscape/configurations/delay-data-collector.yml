@@ -1,4 +1,5 @@
-app:
+
+pp:
   messaging:
     sending:
       threadPoolSize: 24
@@ -62,7 +63,7 @@ spring:
 
   cloud:
     function:
-      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor
+      definition: delayInfoProcessor;weatherInfoProcessor;geocodingResponseProcessor;dataRequestProcessor
 
     stream:
       defaultBinder: rabbit
@@ -85,14 +86,24 @@ spring:
           content-type: application/json
         delayInfoProcessor-in-0:
           destination: railDataResponses
-          group: delayDataCollectorsGroup
+          group: railDataResponsesGroup
           contentType: application/json
         weatherInfoProcessor-in-0:
           destination:  weatherDataResponses
-          group: delayDataCollectorsGroup
+          group: weatherDateResponsesGroup
           contentType: application/json
         geocodingResponseProcessor-in-0:
           destination: geocodingDataResponses
+          group: geocodingDataResponsesGroup
+          contentType: application/json
+        dataRequestProcessor-in-0:
+          destination: dataRequests
+          group: dataRequestsGroup
+          contentType: application/json
+        dataRequestProcessor-out-0:
+          destination: dataResponses
+          producer:
+            required-groups: auditGroup
           contentType: application/json
 
 spring.cloud.stream.bindings.delayInfoProcessor-in-0.consumer:
@@ -125,6 +136,10 @@ spring.cloud.stream.rabbit.bindings.geocodingResponseProcessor-in-0.consumer:
   autoBindDlq: true
   republishToDlq: true
 
+spring.cloud.stream.rabbit.bindings.dataRequestProcessor-in-0.consumer:
+  atoBindDlg: true
+  republishToDlq: true
+
 springdoc:
   swagger-ui:
     path: /openapi/swagger-ui.html
@@ -140,3 +155,13 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: INFO
+    org.springframework.integration: DEBUG
+    org.springframework.messaging.converter: DEBUG
+    org.springframework.cloud.stream:       DEBUG
+    org.springframework.amqp:               DEBUG
+    hu.uni_obuda.thesis.railways.data.delaydatacollector: TRACE
+    io.netty: TRACE
+    io.r2dbc.postgresql.message: TRACE
+    reactor.core: TRACE
+    org.springframework.cloud.stream.binding.BindingService: DEBUG
+    org.springframework.cloud.stream.binder: DEBUG
