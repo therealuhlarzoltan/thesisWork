@@ -1,16 +1,22 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.client;
 
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -40,11 +46,6 @@ public class ReactiveWeatherWebClient implements WeatherWebClient {
         return webClient.get()
                 .uri(weatherRequestUri.toString())
                 .retrieve()
-                .bodyToMono(WeatherInfo.class)
-                .onErrorResume(this::handleWebClientException);
-    }
-
-    private Mono<WeatherInfo> handleWebClientException(Throwable throwable) {
-        return Mono.error(new RuntimeException("Weather API call failed", throwable));
+                .bodyToMono(WeatherInfo.class);
     }
 }

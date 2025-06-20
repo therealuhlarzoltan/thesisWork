@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -60,7 +62,7 @@ public class ReactiveStationWebClient implements StationWebClient {
                                         );
 
                                         if (parsedList.isEmpty()) {
-                                            return Mono.error(new EntityNotFoundException());
+                                            return Mono.error(new EntityNotFoundException(stationCode, TrainStationResponse.class));
                                         } else {
                                             return Mono.just(parsedList.getFirst());
                                         }
@@ -95,7 +97,7 @@ public class ReactiveStationWebClient implements StationWebClient {
                                         );
 
                                         if (parsedList.isEmpty()) {
-                                            return Mono.error(new EntityNotFoundException());
+                                            return Mono.error(new EntityNotFoundException(trainNumber, TrainRouteResponse.class));
                                         } else {
                                             return Mono.just(parsedList.getFirst());
                                         }
@@ -111,6 +113,9 @@ public class ReactiveStationWebClient implements StationWebClient {
     }
 
     private RuntimeException mapApiResponseToException(ClientResponse clientResponse) {
+        if (clientResponse.statusCode().equals(HttpStatusCode.valueOf(404))) {
+            return new EntityNotFoundException("", Object.class);
+        }
         return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(clientResponse.request().getURI().toString()));
     }
 

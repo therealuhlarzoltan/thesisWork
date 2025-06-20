@@ -1,30 +1,35 @@
 import pickle
-from datetime import datetime
 
-from .models import XGBRegressorDatabaseModel
+from .models import DelayPredictionModel
 
-def save_xgb_model(name, model):
-    serialized_model = pickle.dumps(model)
-    obj, created = XGBRegressorDatabaseModel.objects.update_or_create(
-        name=name,
-        defaults={'model_binary': serialized_model}
+
+def save_prediction_model(type, model, metrics):
+    import pickle
+    serialized_pipeline = pickle.dumps(model)
+
+    mae = metrics.at[0, 'MAE']
+    mse = metrics.at[0, 'MSE']
+    rmse = metrics.at[0, 'RMSE']
+    r2 = metrics.at[0, 'R2']
+
+    print("Saving model...")
+    obj = DelayPredictionModel.objects.create(
+        delay_type=type,
+        pipeline_binary=serialized_pipeline,
+        mae=mae,
+        mse=mse,
+        rmse=rmse,
+        r2=r2
     )
+    print("Model saved.")
     return obj
 
-
-def save_xgb_regressor_model(model):
-    serialized_model = pickle.dumps(model)
-    obj, created = XGBRegressorDatabaseModel.objects.update_or_create(
-        name="XGBRegressor:" + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        defaults={'model_binary': serialized_model}
-    )
-    return obj
+def load_prediction_model(type, created_at):
+    obj = DelayPredictionModel.objects.filter(
+        delay_type=type, created_at=created_at).first()
+    return pickle.loads(obj.pipeline_binary)
 
 
-def load_xgb_model(name):
-    obj = XGBRegressorDatabaseModel.objects.get(name=name)
-    return pickle.loads(obj.model_binary)
-
-
-def load_latest_xgb_regressor_model():
-    obj = XGBRegressorDatabaseModel.objects.order_by('-created_at').first()
+def load_latest_prediction_model():
+    obj = DelayPredictionModel.objects.order_by('-created_at').first()
+    return pickle.loads(obj.pipeline_binary)

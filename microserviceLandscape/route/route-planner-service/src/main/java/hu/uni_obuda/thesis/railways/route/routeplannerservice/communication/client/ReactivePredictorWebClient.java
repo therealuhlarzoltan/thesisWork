@@ -3,12 +3,14 @@ package hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.cli
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RequiredArgsConstructor
 @Primary
 @Component
@@ -29,8 +31,7 @@ public class ReactivePredictorWebClient implements PredictorWebClient {
                 .uri(baseUrl + arrivalUri)
                 .bodyValue(delayPredictionRequest)
                 .retrieve()
-                .bodyToMono(DelayPredictionResponse.class)
-                .onErrorResume(this::handleWebClientException);
+                .bodyToMono(DelayPredictionResponse.class);
     }
 
     @Override
@@ -39,11 +40,6 @@ public class ReactivePredictorWebClient implements PredictorWebClient {
                 .uri(baseUrl + departureUri)
                 .bodyValue(delayPredictionRequest)
                 .retrieve()
-                .bodyToMono(DelayPredictionResponse.class)
-                .onErrorResume(this::handleWebClientException);
-    }
-
-    private Mono<DelayPredictionResponse> handleWebClientException(Throwable throwable) {
-        return Mono.error(new RuntimeException("Prediction API call failed", throwable));
+                .bodyToMono(DelayPredictionResponse.class);
     }
 }

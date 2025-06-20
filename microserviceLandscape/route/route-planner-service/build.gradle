@@ -34,8 +34,11 @@ repositories {
 dependencies {
     implementation project(':api')
     implementation project(':util')
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation "io.github.resilience4j:resilience4j-spring-boot3"
+    implementation "io.github.resilience4j:resilience4j-reactor:1.7.0"
     implementation "org.springframework.boot:spring-boot-starter-webflux"
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation "io.github.resilience4j:resilience4j-reactor:1.7.0"
     implementation 'org.springframework.cloud:spring-cloud-starter-config'

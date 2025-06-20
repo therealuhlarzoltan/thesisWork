@@ -1,12 +1,14 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.client;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
+import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -53,16 +55,12 @@ public class ReactiveRailWebClient implements RailWebClient {
     }
 
     private RuntimeException mapApiResponseToException(ClientResponse clientResponse) {
+        if (clientResponse.statusCode().equals(HttpStatusCode.valueOf(404))) {
+            return new EntityNotFoundException("", Object.class);
+        }
         return new ExternalApiException(clientResponse.statusCode(), getUrlFromString(clientResponse.request().getURI().toString()));
     }
 
-    private RuntimeException mapMappingExceptionToException(IOException ioException, String uri) {
-        return new ExternalApiFormatMismatchException(ioException.getMessage(), ioException, getUrlFromUriString(uri));
-    }
-
-    private URL getUrlFromUriString(String uri) {
-        return getUrlFromString(baseUrl + uri);
-    }
 
     private URL getUrlFromString(String url) {
         try {

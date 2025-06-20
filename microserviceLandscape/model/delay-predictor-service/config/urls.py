@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('messaging/', include('messaging.urls')),
     path('model/', include('model.urls')),
+    path('prediction/', include('prediction.urls')),
 ]
