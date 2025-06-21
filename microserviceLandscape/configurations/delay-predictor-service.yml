@@ -1,0 +1,16 @@
+db:
+  name: ${DJANGO_DB_NAME}
+  user: ${DJANGO_DB_USER}
+  password: ${DJANGO_DB_PASSWORD}
+  host: localhost
+  port: 5433
+
+secret.key: ${DJANGO_SECRET_KEY}
+
+celery:
+  broker.url: redis://localhost:6381/0
+  result.backend: redis://localhost:6381/0
+
+---
+spring.activate.on-profile: docker
+
