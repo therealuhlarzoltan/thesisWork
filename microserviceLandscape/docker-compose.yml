@@ -1,14 +1,205 @@
 version: '2.1'
 
 services:
+  rail-data-collector:
+    build: data/rail-data-collector
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8000:8080"
+
+  weather-data-collector:
+    build: data/weather-data-collector
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8001:8080"
+
+  geocoding-service:
+    build: data/geocoding-service
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+      - MAPS_API_KEY=${MAPS_API_KEY}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8003:8080"
+
+  delay-data-collector:
+    build: data/delay-data-collector
+    mem_limit: 3048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+      - POSTGRES_DB_NAME=${POSTGRES_DB_NAME}
+      - POSTGRES_USERNAME=${POSTGRES_USER_NAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgresql-1:
+        condition: service_healthy
+    ports:
+      - "8002:8080"
+
+  delay-predictor-service:
+    build: model/delay-predictor-service
+    mem_limit: 4096m
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - CONFIG_PROFILE=docker
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgresql-2:
+        condition: service_healthy
+      redis-3:
+        condition: service_healthy
+
+  route-planner-service:
+    build: route/route-planner-service
+    mem_limit: 3048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    ports:
+      - "8005:8080"
+
+  postgresql-1:
+    image: postgres:17
+    mem_limit: 4096m
+    container_name: postgresql-1
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+
+  postgresql-2:
+    image: postgres:latest
+    mem_limit: 2048m
+    container_name: postgresql-2
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${DJANGO_DB_USER}
+      POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
+      POSTGRES_DB: ${DJANGO_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+
+  redis-1:
+    image: redis:7.2-alpine
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-2:
+    image: redis:7.2-alpine
+    container_name: redis-2
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-3:
+    image: redis:7.2-alpine
+    container_name: redis-3
+    ports:
+      - "6381:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  eureka-server:
+    build: cloud/eureka-server
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    ports:
+      - "8761:8761"
+
+  rabbitmq:
+    image: rabbitmq:3.11.8-management
+    mem_limit: 4096m
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
   config-server:
-    build: spring-cloud/config-server
+    build: cloud/config-server
     mem_limit: 1024m
     environment:
       - PWD=${PWD}
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=native,docker
       - ENCRYPT_KEY=${CONFIG_SERVER_ENCRYPT_KEY}
-      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
-      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
+      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USER}
+      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PASSWORD}
     volumes:
       - $PWD/configurations:/configurations
+    ports:
+      - "8888:8888"
