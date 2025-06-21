@@ -1,13 +1,20 @@
 import os
+import re
 import socket
 import atexit
 import signal
 import sys
 from django.apps import AppConfig
 import py_eureka_client.eureka_client as eureka_client
+from spring_config import ClientConfigurationBuilder
+from spring_config.client import SpringConfigClient
 
-eureka_user = os.getenv('EUREKA_USERNAME', 'admin')
-eureka_password = os.getenv('EUREKA_PASSWORD', 'admin')
+
+
+CONFIG_USERNAME = os.getenv("CONFIG_USERNAME", "admin")
+CONFIG_PASSWORD = os.getenv("CONFIG_PASSWORD", "admin")
+
+ENV_VAR_PATTERN = re.compile(r'^\$\{([A-Z_][A-Z0-9_]*)\}$')
 
 class PredictionConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -19,16 +26,28 @@ class PredictionConfig(AppConfig):
         if 'runserver' not in sys.argv and 'celery' not in sys.argv:
             return
 
+        print("Getting configurations from Spring Cloud config...")
+        config = (
+            ClientConfigurationBuilder()
+            .app_name("delay-predictor-service")
+            .address(os.getenv("CONFIG_SERVER_URL", "http://localhost:8888"))
+            .profile(os.getenv("CONFIG_PROFILE", "default"))
+            .authentication((os.getenv('CONFIG_USERNAME', 'admin'), os.getenv('CONFIG_PASSWORD', 'admin')))
+            .build()
+        )
+        config_client = SpringConfigClient(config)
+        config = config_client.get_config()
+
         hostname = socket.gethostname()
         ip = socket.gethostbyname(hostname)
 
         print('Registering app to eureka server...')
         eureka_client.init(
-            eureka_server="localhost:8761",
+            eureka_server=self.extract_eureka_server(self.resolve_config_property("APP_EUREKA_SERVER", config), self.resolve_config_property("EUREKA_CLIENT_SERVICEURL_DEFAULTZONE", config)),
             eureka_protocol="http",
-            eureka_basic_auth_user=eureka_user,
-            eureka_basic_auth_password=eureka_password,
-            eureka_context="/eureka/",
+            eureka_basic_auth_user=self.resolve_config_property("APP_EUREKA_USERNAME", config),
+            eureka_basic_auth_password=self.resolve_config_property("APP_EUREKA_PASSWORD", config),
+            eureka_context=self.extract_eureka_context(self.resolve_config_property("EUREKA_CLIENT_SERVICEURL_DEFAULTZONE", config)),
             app_name="delay-predictor-service",
             instance_port=7000,
             instance_ip=ip,
@@ -69,3 +88,39 @@ class PredictionConfig(AppConfig):
         reload_models()
 
         atexit.register(lambda: scheduler.shutdown())
+
+
+    def extract_eureka_server(self, eureka_server, eureka_url):
+        match = re.search(r':(\d+)/', eureka_url)
+        port = match.group(1) if match else ""
+        return eureka_server + ":" + port
+
+
+    def extract_eureka_context(self, eureka_url):
+        match = re.search(r'@.+?(/[^"]*)', eureka_url)
+        return match.group(1) if match else ""
+
+
+    def resolve_config_property(self, flat_key, config):
+        keys = flat_key.lower().split('_')
+
+
+        current = self.lower_keys(config)
+        for key in keys:
+            if not isinstance(current, dict) or key not in current:
+                return ""
+            current = current[key]
+
+        if isinstance(current, str):
+            match = ENV_VAR_PATTERN.match(current)
+            if match:
+                return os.getenv(match.group(1), "")
+        return current
+
+    def lower_keys(self, d):
+        if isinstance(d, dict):
+            return {k.lower(): self.lower_keys(v) for k, v in d.items()}
+        elif isinstance(d, list):
+            return [self.lower_keys(item) for item in d]
+        else:
+            return d
