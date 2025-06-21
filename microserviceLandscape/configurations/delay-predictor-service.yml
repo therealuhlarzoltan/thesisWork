@@ -14,3 +14,7 @@ celery:
 ---
 spring.activate.on-profile: docker
 
+celery:
+  broker.url: redis://redis-3:6379/0
+  result.backend: redis://redis-3:6379/0
+

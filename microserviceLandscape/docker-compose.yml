@@ -88,6 +88,8 @@ services:
         condition: service_healthy
       redis-3:
         condition: service_healthy
+    ports:
+      - "8004:8000"
 
   route-planner-service:
     build: route/route-planner-service
