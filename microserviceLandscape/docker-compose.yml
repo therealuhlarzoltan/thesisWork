@@ -15,6 +15,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "8000:8080"
 
   weather-data-collector:
     build: data/weather-data-collector
@@ -30,6 +32,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "8001:8080"
 
   geocoding-service:
     build: data/geocoding-service
@@ -46,6 +50,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "8003:8080"
 
   delay-data-collector:
     build: data/delay-data-collector
@@ -59,13 +65,15 @@ services:
       - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
       - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
       - POSTGRES_DB_NAME=${POSTGRES_DB_NAME}
-      - POSTGRES_USER_NAME=${POSTGRES_USER_NAME}
+      - POSTGRES_USERNAME=${POSTGRES_USER_NAME}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgresql-1:
         condition: service_healthy
+    ports:
+      - "8002:8080"
 
   delay-predictor-service:
     build: model/delay-predictor-service
@@ -87,10 +95,13 @@ services:
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    ports:
+      - "8005:8080"
 
   postgresql-1:
-    image: postgres:15.2
+    image: postgres:17
     mem_limit: 4096m
+    container_name: postgresql-1
     ports:
       - "5432:5432"
     environment:
@@ -98,7 +109,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 20s
       timeout: 3s
       retries: 10
