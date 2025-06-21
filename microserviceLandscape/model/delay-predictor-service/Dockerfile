@@ -17,3 +17,5 @@ COPY . .
 RUN chmod +x entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+
+EXPOSE 8000
