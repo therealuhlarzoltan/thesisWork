@@ -18,3 +18,8 @@ management.endpoints.web.exposure.include: "*"
 logging:
   level:
     root: DEBUG
+
+---
+spring.config.activate.on-profile: docker
+
+spring.cloud.config.server.native.searchLocations: file:/configurations
