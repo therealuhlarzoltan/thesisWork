@@ -78,6 +78,9 @@ services:
   delay-predictor-service:
     build: model/delay-predictor-service
     mem_limit: 4096m
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - CONFIG_PROFILE=docker
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -117,14 +120,15 @@ services:
   postgresql-2:
     image: postgres:latest
     mem_limit: 2048m
+    container_name: postgresql-2
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER_DJANGO}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_DJANGO}
-      POSTGRES_DB: ${POSTGRES_DB_DJANGO}
+      POSTGRES_USER: ${DJANGO_DB_USER}
+      POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
+      POSTGRES_DB: ${DJANGO_DB_NAME}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER_DJANGO}" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 20s
       timeout: 3s
       retries: 10

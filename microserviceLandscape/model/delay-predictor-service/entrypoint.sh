@@ -1,11 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Applying database migrations..."
-python manage.py migrate
-
-echo "Collecting static files..."
-python manage.py collectstatic --noinput
+#echo "Applying database migrations..."
+#python manage.py migrate
 
 echo "Starting Celery worker..."
 celery -A config worker --loglevel=info --pool=solo
