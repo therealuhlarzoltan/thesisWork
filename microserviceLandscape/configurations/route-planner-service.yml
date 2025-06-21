@@ -246,3 +246,8 @@ logging:
     org.springframework.web.reactive.function.client.ExchangeFunctions: INFO
     org.springframework.web.reactive.function.client.ExchangeFilterFunctions: DEBUG
     org.springframework.web.reactive.function.client.WebClient: INFO
+
+---
+spring.activate.on-profile: docker
+
+server.port: 8080

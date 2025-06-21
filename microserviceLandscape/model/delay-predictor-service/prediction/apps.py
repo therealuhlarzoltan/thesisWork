@@ -49,7 +49,7 @@ class PredictionConfig(AppConfig):
             eureka_basic_auth_password=self.resolve_config_property("APP_EUREKA_PASSWORD", config),
             eureka_context=self.extract_eureka_context(self.resolve_config_property("EUREKA_CLIENT_SERVICEURL_DEFAULTZONE", config)),
             app_name="delay-predictor-service",
-            instance_port=7000,
+            instance_port=8000,
             instance_ip=ip,
             instance_host=hostname
         )

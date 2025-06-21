@@ -1,21 +1,66 @@
 import json
+import os
+import re
+
 import pika
 import pandas as pd
 from collections import defaultdict
+
+from spring_config import ClientConfigurationBuilder
+from spring_config.client import SpringConfigClient
 
 from messaging.training import start_training_for_routing_key, convert_keys_to_snake_case
 
 batch_storage = defaultdict(list)
 
+ENV_VAR_PATTERN = re.compile(r'^\$\{([A-Z_][A-Z0-9_]*)\}$')
+
+def resolve_config_property(flat_key, config):
+    keys = flat_key.lower().split('_')
+
+    current = lower_keys(config)
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            return ""
+        current = current[key]
+
+    if isinstance(current, str):
+        match = ENV_VAR_PATTERN.match(current)
+        if match:
+            return os.getenv(match.group(1), "")
+    return current
+
+
+def lower_keys(d):
+    if isinstance(d, dict):
+        return {k.lower(): lower_keys(v) for k, v in d.items()}
+    elif isinstance(d, list):
+        return [lower_keys(item) for item in d]
+    else:
+        return d
+
 def start_consuming():
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        print("Getting configurations from Spring Cloud config...")
+        config = (
+            ClientConfigurationBuilder()
+            .app_name("delay-predictor-service")
+            .address(os.getenv("CONFIG_SERVER_URL", "http://localhost:8888"))
+            .profile(os.getenv("CONFIG_PROFILE", "default"))
+            .authentication((os.getenv('CONFIG_USERNAME', 'admin'), os.getenv('CONFIG_PASSWORD', 'admin')))
+            .build()
+        )
+        config_client = SpringConfigClient(config)
+        config = config_client.get_config()
+
+
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=resolve_config_property('RABBITMQ_HOST', config)))
         channel = connection.channel()
 
         channel.exchange_declare(exchange='dataResponses', exchange_type='topic', durable=True, passive=True)
 
         queue_name = 'dataResponses.dataResponsesGroup'
-        channel.queue_declare(queue=queue_name, durable=True, passive=True)
+        channel.queue_declare(queue=queue_name, durable=True, passive=False)
         channel.queue_bind(exchange='dataResponses', queue=queue_name, routing_key='#')
 
         print(f"🟢 Listening for responses on queue: {queue_name}")
