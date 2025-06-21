@@ -3,6 +3,7 @@
 import os
 import sys
 
+from spring_config import ClientConfigurationBuilder
 from src import ConfigServerPythonClient
 
 
@@ -18,13 +19,6 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
-    client = ConfigServerPythonClient(
-        os.getenv('CONFIG_SERVER_URL'),
-        'delay-predictor-service',
-        os.getenv('PROFILE')
-    )
-    client.write_configs_to_env()
-
 
 if __name__ == '__main__':
     main()

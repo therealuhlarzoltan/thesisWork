@@ -11,10 +11,51 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import re
 from pathlib import Path
 from dotenv import load_dotenv
+from spring_config import ClientConfigurationBuilder
+from spring_config.client import SpringConfigClient
+
+ENV_VAR_PATTERN = re.compile(r'^\$\{([A-Z_][A-Z0-9_]*)\}$')
 
 load_dotenv()
+
+print("Getting configurations from Spring Cloud config...")
+config = (
+    ClientConfigurationBuilder()
+    .app_name("delay-predictor-service")
+    .address(os.getenv("CONFIG_SERVER_URL", "http://localhost:8888"))
+    .profile(os.getenv("CONFIG_PROFILE", "default"))
+    .authentication((os.getenv('CONFIG_USERNAME', 'admin'), os.getenv('CONFIG_PASSWORD', 'admin')))
+    .build()
+)
+config_client = SpringConfigClient(config)
+config = config_client.get_config()
+
+
+def lower_keys(d):
+    if isinstance(d, dict):
+        return {k.lower(): lower_keys(v) for k, v in d.items()}
+    elif isinstance(d, list):
+        return [lower_keys(item) for item in d]
+    else:
+        return d
+
+def resolve_config_property(flat_key, config):
+    keys = flat_key.lower().split('_')
+
+    current = lower_keys(config)
+    for key in keys:
+        if not isinstance(current, dict) or key.lower() not in current:
+            return ""
+        current = current[key]
+
+    if isinstance(current, str):
+        match = ENV_VAR_PATTERN.match(current)
+        if match:
+            return os.getenv(match.group(1), "")
+    return current
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +65,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -86,11 +127,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': resolve_config_property('DB_NAME', config),
+        'USER': resolve_config_property('DB_USER', config),
+        'PASSWORD': resolve_config_property('DB_PASSWORD', config),
+        'HOST': resolve_config_property('DB_HOST', config),
+        'PORT': resolve_config_property('DB_PORT', config),
     },
     'local': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -140,6 +181,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER_URL = 'redis://localhost:6381/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6381/0'
+CELERY_BROKER_URL = resolve_config_property('CELERY_BROKER_URL', config)
+CELERY_RESULT_BACKEND = resolve_config_property('CELERY_RESULT_BACKEND', config)
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
