@@ -87,7 +87,6 @@ INSTALLED_APPS = [
     'model.apps.ModelConfig',
     'prediction.apps.PredictionConfig',
 
-    'django_celery_beat',
     'django_apscheduler',
 ]
 
@@ -180,9 +179,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CELERY_BROKER_URL = resolve_config_property('CELERY_BROKER_URL', config)
-CELERY_RESULT_BACKEND = resolve_config_property('CELERY_RESULT_BACKEND', config)
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 

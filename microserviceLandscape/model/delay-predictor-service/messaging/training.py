@@ -45,10 +45,10 @@ def _train_arrival_model(df):
         })
 
         save_prediction_model('arrival', arrival_delay_pipeline, metrics_df)
-        print("✅ Arrival model trained and saved.")
+        print("Arrival model trained and saved.")
     except Exception as e:
         import traceback
-        print("❌ Arrival training error:", e)
+        print("Arrival training error:", e)
         print(traceback.format_exc())
 
 
@@ -79,8 +79,8 @@ def _train_departure_model(df):
         })
 
         save_prediction_model('departure', departure_delay_pipeline, metrics_df)
-        print("✅ Departure model trained and saved.")
+        print("Departure model trained and saved.")
     except Exception as e:
         import traceback
-        print("❌ Departure training error:", e)
+        print("Departure training error:", e)
         print(traceback.format_exc())

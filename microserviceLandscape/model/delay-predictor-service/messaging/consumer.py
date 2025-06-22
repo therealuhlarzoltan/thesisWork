@@ -63,7 +63,7 @@ def start_consuming():
         channel.queue_declare(queue=queue_name, durable=True, passive=False)
         channel.queue_bind(exchange='dataResponses', queue=queue_name, routing_key='#')
 
-        print(f"🟢 Listening for responses on queue: {queue_name}")
+        print(f"Listening for responses on queue: {queue_name}")
 
         def on_message(ch, method, properties, body):
             try:

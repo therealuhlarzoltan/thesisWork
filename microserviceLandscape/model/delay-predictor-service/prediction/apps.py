@@ -23,7 +23,7 @@ class PredictionConfig(AppConfig):
     def ready(self):
         # Avoid running during management commands like migrate or collectstatic
         import sys
-        if 'runserver' not in sys.argv and 'celery' not in sys.argv:
+        if 'runserver' not in sys.argv:
             return
 
         print("Getting configurations from Spring Cloud config...")
@@ -82,9 +82,9 @@ class PredictionConfig(AppConfig):
         )
 
         scheduler.start()
-        print("📅 APScheduler started")
+        print("APScheduler started")
 
-        print("🚀 Running reload_models() immediately at startup")
+        print("Running reload_models() immediately at startup")
         reload_models()
 
         atexit.register(lambda: scheduler.shutdown())
