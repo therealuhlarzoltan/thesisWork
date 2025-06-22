@@ -11,34 +11,40 @@ spring.cloud.gateway.routes:
   - id: route-planner-service
     uri: lb://route-planner-service
     predicates:
-      - Path=/route/**
+      - Path=/route-planner/**
+    filters:
+      - StripPrefix=1
 
   - id: route-panner-service-swagger-ui
     uri: lb://route-planner-service
     predicates:
-      - Path=/route/openapi/**
+      - Path=/route-planner/openapi/**
+    filters:
+      - StripPrefix=1
 
-  - id: route-planner-service-swagger-ui-webjars
+  - id: route-planner-service-webjars
     uri: lb://route-planner-service
     predicates:
-      - Path=/webjars/**
+      Path=/route-planner/webjars/**
+    filters:
+      - StripPrefix=1
 
   - id: eureka-api
-    uri: http://${app.eureka-server}:8761
+    uri: http://${app.eureka.server}:8761
     predicates:
       - Path=/eureka/api/{segment}
     filters:
       - SetPath=/eureka/{segment}
 
   - id: eureka-web-start
-    uri: http://${app.eureka-server}:8761
+    uri: http://${app.eureka.server}:8761
     predicates:
       - Path=/eureka/web
     filters:
       - SetPath=/
 
   - id: eureka-web-not-specified
-    uri: http://${app.eureka-server}:8761
+    uri: http://${app.eureka.server}:8761
     predicates:
       - Path=/eureka/**
 
