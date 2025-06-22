@@ -29,6 +29,48 @@ spring.cloud.gateway.routes:
     filters:
       - StripPrefix=1
 
+  - id: rail-data-collector-swagger-ui
+    uri: lb://rail-data-collector
+    predicates:
+      - Path=/rail/openapi/**
+    filters:
+      - StripPrefix=1
+
+  - id: rail-data-collector-webjars
+    uri: lb://rail-data-collector
+    predicates:
+      Path=/rail/webjars/**
+    filters:
+      - StripPrefix=1
+
+  - id: weather-data-collector-swagger-ui
+    uri: lb://weather-data-collector
+    predicates:
+      - Path=/weather/openapi/**
+    filters:
+      - StripPrefix=1
+
+  - id: weather-data-collector-webjars
+    uri: lb://weather-data-collector
+    predicates:
+      Path=/weather/webjars/**
+    filters:
+      - StripPrefix=1
+
+  - id: geocoding-service-swagger-ui
+    uri: lb://geocoding-service
+    predicates:
+      - Path=/geocoding/openapi/**
+    filters:
+      - StripPrefix=1
+
+  - id: geocoding-webjars
+    uri: lb://geocoding-service
+    predicates:
+      Path=/geocoding/webjars/**
+    filters:
+      - StripPrefix=1
+
   - id: eureka-api
     uri: http://${app.eureka.server}:8761
     predicates:
