@@ -8,7 +8,7 @@ from prediction import model_cache
 
 
 def reload_models():
-    print("🔁 APScheduler: Reloading ML models from DB...")
+    print("APScheduler: Reloading ML models from DB...")
 
     def load_model(category):
         two_weeks_ago = timezone.now() - timedelta(weeks=2)
@@ -23,4 +23,4 @@ def reload_models():
     model_cache.arrival_model = load_model('arrival')
     model_cache.departure_model = load_model('departure')
 
-    print("✅ APScheduler: Models reloaded.")
+    print("APScheduler: Models reloaded.")

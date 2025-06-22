@@ -3,7 +3,6 @@ import os
 import re
 import uuid
 import pika
-from celery import shared_task
 from spring_config import ClientConfigurationBuilder
 from spring_config.client import SpringConfigClient
 
@@ -33,7 +32,6 @@ def lower_keys(d):
     else:
         return d
 
-@shared_task
 def publish_initial_batch_request():
     try:
         print("Getting configurations from Spring Cloud config...")
@@ -70,7 +68,7 @@ def publish_initial_batch_request():
         )
 
         channel.basic_publish(exchange='dataRequests', routing_key='', body=json.dumps(body), properties=props)
-        print(f"▶️ Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
+        print(f"Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
         connection.close()
     except Exception as e:
         print("Failed to publish batch request:", e)
