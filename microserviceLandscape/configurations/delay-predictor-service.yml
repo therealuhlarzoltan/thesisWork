@@ -7,19 +7,11 @@ db:
 
 secret.key: ${DJANGO_SECRET_KEY}
 
-celery:
-  broker.url: redis://localhost:6381/0
-  result.backend: redis://localhost:6381/0
-
 rabbitmq:
   host: localhost
 
 ---
 spring.activate.on-profile: docker
-
-celery:
-  broker.url: redis://redis-3:6379/0
-  result.backend: redis://redis-3:6379/0
 
 db:
   host: postgresql-2

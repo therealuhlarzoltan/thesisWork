@@ -181,8 +181,4 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER_URL = resolve_config_property('CELERY_BROKER_URL', config)
-CELERY_RESULT_BACKEND = resolve_config_property('CELERY_RESULT_BACKEND', config)
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-
 
