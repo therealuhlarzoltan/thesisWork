@@ -4,6 +4,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -11,8 +14,12 @@ import org.springframework.security.core.userdetails.MapReactiveUserDetailsServi
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import reactor.core.publisher.Mono;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -48,11 +55,11 @@ public class SecurityConfig {
                         .pathMatchers("/geocoding/openapi/**", "/geocoding/webjars/**").authenticated()
                         .pathMatchers("/delays/openapi/**", "/delays/webjars/**").authenticated()
 
-                        .pathMatchers("/route-planner/**").permitAll()
-                        .pathMatchers("/rail/**").permitAll()
-                        .pathMatchers("/weather/**").permitAll()
-                        .pathMatchers("/geocoding/**").permitAll()
-                        .pathMatchers("/delays/**").permitAll()
+                        .pathMatchers("/route-planner/**").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
+                        .pathMatchers("/rail/**").hasRole("ROLE_ADMIN")
+                        .pathMatchers("/weather/**").hasRole("ROLE_ADMIN")
+                        .pathMatchers("/geocoding/**").hasRole("ROLE_ADMIN")
+                        .pathMatchers("/delays/**").hasRole("ROLE_ADMIN")
 
                         .anyExchange().denyAll()
                 )
@@ -76,6 +83,22 @@ public class SecurityConfig {
                 .roles("SWAGGER_USER")
                 .build();
         return new MapReactiveUserDetailsService(user);
+    }
+
+    @Bean
+    public Converter<Jwt, Mono<AbstractAuthenticationToken>> jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter delegate = new JwtGrantedAuthoritiesConverter();
+        delegate.setAuthorityPrefix("ROLE_");
+        delegate.setAuthoritiesClaimName("roles");
+
+        ReactiveJwtAuthenticationConverterAdapter adapter =
+                new ReactiveJwtAuthenticationConverterAdapter(jwt -> {
+                    var authorities = delegate.convert(jwt);
+                    return new UsernamePasswordAuthenticationToken(
+                            jwt.getSubject(), jwt, authorities);
+                });
+
+        return adapter;
     }
 }
 
