@@ -100,9 +100,12 @@ services:
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - SERVER_SSL_KEY_STORE=file:/keystore/edge-test.p12
+      - SERVER_SSL_KEY_STORE_PASSWORD=${KEY_STORE_PASSWORD}
+    volumes:
+      - $PWD/keystore:/keystore
     ports:
       - "8443:8443"
-
 
   postgresql-1:
     image: postgres:17
