@@ -1,11 +1,13 @@
 package hu.uni_obuda.thesis.railways.cloud.securityserver.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "refresh_tokens")
+@Data
 public class RefreshTokenEntity {
 
     @Id

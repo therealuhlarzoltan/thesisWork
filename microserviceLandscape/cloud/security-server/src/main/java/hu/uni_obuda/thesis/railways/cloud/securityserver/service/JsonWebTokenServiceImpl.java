@@ -1,0 +1,63 @@
+package hu.uni_obuda.thesis.railways.cloud.securityserver.service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.List;
+
+
+@Service
+public class JsonWebTokenServiceImpl implements JsonWebTokenService {
+
+    @Value("${jwt.secret}")
+    private String secret;
+
+    private Key constructSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
+    @Override
+    public String generateToken(UserDetails user) {
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("roles", user.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority).toList())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 300000)) // 5 minutes
+                .signWith(SignatureAlgorithm.HS256, secret)
+                .compact();
+    }
+
+    @Override
+    public String extractUsername(String token) {
+        return Jwts.parser()
+                .setSigningKey(constructSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    @Override
+    public List<String> extractRoles(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(constructSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("roles", List.class);
+    }
+
+    @Override
+    public boolean validateToken(String token, UserDetails user) {
+        return extractUsername(token).equals(user.getUsername());
+    }
+}
