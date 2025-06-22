@@ -64,6 +64,11 @@ public class SecurityConfig {
                         .anyExchange().denyAll()
                 )
                 .httpBasic(Customizer.withDefaults())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                        )
+                )
                 .build();
     }
 
