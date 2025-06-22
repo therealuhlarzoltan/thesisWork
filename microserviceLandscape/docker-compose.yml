@@ -15,8 +15,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "8000:8080"
 
   weather-data-collector:
     build: data/weather-data-collector
@@ -32,8 +30,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "8001:8080"
 
   geocoding-service:
     build: data/geocoding-service
@@ -50,8 +46,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-    ports:
-      - "8003:8080"
 
   delay-data-collector:
     build: data/delay-data-collector
@@ -72,8 +66,6 @@ services:
         condition: service_healthy
       postgresql-1:
         condition: service_healthy
-    ports:
-      - "8002:8080"
 
   delay-predictor-service:
     build: model/delay-predictor-service
@@ -88,8 +80,6 @@ services:
         condition: service_healthy
       redis-3:
         condition: service_healthy
-    ports:
-      - "8004:8000"
 
   route-planner-service:
     build: route/route-planner-service
@@ -100,8 +90,29 @@ services:
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+
+  api-gateway:
+    build: cloud/api-gateway
+    mem_limit: 1048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - SERVER_SSL_KEY_STORE=file:/keystore/certificate.p12
+      - SERVER_SSL_KEY_STORE_PASSWORD=${KEY_STORE_PASSWORD}
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY=DEBUG
+      - LOGGING_LEVEL_REACTOR_CORE_PUBLISHER=DEBUG
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=DEBUG
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=DEBUG
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_WEB_SERVER=TRACE
+      - SWAGGER_USERNAME=${SWAGGER_USERNAME}
+      - SWAGGER_PASSWORD=${SWAGGER_PASSWORD}
+    volumes:
+      - $PWD/keystore:/keystore
     ports:
-      - "8005:8080"
+      - "8443:8443"
 
   postgresql-1:
     image: postgres:17
@@ -177,8 +188,6 @@ services:
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-    ports:
-      - "8761:8761"
 
   rabbitmq:
     image: rabbitmq:3.11.8-management
@@ -203,5 +212,3 @@ services:
       - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PASSWORD}
     volumes:
       - $PWD/configurations:/configurations
-    ports:
-      - "8888:8888"
