@@ -87,7 +87,6 @@ INSTALLED_APPS = [
     'model.apps.ModelConfig',
     'prediction.apps.PredictionConfig',
 
-    'django_celery_beat',
     'django_apscheduler',
 ]
 

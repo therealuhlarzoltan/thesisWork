@@ -68,7 +68,7 @@ def publish_initial_batch_request():
         )
 
         channel.basic_publish(exchange='dataRequests', routing_key='', body=json.dumps(body), properties=props)
-        print(f"▶️ Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
+        print(f"Sent DataTransferEvent<List<DelayRecord>> to dataRequests")
         connection.close()
     except Exception as e:
         print("Failed to publish batch request:", e)
