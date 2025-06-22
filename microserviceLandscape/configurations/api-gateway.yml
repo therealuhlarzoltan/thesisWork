@@ -111,6 +111,10 @@ spring.cloud.gateway.routes:
     filters:
       - RewritePath=/config/(?<segment>.*), /$\{segment}
 
+swagger:
+  username: ${SWAGGER_USERNAME}
+  password: ${SWAGGER_PASSWORD}
+
 
 management.endpoint.gateway.enabled: true
 
