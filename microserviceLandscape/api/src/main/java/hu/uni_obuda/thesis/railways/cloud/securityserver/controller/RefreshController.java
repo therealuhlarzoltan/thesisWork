@@ -5,6 +5,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 public interface RefreshController {
-    @PostMapping
+    @PostMapping("refresh")
     RefreshTokenResponse refresh(@RequestHeader("Authorization") String authHeader);
 }

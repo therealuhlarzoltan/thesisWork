@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 public interface RegistrationController {
-    @PostMapping
+    @PostMapping("register")
     void register(@Valid @RequestBody RegistrationRequest registrationRequest);
-    @PostMapping("/admin")
+    @PostMapping("register/admin")
     void registerAdmin(@Valid @RequestBody RegistrationRequest registrationRequest);
 }

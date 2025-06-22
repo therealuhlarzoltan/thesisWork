@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 public interface LoginController {
-    @GetMapping("/login")
+    @GetMapping("login")
     JwtResponse login(@Valid @RequestBody LoginRequest loginRequest);
-    @DeleteMapping("/logout")
+    @DeleteMapping("logout")
     void logout(@RequestHeader("Authorization") String authHeader);
 }
