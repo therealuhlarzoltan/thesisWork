@@ -5,6 +5,7 @@ import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.RefreshTokenEnti
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.RefreshTokenRepository;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.service.JsonWebTokenService;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.service.RefreshTokenService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -19,6 +20,7 @@ public class RefreshControllerImpl implements RefreshController {
     private final JsonWebTokenService jwtService;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    @Transactional
     @Override
     public JwtResponse refresh(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

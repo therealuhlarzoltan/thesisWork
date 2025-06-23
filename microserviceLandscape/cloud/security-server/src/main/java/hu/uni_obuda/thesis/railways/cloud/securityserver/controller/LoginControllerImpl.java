@@ -7,7 +7,9 @@ import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.UserEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.RefreshTokenRepository;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.UserRepository;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.service.JsonWebTokenService;
+import hu.uni_obuda.thesis.railways.cloud.securityserver.service.LoginService;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.service.RefreshTokenService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,51 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class LoginControllerImpl implements LoginController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JsonWebTokenService jwtService;
-    private final RefreshTokenService refreshTokenService;
-    private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final LoginService loginService;
 
     @Override
     public JwtResponse login(LoginRequest loginRequest) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-
-        UserEntity user = (UserEntity) auth.getPrincipal();
-
-        refreshTokenRepository.deleteByUser(user);
-        String jwt = jwtService.generateToken(user);
-        RefreshTokenEntity refreshToken = refreshTokenService.createRefreshToken(user);
-
-        return new JwtResponse(jwt, refreshToken.getToken());
+        return loginService.login(loginRequest);
     }
 
     @Override
     public void logout(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Missing or invalid Authorization header");
-        }
-
-        String jwt = authHeader.substring(7);
-
-        if (!jwtService.validateToken(jwt)) {
-            throw new BadCredentialsException("Invalid or expired token");
-        }
-
-        String email = jwtService.extractUsername(jwt);
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-
-        boolean hasValidRole = user.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(role -> role.equals("ROLE_USER") || role.equals("ROLE_ADMIN"));
-
-        if (!hasValidRole) {
-            throw new AccessDeniedException("User does not have permission to logout");
-        }
-
-        refreshTokenService.invalidateToken(user);
+        loginService.logout(authHeader);
     }
 }

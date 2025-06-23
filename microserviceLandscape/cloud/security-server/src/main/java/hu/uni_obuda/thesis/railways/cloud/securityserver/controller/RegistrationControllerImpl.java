@@ -5,11 +5,13 @@ import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.RoleEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.UserEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.RoleRepository;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Set;
@@ -28,6 +30,7 @@ public class RegistrationControllerImpl implements RegistrationController {
     @Value("${role.admin.name}")
     private String adminRoleName;
 
+    @Transactional
     @Override
     public void register(RegistrationRequest registrationRequest) {
         if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {
@@ -45,6 +48,7 @@ public class RegistrationControllerImpl implements RegistrationController {
         userRepository.save(user);
     }
 
+    @Transactional
     @Override
     public void registerAdmin(RegistrationRequest registrationRequest) {
         if (userRepository.findByEmail(registrationRequest.getEmail()).isPresent()) {

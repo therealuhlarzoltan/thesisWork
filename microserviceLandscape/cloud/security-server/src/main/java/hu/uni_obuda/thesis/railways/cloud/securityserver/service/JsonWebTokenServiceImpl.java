@@ -34,7 +34,7 @@ public class JsonWebTokenServiceImpl implements JsonWebTokenService {
                         .map(GrantedAuthority::getAuthority).toList())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessExpirationMs))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .signWith(SignatureAlgorithm.HS256, constructSigningKey())
                 .compact();
     }
 
