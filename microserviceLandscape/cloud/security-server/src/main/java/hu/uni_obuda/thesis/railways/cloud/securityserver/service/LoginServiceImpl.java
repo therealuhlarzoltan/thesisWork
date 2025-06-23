@@ -49,13 +49,13 @@ public class LoginServiceImpl implements LoginService {
             throw new BadCredentialsException("Missing or invalid Authorization header");
         }
 
-        String jwtRefreshToken = authHeader.substring(7);
+        String jwt = authHeader.substring(7);
 
-        if (!jwtService.validateAccessToken(jwtRefreshToken)) {
+        if (!jwtService.validateAccessToken(jwt)) {
             throw new BadCredentialsException("Invalid or expired token");
         }
 
-        String email = jwtService.extractAccessUsername(jwtRefreshToken);
+        String email = jwtService.extractAccessUsername(jwt);
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
