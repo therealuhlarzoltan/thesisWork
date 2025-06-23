@@ -17,6 +17,10 @@ spring:
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
   flyway:
     database-type: postgresql
     enabled: true
