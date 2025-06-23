@@ -114,6 +114,22 @@ services:
     ports:
       - "8443:8443"
 
+  security-server:
+    build: cloud/api-gateway
+    mem_limit: 1048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - POSTGRES_DB_NAME=${SECURITY_DB_NAME}
+      - POSTGRES_USERNAME=${SECURITY_USER_NAME}
+      - POSTGRES_PASSWORD=${SECURITY_PASSWORD}
+    depends_on:
+      postgresql-3:
+        condition: service_healthy
+
   postgresql-1:
     image: postgres:17
     mem_limit: 4096m
@@ -140,6 +156,22 @@ services:
       POSTGRES_USER: ${DJANGO_DB_USER}
       POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
       POSTGRES_DB: ${DJANGO_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+
+  postgresql-3:
+    image: postgres:17
+    mem_limit: 4096m
+    container_name: postgresql-3
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${SECURITY_DB_USER}
+      POSTGRES_PASSWORD: $SECURITY_DB_PASSWORD}
+      POSTGRES_DB: ${SECURITY_DB_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 20s

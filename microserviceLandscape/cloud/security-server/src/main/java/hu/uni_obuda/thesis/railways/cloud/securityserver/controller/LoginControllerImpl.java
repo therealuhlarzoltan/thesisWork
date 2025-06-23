@@ -3,7 +3,6 @@ package hu.uni_obuda.thesis.railways.cloud.securityserver.controller;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.dto.JwtResponse;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.dto.LoginRequest;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.RefreshTokenEntity;
-import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.RoleEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.UserEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.RefreshTokenRepository;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.UserRepository;
@@ -17,7 +16,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.RestController;
 
