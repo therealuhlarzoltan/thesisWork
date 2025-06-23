@@ -78,8 +78,6 @@ services:
         condition: service_healthy
       postgresql-2:
         condition: service_healthy
-      redis-3:
-        condition: service_healthy
 
   route-planner-service:
     build: route/route-planner-service
@@ -109,10 +107,29 @@ services:
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_WEB_SERVER=TRACE
       - SWAGGER_USERNAME=${SWAGGER_USERNAME}
       - SWAGGER_PASSWORD=${SWAGGER_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - $PWD/keystore:/keystore
     ports:
       - "8443:8443"
+
+  security-server:
+    build: cloud/security-server
+    mem_limit: 1048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - POSTGRES_DB_NAME=${SECURITY_DB_NAME}
+      - POSTGRES_USERNAME=${SECURITY_DB_USER}
+      - POSTGRES_PASSWORD=${SECURITY_DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+    depends_on:
+      postgresql-3:
+        condition: service_healthy
 
   postgresql-1:
     image: postgres:17
@@ -146,6 +163,22 @@ services:
       timeout: 3s
       retries: 10
 
+  postgresql-3:
+    image: postgres:17
+    mem_limit: 4096m
+    container_name: postgresql-3
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${SECURITY_DB_USER}
+      POSTGRES_PASSWORD: $SECURITY_DB_PASSWORD}
+      POSTGRES_DB: ${SECURITY_DB_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+
   redis-1:
     image: redis:7.2-alpine
     container_name: redis-1
@@ -162,17 +195,6 @@ services:
     container_name: redis-2
     ports:
       - "6380:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  redis-3:
-    image: redis:7.2-alpine
-    container_name: redis-3
-    ports:
-      - "6381:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
       interval: 10s
