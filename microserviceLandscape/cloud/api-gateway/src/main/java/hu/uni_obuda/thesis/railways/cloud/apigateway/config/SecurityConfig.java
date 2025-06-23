@@ -14,12 +14,17 @@ import org.springframework.security.core.userdetails.MapReactiveUserDetailsServi
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import reactor.core.publisher.Mono;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -45,16 +50,34 @@ public class SecurityConfig {
 
     @Order(2)
     @Bean
+    public SecurityWebFilterChain swaggerChain(ServerHttpSecurity http) {
+        ServerWebExchangeMatcher swaggerPaths = exchange -> {
+            String path = exchange.getRequest().getPath().value();
+            if (path.startsWith("/route-planner/openapi/") || path.startsWith("/route-planner/webjars/")
+                    || path.startsWith("/rail/openapi/") || path.startsWith("/rail/webjars/")
+                    || path.startsWith("/weather/openapi/") || path.startsWith("/weather/webjars/")
+                    || path.startsWith("/geocoding/openapi/") || path.startsWith("/geocoding/webjars/")
+                    || path.startsWith("/delays/openapi/") || path.startsWith("/delays/webjars/")
+                    || path.startsWith("/security/openapi/") || path.startsWith("/security/webjars/")) {
+                return ServerWebExchangeMatcher.MatchResult.match();
+            }
+            return ServerWebExchangeMatcher.MatchResult.notMatch();
+        };
+
+        return http
+                .securityMatcher(swaggerPaths)
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .authorizeExchange(ex -> ex.anyExchange().authenticated())
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+
+    @Order(3)
+    @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(auth -> auth
-                        .pathMatchers("/route-planner/openapi/**", "/route-planner/webjars/**").authenticated()
-                        .pathMatchers("/rail/openapi/**", "/rail/webjars/**").authenticated()
-                        .pathMatchers("/weather/openapi/**", "/weather/webjars/**").authenticated()
-                        .pathMatchers("/geocoding/openapi/**", "/geocoding/webjars/**").authenticated()
-                        .pathMatchers("/delays/openapi/**", "/delays/webjars/**").authenticated()
-
                         .pathMatchers("/route-planner/**").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
                         .pathMatchers("/rail/**").hasRole("ROLE_ADMIN")
                         .pathMatchers("/weather/**").hasRole("ROLE_ADMIN")
@@ -63,7 +86,6 @@ public class SecurityConfig {
 
                         .anyExchange().denyAll()
                 )
-                .httpBasic(Customizer.withDefaults())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
@@ -104,6 +126,13 @@ public class SecurityConfig {
                 });
 
         return adapter;
+    }
+
+    @Bean
+    public ReactiveJwtDecoder jwtDecoder(@Value("${jwt.secret}") String secret) {
+        return NimbusReactiveJwtDecoder
+                .withSecretKey(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"))
+                .build();
     }
 }
 

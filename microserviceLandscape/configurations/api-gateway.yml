@@ -113,6 +113,27 @@ spring:
       filters:
         - RewritePath=/config/(?<segment>.*), /$\{segment}
 
+    - id: security-server
+      uri: http://security-server:9999
+      predicates:
+        - Path=/security/**
+      filters:
+        - StripPrefix=1
+
+    - id: security-server-swagger-ui
+      uri: http://security-server:9999
+      predicates:
+        - Path=/security/openapi/**
+      filters:
+        - StripPrefix=1
+
+    - id: security-server-webjars
+      uri: http://security-server:9999
+      predicates:
+        Path=/security/webjars/**
+      filters:
+        - StripPrefix=1
+
   security:
     oauth2:
       resourceserver:

@@ -19,6 +19,8 @@ public class JsonWebTokenServiceImpl implements JsonWebTokenService {
 
     @Value("${jwt.secret}")
     private String secret;
+    @Value("${jwt.access.expiration-ms}")
+    private Long accessExpirationMs;
 
     private Key constructSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
@@ -31,7 +33,7 @@ public class JsonWebTokenServiceImpl implements JsonWebTokenService {
                 .claim("roles", user.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority).toList())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 300000)) // 5 minutes
+                .setExpiration(new Date(System.currentTimeMillis() + accessExpirationMs))
                 .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
     }
