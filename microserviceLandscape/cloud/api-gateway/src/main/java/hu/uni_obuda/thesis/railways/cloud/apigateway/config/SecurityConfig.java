@@ -128,6 +128,7 @@ public class SecurityConfig {
                         .pathMatchers("/geocoding/**").hasRole("ROLE_ADMIN")
                         .pathMatchers("/delays/**").hasRole("ROLE_ADMIN")
                         .pathMatchers( "/security/custom-logout").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
+                        .pathMatchers("/security/register/admin").hasRole("ROLE_ADMIN")
                         .pathMatchers("/security/**").permitAll()
 
                         .anyExchange().denyAll()
