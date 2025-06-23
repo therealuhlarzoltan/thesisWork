@@ -1,0 +1,64 @@
+server:
+  port: 9999
+  error.include-message: always
+  forward-headers-strategy: framework
+
+jwt:
+  access:
+    secret: ${JWT_SECRET}
+    expiration-ms: 120000
+  refresh:
+    secret: ${JWT_REFRESH_SECRET}
+    expiration-ms: 86400000
+
+role:
+  default.name: ROLE_USER
+  admin.name: ROLE_ADMIN
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    database-type: postgresql
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
+    user: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/api-docs
+  paths-to-match: /**
+  packages-to-scan:
+    - hu.uni_obuda.thesis.railways.cloud.securityserver
+
+
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+
+logging:
+  level:
+    root: INFO
+
+---
+spring.activate.on-profile: docker
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgresql-3:5432/${POSTGRES_DB_NAME}
+  flyway:
+    url: jdbc:postgresql://postgresql-3:5432/${POSTGRES_DB_NAME}
+
+
