@@ -17,11 +17,11 @@ export const AuthProvider = ({ children }) => {
         const requestOptions = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "username": username, "password": password })
+            body: JSON.stringify({ "email": username, "password": password })
         }
-        let response = await fetch('/security/login/', requestOptions)
+        let response = await fetch('https://localhost:8443/security/login', requestOptions)
         let data = await response.json()
-
+        console.log(data)
         if (response.status === 200) {
             setAuthTokens(data);
             setUser(jwtDecode(data.access))
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
                     "refresh_token": authTokens?.refresh
                 })
             }
-            let response = await fetch('/security/logout/', requestOptions)
+            let response = await fetch('https://localhost:8443/security/logout', requestOptions)
         }  catch (error) {
             return {"error": true}
         }
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ "refresh": authTokens?.Token })
             }
-            let response = await fetch('/security/refresh/', requestOptions)
+            let response = await fetch('https://localhost:8443/security/refresh', requestOptions)
             let data = await response.json()
 
             if (response.ok) {
