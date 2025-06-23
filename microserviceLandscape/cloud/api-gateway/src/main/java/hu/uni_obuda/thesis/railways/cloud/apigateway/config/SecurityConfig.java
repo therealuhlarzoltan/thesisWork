@@ -83,6 +83,8 @@ public class SecurityConfig {
                         .pathMatchers("/weather/**").hasRole("ROLE_ADMIN")
                         .pathMatchers("/geocoding/**").hasRole("ROLE_ADMIN")
                         .pathMatchers("/delays/**").hasRole("ROLE_ADMIN")
+                        .pathMatchers("/security/logout").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
+                        .pathMatchers("/security/**").permitAll()
 
                         .anyExchange().denyAll()
                 )
