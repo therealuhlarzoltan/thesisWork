@@ -5,6 +5,8 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
+  access:
+      expiration-ms: 120000
 
 role:
   default.name: ROLE_USER
@@ -30,6 +32,15 @@ spring:
     user: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
 
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/api-docs
+  paths-to-match: /**
+  packages-to-scan:
+    - hu.uni_obuda.thesis.railways.cloud.securityserver
+
 
 management.endpoint.health.show-details: "ALWAYS"
 management.endpoints.web.exposure.include: "*"
@@ -38,11 +49,4 @@ logging:
   level:
     root: INFO
 
----
-spring.activate.on-profile: docker
 
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
-  flyway:
-    url: jdbc:postgresql://postgresql-3:5432/${POSTGRES_DB_NAME}

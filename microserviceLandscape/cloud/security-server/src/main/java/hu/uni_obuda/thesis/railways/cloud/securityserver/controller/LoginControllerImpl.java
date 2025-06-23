@@ -30,6 +30,7 @@ public class LoginControllerImpl implements LoginController {
     private final JsonWebTokenService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public JwtResponse login(LoginRequest loginRequest) {
@@ -38,6 +39,7 @@ public class LoginControllerImpl implements LoginController {
 
         UserEntity user = (UserEntity) auth.getPrincipal();
 
+        refreshTokenRepository.deleteByUser(user);
         String jwt = jwtService.generateToken(user);
         RefreshTokenEntity refreshToken = refreshTokenService.createRefreshToken(user);
 
