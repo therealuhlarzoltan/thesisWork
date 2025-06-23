@@ -116,7 +116,7 @@ services:
       - "8443:8443"
 
   security-server:
-    build: cloud/api-gateway
+    build: cloud/security-server
     mem_limit: 1048m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -125,8 +125,9 @@ services:
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
       - POSTGRES_DB_NAME=${SECURITY_DB_NAME}
-      - POSTGRES_USERNAME=${SECURITY_USER_NAME}
-      - POSTGRES_PASSWORD=${SECURITY_PASSWORD}
+      - POSTGRES_USERNAME=${SECURITY_DB_USER}
+      - POSTGRES_PASSWORD=${SECURITY_DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       postgresql-3:
         condition: service_healthy
