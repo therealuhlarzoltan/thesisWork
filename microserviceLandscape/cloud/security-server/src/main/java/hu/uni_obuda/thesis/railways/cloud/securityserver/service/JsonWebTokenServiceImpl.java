@@ -38,26 +38,36 @@ public class JsonWebTokenServiceImpl implements JsonWebTokenService {
 
     @Override
     public String extractUsername(String token) {
-        return Jwts.parser()
-                .setSigningKey(constructSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        Claims claims = parseToken(token);
+        return claims.getSubject();
     }
 
     @Override
     public List<String> extractRoles(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(constructSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        Claims claims = parseToken(token);
         return claims.get("roles", List.class);
     }
 
     @Override
     public boolean validateToken(String token, UserDetails user) {
         return extractUsername(token).equals(user.getUsername());
+    }
+
+    @Override
+    public boolean validateToken(String token) {
+        try {
+            parseToken(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private Claims parseToken(String token) {
+        return Jwts.parser()
+                .setSigningKey(constructSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

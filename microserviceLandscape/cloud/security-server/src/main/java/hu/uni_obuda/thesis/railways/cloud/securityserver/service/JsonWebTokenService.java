@@ -9,4 +9,6 @@ public interface JsonWebTokenService {
     String extractUsername(String token);
     List<String> extractRoles(String token);
     boolean validateToken(String token, UserDetails user);
+
+    boolean validateToken(String token);
 }

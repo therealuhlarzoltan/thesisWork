@@ -52,7 +52,7 @@ public class LoginControllerImpl implements LoginController {
 
         String jwt = authHeader.substring(7);
 
-        if (!jwtService.validateToken()) {
+        if (!jwtService.validateToken(jwt)) {
             throw new BadCredentialsException("Invalid or expired token");
         }
 
