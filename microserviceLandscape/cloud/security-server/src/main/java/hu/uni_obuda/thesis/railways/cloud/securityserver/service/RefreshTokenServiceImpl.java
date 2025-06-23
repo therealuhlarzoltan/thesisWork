@@ -17,6 +17,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Value("${jwt.refresh.expiration-ms:86400000}")
     private Long refreshTokenDurationMs;
 
+    private final JsonWebTokenService jwtService;
     private final RefreshTokenRepository tokenRepository;
 
     @Override
@@ -24,7 +25,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshTokenEntity token = new RefreshTokenEntity();
         token.setUser(user);
         token.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
-        token.setToken(UUID.randomUUID().toString());
+        String jwtRefreshToken = jwtService.generateRefreshToken(user);
+        token.setToken(jwtRefreshToken);
         return tokenRepository.save(token);
     }
 

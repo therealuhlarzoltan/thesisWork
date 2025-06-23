@@ -33,7 +33,7 @@ public class RefreshControllerImpl implements RefreshController {
                 .map(refreshTokenService::verifyExpiration)
                 .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Invalid or expired refresh token"));
 
-        String newAccessToken = jwtService.generateToken(tokenEntity.getUser());
+        String newAccessToken = jwtService.generateAccessToken(tokenEntity.getUser());
         return new JwtResponse(newAccessToken, refreshToken);
     }
 }

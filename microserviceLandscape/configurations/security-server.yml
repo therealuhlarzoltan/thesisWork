@@ -4,9 +4,12 @@ server:
   forward-headers-strategy: framework
 
 jwt:
-  secret: ${JWT_SECRET}
   access:
-      expiration-ms: 120000
+    secret: ${JWT_SECRET}
+    expiration-ms: 120000
+  refresh:
+    secret: ${JWT_REFRESH_SECRET}
+    expiration-ms: 86400000
 
 role:
   default.name: ROLE_USER
