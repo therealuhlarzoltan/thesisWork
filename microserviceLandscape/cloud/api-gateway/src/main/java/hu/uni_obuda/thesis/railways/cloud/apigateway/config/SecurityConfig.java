@@ -35,8 +35,6 @@ import java.nio.charset.StandardCharsets;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
-
     @Order(1)
     @Bean
     public SecurityWebFilterChain permitAllChain(ServerHttpSecurity http) {
@@ -86,10 +84,8 @@ public class SecurityConfig {
         ServerWebExchangeMatcher publicPathsMatcher = exchange -> {
             String path = exchange.getRequest().getPath().value();
             if (path.startsWith("/security/refresh")) {
-                LOG.info("New chain matched");
                 return ServerWebExchangeMatcher.MatchResult.match();
             }
-            LOG.info("New chain not matched");
             return ServerWebExchangeMatcher.MatchResult.notMatch();
         };
 

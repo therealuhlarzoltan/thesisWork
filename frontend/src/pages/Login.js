@@ -15,12 +15,8 @@ import AuthContext from '../context/AuthContext';
 
 import { Navigate } from 'react-router-dom';
 
-import { blue, white, purple } from '@mui/material/colors';
 import { Paper } from '@mui/material';
-
 import { translateError } from '../ErrorMessages';
-
-
 
 function Login() {
 
@@ -52,33 +48,39 @@ function Login() {
                     setAlert(translateError(result.data[key], result.data[key]));
                     setStatus(result.response.status);
                 } else if (result.response.status === 401) {
-                    setAlert("Probléma a bejelentkezéssel, próbáld újra később!")
+                    setAlert("\uD83D\uDEA7 Probléma a bejelentkezéssel, próbáld újra később!")
                     setStatus(result.response.status)
                 } else if (result.response.status === 403) {
-                    setAlert("Hibás email cím vagy jelszó, próbáld újra!")
+                    setAlert("\u274C Hibás email cím vagy jelszó, próbáld újra!")
                     setStatus(result.response.status)
                 } else {
-                    setAlert("Váratlan hiba történt...")
+                    setAlert("\u26A0\uFE0F Váratlan hiba történt...")
                     setStatus(result.response.status)
                 }
             }
         } catch (error) {
             console.log("the error that occurred is: ", error)
             setStatus(500)
-            setAlert("Váratlan hiba történt...")
+            setAlert("\u26A0\uFE0F Váratlan hiba történt...")
         }
-
     }
 
-
     return (
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{
+            width: '100%',
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #003366 30%, #002244 70%, #FFCC00 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 2
+        }}>
             {user ? <Navigate to={"/"} replace={true} /> : null}
-            <Grid container rowSpacing={1.5} alignItems="center" justify="center" direction="column">
+            <Grid container rowSpacing={1.5} alignItems="center" justifyContent="center" direction="column">
                 <Grid item xs={12} id="alert-grid">
                     {status === 200 ? <Navigate to={"/"} replace={true} /> : null}
-                    {status && status != 200 ?
-                        <Alert severity="error" sx={{margin: "auto", mb: 2 }}
+                    {status && status !== 200 ?
+                        <Alert severity="error" sx={{ margin: "auto", mb: 2, maxWidth: '400px' }}
                                action={
                                    <IconButton
                                        aria-label="close"
@@ -97,37 +99,58 @@ function Login() {
                         </Alert> : null
                     }
                 </Grid>
-                <Paper elevation={3} sx={{width: "30%"}}>
-                    <Grid container rowSpacing={1.5} alignItems="center" justify="center" direction="column" >
+                <Paper elevation={6} sx={{
+                    width: "100%",
+                    maxWidth: 420,
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: 4,
+                    p: 4,
+                    border: '2px solid #FFCC00',
+                    boxShadow: '0 0 20px rgba(0, 51, 102, 0.3)'
+                }}>
+                    <Grid container rowSpacing={2} alignItems="center" justifyContent="center" direction="column">
                         <Grid item xs={12}>
-                            <Typography variant="h2" gutterBottom sx={{mt: 4}}>
-                                Login
+                            <Typography variant="h5" gutterBottom align="center" sx={{ color: '#002244', fontWeight: 700, lineHeight: 1.4 }}>
+                                🚂 Vasúti utazástervező alkalmazás bejelentkezés
                             </Typography>
                         </Grid>
                         <Grid item xs={8} align="center">
                             <TextField
+                                fullWidth
                                 id="username"
-                                label="Username"
+                                label="Email"
                                 value={username}
                                 onChange={handleUsernameChange}
                             />
                         </Grid>
                         <Grid item xs={8} align="center">
                             <TextField
+                                fullWidth
                                 id="password"
-                                label="Password"
+                                label="Jelszó"
                                 type="password"
                                 value={password}
                                 onChange={handlePasswordChange}
                             />
                         </Grid>
-                        <Grid xs={8}>
-                            <Button sx={{"marginTop": "10px", color: purple['500'], borderColor: purple["700"], ":hover": { backgroundColor: purple["700"], color: "white", borderColor: purple["700"] }, mb: 4 }}
-                                    size="large"
-                                    variant="outlined"
-                                    onClick={handleLoginButtonClicked}
+                        <Grid item xs={8}>
+                            <Button
+                                fullWidth
+                                sx={{
+                                    marginTop: 2,
+                                    backgroundColor: '#003366',
+                                    color: '#FFCC00',
+                                    fontWeight: 700,
+                                    ':hover': {
+                                        backgroundColor: '#002244'
+                                    },
+                                    py: 1.2
+                                }}
+                                size="large"
+                                variant="contained"
+                                onClick={handleLoginButtonClicked}
                             >
-                                Login
+                                🚇 Bejelentkezés
                             </Button>
                         </Grid>
                     </Grid>
@@ -137,4 +160,4 @@ function Login() {
     );
 }
 
-export default Login
+export default Login;
