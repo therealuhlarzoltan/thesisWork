@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
         console.log(data)
         if (response.status === 200) {
             setAuthTokens(data);
-            setUser(jwtDecode(data.access))
+            setUser(jwtDecode(data.accessToken).sub)
             localStorage.setItem("authTokens", JSON.stringify(data));
         }
 
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
 
             if (response.ok) {
                 setAuthTokens(data);
-                setUser(jwtDecode(data.access))
+                setUser(jwtDecode(data.accessToken).sub)
                 localStorage.setItem("authTokens", JSON.stringify(data));
                 setLoaded(true);
             }
@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }) => {
             {
                 update();
             }
-        }, 240000);
+        }, 90000);
         return () => clearInterval(interval);
 
     }, [authTokens, loaded])

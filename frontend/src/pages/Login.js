@@ -18,6 +18,8 @@ import { Navigate } from 'react-router-dom';
 import { blue, white, purple } from '@mui/material/colors';
 import { Paper } from '@mui/material';
 
+import { translateError } from '../ErrorMessages';
+
 
 
 function Login() {
@@ -45,22 +47,25 @@ function Login() {
                 setStatus(200);
             }
             else {
-
-
-                if (result.response.status === 400 || result.response.status === 401) {
+                if (result.response.status === 400) {
                     const key = Object.keys(result.data)[0];
-                    let field = key;
-                    let firstLetter = field.charAt(0).toUpperCase();
-                    field = field.slice(1);
-                    const str = firstLetter + field
-                    setAlert(`${str}:  ${result.data[key]}`);
+                    setAlert(translateError(result.data[key], result.data[key]));
                     setStatus(result.response.status);
+                } else if (result.response.status === 401) {
+                    setAlert("Probléma a bejelentkezéssel, próbáld újra később!")
+                    setStatus(result.response.status)
+                } else if (result.response.status === 403) {
+                    setAlert("Hibás email cím vagy jelszó, próbáld újra!")
+                    setStatus(result.response.status)
+                } else {
+                    setAlert("Váratlan hiba történt...")
+                    setStatus(result.response.status)
                 }
             }
         } catch (error) {
             console.log("the error that occurred is: ", error)
             setStatus(500)
-            setAlert("Something went wrong — please try again later!")
+            setAlert("Váratlan hiba történt...")
         }
 
     }
