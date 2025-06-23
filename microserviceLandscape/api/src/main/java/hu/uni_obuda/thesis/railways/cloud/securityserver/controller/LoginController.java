@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.*;
 public interface LoginController {
     @PostMapping("login")
     JwtResponse login(@Valid @RequestBody LoginRequest loginRequest);
-    @DeleteMapping("logout")
+    @DeleteMapping("custom-logout")
     void logout(@RequestHeader("Authorization") String authHeader);
 }

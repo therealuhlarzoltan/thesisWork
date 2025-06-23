@@ -45,4 +45,16 @@ public class UserEntity implements UserDetails {
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
     @Override public boolean isEnabled() { return true; }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof UserEntity that)) return false;
+
+        return email.equals(that.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return email.hashCode();
+    }
 }

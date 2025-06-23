@@ -113,6 +113,15 @@ spring:
       filters:
         - RewritePath=/config/(?<segment>.*), /$\{segment}
 
+    - id: security-server-logout
+      uri: http://security-server:9999
+      predicates:
+        - Path=/security/logout
+      filters:
+        - StripPrefix=1
+        - RewritePath=/logout, /custom-logout
+        - PreserveHostHeader
+
     - id: security-server
       uri: http://security-server:9999
       predicates:

@@ -78,8 +78,6 @@ services:
         condition: service_healthy
       postgresql-2:
         condition: service_healthy
-      redis-3:
-        condition: service_healthy
 
   route-planner-service:
     build: route/route-planner-service
@@ -197,17 +195,6 @@ services:
     container_name: redis-2
     ports:
       - "6380:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  redis-3:
-    image: redis:7.2-alpine
-    container_name: redis-3
-    ports:
-      - "6381:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
       interval: 10s

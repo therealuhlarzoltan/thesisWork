@@ -33,7 +33,7 @@ public class LoginServiceImpl implements LoginService {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-        UserEntity user = (UserEntity) auth.getPrincipal();
+        UserEntity user = userRepository.findByEmail(((UserEntity) auth.getPrincipal()).getUsername()).get();
 
         refreshTokenRepository.deleteByUser(user);
         String jwt = jwtService.generateAccessToken(user);
