@@ -109,6 +109,7 @@ services:
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_WEB_SERVER=TRACE
       - SWAGGER_USERNAME=${SWAGGER_USERNAME}
       - SWAGGER_PASSWORD=${SWAGGER_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - $PWD/keystore:/keystore
     ports:
