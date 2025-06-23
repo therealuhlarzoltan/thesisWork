@@ -3,7 +3,6 @@ package hu.uni_obuda.thesis.railways.cloud.securityserver.service;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.RefreshTokenEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.entity.UserEntity;
 import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.RefreshTokenRepository;
-import hu.uni_obuda.thesis.railways.cloud.securityserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,5 +35,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             throw new RuntimeException("Refresh token expired");
         }
         return token;
+    }
+
+    @Override
+    public void invalidateToken(UserEntity user) {
+        tokenRepository.deleteByUser(user);
     }
 }
