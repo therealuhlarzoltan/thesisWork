@@ -1,0 +1,36 @@
+import React from 'react';
+
+import Paper from '@mui/material/Paper';
+import { Grid, Typography } from "@mui/material";
+import Button from '@mui/material/Button';
+import Stack from "@mui/material/Stack";
+
+import { useNavigate } from "react-router-dom";
+import { purple, blue } from "@mui/material/colors";
+
+
+function Landing() {
+
+    const navigate = useNavigate()
+    const buttons = [
+        <Button key="Login" variant="contained" sx={{ color: "white", backgroundColor: purple['500'], ":hover": { backgroundColor: blue["700"], borderColor: purple["700"] } }} onClick={() => navigate("/login")}>Login</Button>,
+        <Button key="Register" variant="contained" sx={{ color: "white", backgroundColor: blue['700'], ":hover": { backgroundColor: purple["700"], borderColor: blue["700"] } }} onClick={() => navigate("/register")}>Register</Button>,
+    ]
+
+    return (
+        <Grid container justifyContent="center" alignItems="center" sx={{ height: "80%" }}>
+            <Grid item xs={6}>
+                <Paper elevation={3}>
+                    <Grid container display={"flex"} justifyContent="center" alignItems="center" flexDirection={"column"}>
+                        <Typography textAlign={"center"} variant="h2" sx={{my: "18px"}}>Welcome to SummarAI-z</Typography>
+                        <Stack spacing={2} direction="row" sx={{my: "40px"}}>
+                            {buttons}
+                        </Stack>
+                    </Grid>
+                </Paper>
+            </Grid>
+        </Grid>
+    );
+}
+
+export default Landing
