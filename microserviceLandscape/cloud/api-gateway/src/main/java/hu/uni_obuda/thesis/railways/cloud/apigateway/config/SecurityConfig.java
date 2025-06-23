@@ -41,7 +41,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain permitAllChain(ServerHttpSecurity http) {
         ServerWebExchangeMatcher publicPathsMatcher = exchange -> {
             String path = exchange.getRequest().getPath().value();
-            if (path.startsWith("/eureka/") || path.startsWith("/config/")) {
+            if (path.startsWith("/eureka/") || path.startsWith("/config/") || path.contains("/error/")) {
                 return ServerWebExchangeMatcher.MatchResult.match();
             }
             return ServerWebExchangeMatcher.MatchResult.notMatch();

@@ -143,6 +143,11 @@ spring:
       filters:
         - StripPrefix=1
 
+    - id: security-error
+      uri: lb://security-server
+      predicates:
+        - Path=/error/**
+
   security:
     oauth2:
       resourceserver:
