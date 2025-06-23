@@ -49,4 +49,13 @@ logging:
   level:
     root: INFO
 
+---
+spring.activate.on-profile: docker
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
+  flyway:
+    url: jdbc:postgresql://postgresql-3:5432/${POSTGRES_DB_NAME}
+
 
