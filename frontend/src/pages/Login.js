@@ -1,17 +1,17 @@
-import React from 'react';
-
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Grid from "@mui/material/Grid";
-import Button from '@mui/material/Button';
-import { useState, useContext } from "react";
-import Typography from '@mui/material/Typography';
+import React, { useState, useContext } from 'react';
+import {
+    Box,
+    Grid,
+    Paper,
+    TextField,
+    Typography,
+    Button,
+    Alert,
+    IconButton
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import Alert from '@mui/material/Alert';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import { Navigate } from 'react-router-dom';
-
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import { Navigate, Link as RouterLink } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { translateError } from '../ErrorMessages';
 
@@ -141,6 +141,30 @@ function Login() {
                                 onClick={handleLoginButtonClicked}
                             >
                                 🚇 Bejelentkezés
+                            </Button>
+                        </Grid>
+                        <Grid item xs={8}>
+                            <Button
+                                fullWidth
+                                component={RouterLink}
+                                to="/"
+                                variant="outlined"
+                                startIcon={<HomeRoundedIcon />}
+                                sx={{
+                                    mt: 1.5,
+                                    borderColor: '#003366',
+                                    color: '#003366',
+                                    fontWeight: 600,
+                                    ':hover': {
+                                        borderColor: '#002244',
+                                        backgroundColor: 'rgba(0, 51, 102, 0.05)',
+                                        transform: 'translateY(-1px)',
+                                        transition: 'all 0.2s ease-in-out',
+                                    },
+                                    py: 1.1
+                                }}
+                            >
+                                Vissza a főoldalra
                             </Button>
                         </Grid>
                     </Grid>

@@ -83,8 +83,9 @@ export const AuthProvider = ({ children }) => {
         try {
             const requestOptions = {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "refresh": authTokens?.Token })
+                headers: { "Content-Type": "application/json",
+                            "Authorization": "Bearer " + String(authTokens?.refreshToken),
+                }
             }
             let response = await fetch('https://localhost:8443/security/refresh', requestOptions)
             let data = await response.json()
@@ -134,7 +135,7 @@ export const AuthProvider = ({ children }) => {
             {
                 update();
             }
-        }, 90000);
+        }, 30000);
         return () => clearInterval(interval);
 
     }, [authTokens, loaded])

@@ -1,5 +1,7 @@
-import React, { Component } from "react";
-import { createBrowserRouter, RouterProvider, } from "react-router-dom";
+import React from "react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -30,9 +32,12 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </LocalizationProvider>
   );
 }
+
 

@@ -69,7 +69,7 @@ services:
 
   delay-predictor-service:
     build: model/delay-predictor-service
-    mem_limit: 4096m
+    mem_limit: 8192m
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - CONFIG_PROFILE=docker

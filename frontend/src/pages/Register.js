@@ -11,7 +11,6 @@ import {
     Link
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DirectionsRailwayFilledIcon from '@mui/icons-material/DirectionsRailwayFilled';
 import { Navigate, Link as RouterLink } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
