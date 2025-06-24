@@ -31,6 +31,13 @@ spring:
       filters:
         - StripPrefix=1
 
+    - id: route-planner-service
+      uri: lb://route-planner-service
+      predicates:
+        - Path=/route-planner/**
+      filters:
+        - StripPrefix=1
+
     - id: rail-data-collector-swagger-ui
       uri: lb://rail-data-collector
       predicates:
@@ -42,6 +49,13 @@ spring:
       uri: lb://rail-data-collector
       predicates:
         Path=/rail/webjars/**
+      filters:
+        - StripPrefix=1
+
+    - id: rail-data-collector
+      uri: lb://rail-data-collector
+      predicates:
+        - Path=/rail/**
       filters:
         - StripPrefix=1
 
@@ -59,6 +73,13 @@ spring:
       filters:
         - StripPrefix=1
 
+    - id: weather-data-collector
+      uri: lb://weather-data-collector
+      predicates:
+        - Path=/weather/**
+      filters:
+        - StripPrefix=1
+
     - id: geocoding-service-swagger-ui
       uri: lb://geocoding-service
       predicates:
@@ -73,6 +94,13 @@ spring:
       filters:
         - StripPrefix=1
 
+    - id: geocoding-service
+      uri: lb://geocoding-service
+      predicates:
+        - Path=/geocoding/**
+      filters:
+        - StripPrefix=1
+
     - id: delay-data-collector-swagger-ui
       uri: lb://delay-data-collector
       predicates:
@@ -84,6 +112,20 @@ spring:
       uri: lb://delay-data-collector
       predicates:
         Path=/delays/webjars/**
+      filters:
+        - StripPrefix=1
+
+    - id: delay-data-collector
+      uri: lb://delay-data-collector
+      predicates:
+        - Path=/delays/**
+      filters:
+        - StripPrefix=1
+
+    - id: delay-predictor-service-admin
+      uri: lb://delay-predictor-service
+      predicates:
+        - Path=/prediction/admin
       filters:
         - StripPrefix=1
 
