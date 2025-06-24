@@ -70,7 +70,7 @@ function HomePageContent() {
             to,
             ...(departureTime && !arrivalTime && { departureTime: dayjs(departureTime).format('YYYY-MM-DDTHH:mm') }),
             ...(arrivalTime && !departureTime && { arrivalTime: dayjs(arrivalTime).format('YYYY-MM-DDTHH:mm') }),
-            ...(maxChanges > 0 && { maxChanges: maxChanges.toString() })
+            ...({ maxChanges: maxChanges.toString() })
         });
 
         try {
