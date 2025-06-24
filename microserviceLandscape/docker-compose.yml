@@ -69,7 +69,7 @@ services:
 
   delay-predictor-service:
     build: model/delay-predictor-service
-    mem_limit: 4096m
+    mem_limit: 8192m
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - CONFIG_PROFILE=docker
@@ -171,7 +171,7 @@ services:
       - "5434:5432"
     environment:
       POSTGRES_USER: ${SECURITY_DB_USER}
-      POSTGRES_PASSWORD: $SECURITY_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${SECURITY_DB_PASSWORD}
       POSTGRES_DB: ${SECURITY_DB_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]

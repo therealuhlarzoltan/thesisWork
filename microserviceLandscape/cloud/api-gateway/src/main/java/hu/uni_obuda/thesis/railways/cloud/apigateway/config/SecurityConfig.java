@@ -1,13 +1,10 @@
 package hu.uni_obuda.thesis.railways.cloud.apigateway.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.Customizer;
@@ -24,7 +21,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -34,14 +31,13 @@ import java.nio.charset.StandardCharsets;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SecurityConfig.class);
-
     @Order(1)
     @Bean
     public SecurityWebFilterChain permitAllChain(ServerHttpSecurity http) {
         ServerWebExchangeMatcher publicPathsMatcher = exchange -> {
             String path = exchange.getRequest().getPath().value();
-            if (path.startsWith("/eureka/") || path.startsWith("/config/") || path.contains("/error/")) {
+            if (path.startsWith("/eureka/") || path.startsWith("/config/")
+                    || path.contains("/error/") || path.contains("/prediction/admin")) {
                 return ServerWebExchangeMatcher.MatchResult.match();
             }
             return ServerWebExchangeMatcher.MatchResult.notMatch();
@@ -84,10 +80,8 @@ public class SecurityConfig {
         ServerWebExchangeMatcher publicPathsMatcher = exchange -> {
             String path = exchange.getRequest().getPath().value();
             if (path.startsWith("/security/refresh")) {
-                LOG.info("New chain matched");
                 return ServerWebExchangeMatcher.MatchResult.match();
             }
-            LOG.info("New chain not matched");
             return ServerWebExchangeMatcher.MatchResult.notMatch();
         };
 
@@ -95,6 +89,14 @@ public class SecurityConfig {
                 .securityMatcher(publicPathsMatcher)
                 .authorizeExchange(ex -> ex.anyExchange().permitAll())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(exchange -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.addAllowedOrigin("http://localhost:3000");
+                    config.addAllowedMethod("*");
+                    config.addAllowedHeader("*");
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
                 .build();
     }
 
@@ -103,6 +105,14 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(exchange -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.addAllowedOrigin("http://localhost:3000");
+                    config.addAllowedMethod("*");
+                    config.addAllowedHeader("*");
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
                 .authorizeExchange(auth -> auth
                         .pathMatchers("/route-planner/**").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
                         .pathMatchers("/rail/**").hasRole("ROLE_ADMIN")
@@ -110,6 +120,7 @@ public class SecurityConfig {
                         .pathMatchers("/geocoding/**").hasRole("ROLE_ADMIN")
                         .pathMatchers("/delays/**").hasRole("ROLE_ADMIN")
                         .pathMatchers( "/security/custom-logout").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
+                        .pathMatchers("/security/register/admin").hasRole("ROLE_ADMIN")
                         .pathMatchers("/security/**").permitAll()
 
                         .anyExchange().denyAll()
