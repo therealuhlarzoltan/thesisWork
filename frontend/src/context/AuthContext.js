@@ -42,11 +42,17 @@ export const AuthProvider = ({ children }) => {
             body: JSON.stringify({ "email": email, "password": password })
         };
         let response = await fetch('https://localhost:8443/security/register', requestOptions);
-        let data = await response.json();
+        let data = null;
+
+        try {
+            data = await response.json()
+        } catch (error) {
+            data = {}
+        }
 
         return {
-            data: data,
-            response: response
+            data,
+            response
         };
     };
 

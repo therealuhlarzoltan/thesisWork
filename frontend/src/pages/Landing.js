@@ -71,7 +71,7 @@ function Landing() {
                 padding: 2
             }}
         >
-            <Grid item xs={10} sm={8} md={6} lg={4}>
+            <Grid item xs={10} sm={8} md={6} lg={4} sx={{ animation: 'fadeInSlide 1s ease-in-out' }}>
                 <Paper
                     elevation={12}
                     sx={{
@@ -81,10 +81,7 @@ function Landing() {
                         textAlign: 'center',
                         border: '3px solid #FFCC00',
                         boxShadow: '0 8px 30px rgba(0, 0, 0, 0.2)',
-                        transition: 'transform 0.3s ease-in-out',
-                        '&:hover': {
-                            transform: 'scale(1.02)'
-                        }
+                        animation: 'fadeSlide 0.7s ease-out'
                     }}
                 >
                     <Typography
@@ -103,6 +100,31 @@ function Landing() {
                     </Stack>
                 </Paper>
             </Grid>
+            <style>
+                {`
+                @keyframes fadeSlide {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes fadeInSlide {
+                    from {
+                        opacity: 0;
+                        transform: translateY(40px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                `}
+            </style>
         </Grid>
     );
 }
