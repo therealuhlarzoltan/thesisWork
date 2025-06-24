@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
 import {translateError} from "../ErrorMessages";
 
 function HomePageContent() {
-    const { user, logoutUser, authTokens } = useContext(AuthContext);
+    const { user, logout, authTokens } = useContext(AuthContext);
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
     const [departureTime, setDepartureTime] = useState(null);
@@ -147,9 +147,9 @@ function HomePageContent() {
             <Paper elevation={6} sx={{ maxWidth: 900, mx: 'auto', p: 4, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.95)', mb: 4 }}>
                 <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                     <Typography variant="h5" fontWeight={700} color="#002244">
-                        Bejelentkezve mint <span style={{ color: '#003366' }}>{user.email}</span>
+                        Bejelentkezve mint <span style={{ color: '#003366' }}>{user}</span>
                     </Typography>
-                    <Button variant="outlined" color="error" startIcon={<LogoutIcon />} onClick={logoutUser}>
+                    <Button variant="outlined" color="error" startIcon={<LogoutIcon />} onClick={logout}>
                         Kijelentkezés
                     </Button>
                 </Grid>
