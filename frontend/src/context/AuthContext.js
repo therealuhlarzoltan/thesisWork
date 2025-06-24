@@ -35,6 +35,21 @@ export const AuthProvider = ({ children }) => {
 
     }
 
+    let register = async (email, password) => {
+        const requestOptions = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "email": email, "password": password })
+        };
+        let response = await fetch('https://localhost:8443/security/register', requestOptions);
+        let data = await response.json();
+
+        return {
+            data: data,
+            response: response
+        };
+    };
+
     let logout = async () => {
         try {
             const requestOptions = {
@@ -92,6 +107,7 @@ export const AuthProvider = ({ children }) => {
 
     let contextData = {
         "login": login,
+        "register": register,
         "user": user,
         "logout": logout,
         "update": update,
