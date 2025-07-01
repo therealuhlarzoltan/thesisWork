@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    @Value("frontend.url")
+    @Value("${frontend.url}")
     private String frontendUrl;
 
     @Order(1)
