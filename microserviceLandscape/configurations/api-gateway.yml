@@ -6,6 +6,8 @@ server.ssl:
   key-store-password: ${KEY_STORE_PASSWORD}
   key-alias: localhost
 
+frontend.url: http://localhost:3000
+
 spring:
 
   cloud.gateway.routes:
