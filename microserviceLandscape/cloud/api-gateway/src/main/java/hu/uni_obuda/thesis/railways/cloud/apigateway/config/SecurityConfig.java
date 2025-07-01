@@ -31,13 +31,17 @@ import java.nio.charset.StandardCharsets;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
+    @Value("frontend.url")
+    private String frontendUrl;
+
     @Order(1)
     @Bean
     public SecurityWebFilterChain permitAllChain(ServerHttpSecurity http) {
         ServerWebExchangeMatcher publicPathsMatcher = exchange -> {
             String path = exchange.getRequest().getPath().value();
             if (path.startsWith("/eureka/") || path.startsWith("/config/")
-                    || path.contains("/error/") || path.contains("/prediction/admin")) {
+                    || path.contains("/error/") || path.contains("/prediction/admin")
+            || path.contains("/login/?next=/admin/")) {
                 return ServerWebExchangeMatcher.MatchResult.match();
             }
             return ServerWebExchangeMatcher.MatchResult.notMatch();
@@ -91,7 +95,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(exchange -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.addAllowedOrigin("http://localhost:3000");
+                    config.addAllowedOrigin(frontendUrl);
                     config.addAllowedMethod("*");
                     config.addAllowedHeader("*");
                     config.setAllowCredentials(true);
@@ -107,7 +111,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(exchange -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.addAllowedOrigin("http://localhost:3000");
+                    config.addAllowedOrigin(frontendUrl);
                     config.addAllowedMethod("*");
                     config.addAllowedHeader("*");
                     config.setAllowCredentials(true);
