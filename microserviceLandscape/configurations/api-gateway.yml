@@ -6,6 +6,8 @@ server.ssl:
   key-store-password: ${KEY_STORE_PASSWORD}
   key-alias: localhost
 
+frontend.url: http://localhost:3000
+
 spring:
 
   cloud.gateway.routes:
@@ -125,7 +127,7 @@ spring:
     - id: delay-predictor-service-admin
       uri: lb://delay-predictor-service
       predicates:
-        - Path=/prediction/admin
+        - Path=/prediction/admin/**
       filters:
         - StripPrefix=1
 
