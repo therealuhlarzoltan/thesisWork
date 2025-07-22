@@ -11,7 +11,7 @@ def reload_models():
     print("APScheduler: Reloading ML models from DB...")
 
     def load_model(category):
-        two_weeks_ago = timezone.now() - timedelta(weeks=2)
+        two_weeks_ago = timezone.now() - timedelta(weeks=6)
         db_model = (
             DelayPredictionModel.objects
             .filter(delay_type=category, created_at__gte=two_weeks_ago)

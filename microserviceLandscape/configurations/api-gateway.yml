@@ -127,7 +127,7 @@ spring:
     - id: delay-predictor-service-admin
       uri: lb://delay-predictor-service
       predicates:
-        - Path=/prediction/admin
+        - Path=/prediction/admin/**
       filters:
         - StripPrefix=1
 

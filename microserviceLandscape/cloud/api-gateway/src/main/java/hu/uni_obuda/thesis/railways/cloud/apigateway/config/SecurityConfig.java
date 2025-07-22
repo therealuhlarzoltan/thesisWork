@@ -40,8 +40,7 @@ public class SecurityConfig {
         ServerWebExchangeMatcher publicPathsMatcher = exchange -> {
             String path = exchange.getRequest().getPath().value();
             if (path.startsWith("/eureka/") || path.startsWith("/config/")
-                    || path.contains("/error/") || path.contains("/prediction/admin")
-            || path.contains("/login/?next=/admin/")) {
+                    || path.contains("/error/") || path.contains("/prediction/admin")) {
                 return ServerWebExchangeMatcher.MatchResult.match();
             }
             return ServerWebExchangeMatcher.MatchResult.notMatch();
@@ -178,4 +177,3 @@ public class SecurityConfig {
                 .build();
     }
 }
-
