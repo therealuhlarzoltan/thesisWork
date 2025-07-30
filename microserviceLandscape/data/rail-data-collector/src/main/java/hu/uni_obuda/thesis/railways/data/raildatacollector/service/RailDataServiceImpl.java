@@ -204,6 +204,18 @@ public class RailDataServiceImpl implements RailDataService {
         return Mono.just(routes);
     }
 
+    private static Mono<ShortTimetableResponse.TimetableEntry> extractTimetableEntry(ShortTimetableResponse response, String trainNumber, LocalDate date) {
+        LOG.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
+        return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
+                .filter(entry -> entry.getDetails().stream()
+                        .anyMatch(details ->
+                                details.getTrainInfo().getCode().equals(trainNumber)))
+                .findFirst()
+                .map(Mono::just)
+                .orElse(Mono.error(new TrainNotInServiceException(trainNumber, date)))
+                : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
+    }
+
     private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber, LocalDate date) {
         LOG.info("Extracting train URI for train number {} on date {}", trainNumber, date);
         return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
