@@ -10,7 +10,7 @@ server:
 maps.api:
   base-url: https://maps.googleapis.com/maps/api
   geocoding-url: /geocode/json
-  country-code : HU
+  country-code : Hungary
   api-key: ${MAPS_API_KEY}
 
 tcp:
