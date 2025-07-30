@@ -21,6 +21,10 @@ public class ShortTimetableResponse {
     @Data
     public static class TimetableEntry {
 
+        @JsonProperty("starttime")
+        private String startTime;
+        @JsonProperty("destinationtime")
+        private String destinationTime;
         @JsonProperty("details")
         private List<TrainDetail> details;
     }
