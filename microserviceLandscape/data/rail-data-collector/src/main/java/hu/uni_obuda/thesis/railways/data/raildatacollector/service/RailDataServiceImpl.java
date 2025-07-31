@@ -21,6 +21,9 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple4;
+import reactor.util.function.Tuples;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -70,8 +73,11 @@ public class RailDataServiceImpl implements RailDataService {
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
                 .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
-                .flatMap(timetableResponse -> extractTrainUri(timetableResponse, trainNumber, date))
-                .flatMap(trainUri -> gateway.getShortTrainDetails(trainUri))
+                .flatMap(timetableResponse -> extractTimetableEntry(timetableResponse, trainNumber, date))
+                .flatMap(entry -> extractSchedule(entry, trainNumber))
+                .flatMap(this::checkSchedule)
+                .flatMap(entry -> extractTrainUri(entry, trainNumber, date))
+                .flatMap(gateway::getShortTrainDetails)
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
                 .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
@@ -204,6 +210,36 @@ public class RailDataServiceImpl implements RailDataService {
         return Mono.just(routes);
     }
 
+    private Mono<ShortTimetableResponse.TimetableEntry> checkSchedule(Tuple4<LocalTime, LocalTime, String, ShortTimetableResponse.TimetableEntry> schedule) {
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(schedule.getT1())) {
+            LOG.warn("Train {} has not departed yet according to schedule, aborting...", schedule.getT3());
+            return Mono.empty();
+        } else if (now.isBefore(schedule.getT2())) {
+            LOG.warn("Train {} has not arrived yet according to schedule, aborting...", schedule.getT3());
+            return Mono.empty();
+        } else {
+            LOG.info("Train should have arrived by now according to schedule, proceeding...");
+            return Mono.just(schedule.getT4());
+        }
+    }
+
+    private Mono<Tuple4<LocalTime, LocalTime, String, ShortTimetableResponse.TimetableEntry>> extractSchedule(ShortTimetableResponse.TimetableEntry entry, String trainNumber) {
+        String departureString = entry.getStartTime();
+        String arrivalString = entry.getDestinationTime();
+        LocalTime arrivalTime;
+        LocalTime departureTime;
+        try {
+            departureTime = parseTimeSafe(departureString);
+            arrivalTime = parseTimeSafe(arrivalString);
+        } catch (Exception e) {
+            LOG.error("Could not extract scheduled departure and or arrival for train {}", trainNumber, e);
+            LOG.warn("Assuming train {} has just arrived", trainNumber);
+            return Mono.just(Tuples.of(LocalTime.MIDNIGHT, LocalTime.now(), trainNumber, entry));
+        }
+        return Mono.just(Tuples.of(departureTime, arrivalTime, trainNumber, entry));
+    }
+
     private static Mono<ShortTimetableResponse.TimetableEntry> extractTimetableEntry(ShortTimetableResponse response, String trainNumber, LocalDate date) {
         LOG.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
         return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
@@ -216,15 +252,17 @@ public class RailDataServiceImpl implements RailDataService {
                 : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
     }
 
-    private static Mono<String> extractTrainUri(ShortTimetableResponse response, String trainNumber, LocalDate date) {
-        LOG.info("Extracting train URI for train number {} on date {}", trainNumber, date);
-        return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
-                .flatMap(entry -> entry.getDetails().stream())
-                .filter(details -> details.getTrainInfo().getCode().equals(trainNumber))
-                .findFirst()
-                .map(details -> Mono.just(details.getTrainInfo().getUrl()))
-                .orElse(Mono.error(new TrainNotInServiceException(trainNumber, date)))
-                : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
+    private static Mono<String> extractTrainUri(ShortTimetableResponse.TimetableEntry entry, String trainNumber, LocalDate date) {
+        LOG.info("Extracting train URI for train number {}", trainNumber);
+        var details = entry.getDetails();
+        if (details == null) {
+            return Mono.error(new TrainNotInServiceException(trainNumber, date));
+        }
+        return Flux.fromIterable(details)
+                .filter(detail -> trainNumber.equals(detail.getTrainInfo().getCode()))
+                .next()
+                .map(detail -> detail.getTrainInfo().getUrl())
+                .switchIfEmpty(Mono.error(new TrainNotInServiceException(trainNumber, date)));
     }
 
     private Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
