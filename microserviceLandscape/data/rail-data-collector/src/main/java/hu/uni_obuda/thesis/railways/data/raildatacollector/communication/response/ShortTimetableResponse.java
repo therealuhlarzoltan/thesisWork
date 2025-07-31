@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ShortTimetableResponse {
 
     @JsonProperty("timetable")
@@ -19,8 +20,13 @@ public class ShortTimetableResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TimetableEntry {
 
+        @JsonProperty("starttime")
+        private String startTime;
+        @JsonProperty("destinationtime")
+        private String destinationTime;
         @JsonProperty("details")
         private List<TrainDetail> details;
     }
@@ -28,6 +34,7 @@ public class ShortTimetableResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TrainDetail {
 
         @JsonProperty("train_info")
@@ -37,6 +44,7 @@ public class ShortTimetableResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TrainInfo {
 
         @JsonProperty("url")
