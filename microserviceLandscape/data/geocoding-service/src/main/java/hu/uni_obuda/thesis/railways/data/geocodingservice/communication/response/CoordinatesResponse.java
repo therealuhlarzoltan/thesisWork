@@ -12,6 +12,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CoordinatesResponse {
 
     private List<Result> results = new ArrayList<>();
