@@ -212,6 +212,9 @@ public class RailDataServiceImpl implements RailDataService {
 
     private Mono<ShortTimetableResponse.TimetableEntry> checkSchedule(Tuple4<LocalTime, LocalTime, String, ShortTimetableResponse.TimetableEntry> schedule) {
         LocalTime now = LocalTime.now();
+        if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(LocalTime.MIDNIGHT.plusHours(4))) {
+            LOG.info("Not checking schedule in the early hours of the day, proceeding...");
+        }
         if (now.isBefore(schedule.getT1())) {
             LOG.warn("Train {} has not departed yet according to schedule, aborting...", schedule.getT3());
             return Mono.empty();
