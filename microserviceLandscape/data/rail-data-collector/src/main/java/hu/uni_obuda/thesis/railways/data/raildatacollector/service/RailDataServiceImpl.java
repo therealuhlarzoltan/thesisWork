@@ -214,6 +214,7 @@ public class RailDataServiceImpl implements RailDataService {
         LocalTime now = LocalTime.now();
         if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(LocalTime.MIDNIGHT.plusHours(4))) {
             LOG.info("Not checking schedule in the early hours of the day, proceeding...");
+            return Mono.just(schedule.getT4());
         }
         if (now.isBefore(schedule.getT1())) {
             LOG.warn("Train {} has not departed yet according to schedule, aborting...", schedule.getT3());
