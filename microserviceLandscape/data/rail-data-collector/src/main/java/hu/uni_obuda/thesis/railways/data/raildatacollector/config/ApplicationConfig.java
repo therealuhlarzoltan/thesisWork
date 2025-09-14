@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.CachingYamlGraphQlVariableLoader;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.YamlGraphQlVariableLoader;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.serializer.TimetableResponseDeserializer;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
@@ -13,6 +15,7 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.graphql.client.HttpGraphQlClient;
@@ -63,6 +66,19 @@ public class ApplicationConfig {
         return new CachingDocumentSource(
                 new ResourceDocumentSource(List.of(new ClassPathResource("classpath:graphql/emma")), ResourceDocumentSource.FILE_EXTENSIONS)
         );
+    }
+
+    @Lazy
+    @Bean
+    @Profile("data-source-emma")
+    public CachingYamlGraphQlVariableLoader cachingGraphQlVariableLoader(YamlGraphQlVariableLoader nonCachingVariableLoader) {
+        return new CachingYamlGraphQlVariableLoader(nonCachingVariableLoader);
+    }
+
+    @Bean
+    @Profile("data-source-emma")
+    public YamlGraphQlVariableLoader graphQlVariableLoader() {
+        return new YamlGraphQlVariableLoader("classpath:graphql/emma/default-variables");
     }
 
     @Bean
