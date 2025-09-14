@@ -13,10 +13,17 @@ import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.graphql.client.HttpGraphQlClient;
+import org.springframework.graphql.support.CachingDocumentSource;
+import org.springframework.graphql.support.DocumentSource;
+import org.springframework.graphql.support.ResourceDocumentSource;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -32,11 +39,30 @@ public class ApplicationConfig {
     private String railwayApiUrl;
 
     @Bean
+    @Profile("data-source-elvira")
     public WebClient webClient(WebClient.Builder builder) {
         return builder.baseUrl(railwayApiUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
                 .build();
+    }
+
+    @Bean
+    @Profile("data-source-emma")
+    public HttpGraphQlClient graphQlClient(WebClient.Builder webClientBuilder) {
+        WebClient webClient = webClientBuilder.baseUrl(railwayApiUrl)
+                .defaultHeader("Content-Type", "application/json")
+                .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
+                .build();
+        return HttpGraphQlClient.builder(webClient).build();
+    }
+
+    @Bean
+    @Profile("data-source-emma")
+    public DocumentSource graphQlDocumentSource() {
+        return new CachingDocumentSource(
+                new ResourceDocumentSource(List.of(new ClassPathResource("classpath:graphql/emma")), ResourceDocumentSource.FILE_EXTENSIONS)
+        );
     }
 
     @Bean

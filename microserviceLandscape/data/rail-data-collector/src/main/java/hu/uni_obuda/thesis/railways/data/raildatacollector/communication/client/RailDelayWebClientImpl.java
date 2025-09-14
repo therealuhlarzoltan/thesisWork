@@ -2,27 +2,25 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
+@Profile("data-source-elvira")
 @Component
 @RequiredArgsConstructor
 public class RailDelayWebClientImpl implements RailDelayWebClient {
