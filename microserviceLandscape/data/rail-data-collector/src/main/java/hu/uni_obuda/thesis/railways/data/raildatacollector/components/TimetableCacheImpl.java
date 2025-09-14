@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.components;
 
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.GraphQlShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 public class TimetableCacheImpl implements TimetableCache {
 
     private final ReactiveRedisTemplate<String, ShortTimetableResponse> timetableRedisTemplate;
+    private final ReactiveRedisTemplate<String, GraphQlShortTimetableResponse> graphQlShortTimetableRedisTemplate;
     private final ReactiveRedisTemplate<String, String> keysRedisTemplate;
 
     @Value("${caching.timetable.cache-duration:6}")
@@ -23,7 +25,13 @@ public class TimetableCacheImpl implements TimetableCache {
 
     @Override
     public Mono<Boolean> isCached(String from, String to, LocalDate date) {
-        return timetableRedisTemplate.hasKey(toKey(from, to, date));
+        return timetableRedisTemplate.hasKey(toKey(from, to, date)).flatMap(result -> {
+            if (Boolean.TRUE.equals(result)) {
+                return Mono.just(true);
+            } else {
+                return graphQlShortTimetableRedisTemplate.hasKey(toKey(from, to, date));
+            }
+        });
     }
 
     @Override
@@ -37,9 +45,25 @@ public class TimetableCacheImpl implements TimetableCache {
     }
 
     @Override
+    public Mono<Void> cache(String from, String to, LocalDate date, GraphQlShortTimetableResponse timetable) {
+        String key = toKey(from, to, date);
+        return graphQlShortTimetableRedisTemplate
+                .opsForValue()
+                .set(key, timetable, Duration.ofHours(cacheDuration))
+                .then(keysRedisTemplate.opsForSet().add(KEY_SET_PREFIX, key))
+                .then();
+    }
+
+    @Override
     public Mono<ShortTimetableResponse> get(String from, String to, LocalDate date) {
         return timetableRedisTemplate.opsForValue().get(toKey(from, to, date));
     }
+
+    @Override
+    public Mono<GraphQlShortTimetableResponse> getGraphQl(String from, String to, LocalDate date) {
+        return graphQlShortTimetableRedisTemplate.opsForValue().get(toKey(from, to, date));
+    }
+
 
     @Override
     public Mono<Void> evictAll() {

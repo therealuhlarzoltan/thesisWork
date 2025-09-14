@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.GraphQlShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,4 +32,15 @@ public class RedisCacheConfig {
         return new ReactiveRedisTemplate<>(factory, context);
     }
 
+    @Bean
+    public ReactiveRedisTemplate<String, GraphQlShortTimetableResponse> graphQlTimetableResponseRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        Jackson2JsonRedisSerializer<GraphQlShortTimetableResponse> jacksonSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, GraphQlShortTimetableResponse.class);
+
+        RedisSerializationContext<String, GraphQlShortTimetableResponse> context = RedisSerializationContext
+                .<String, GraphQlShortTimetableResponse>newSerializationContext(new StringRedisSerializer())
+                .value(jacksonSerializer)
+                .build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
+    }
 }

@@ -8,7 +8,16 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDate;
 
 public interface RailDataService {
-    Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date);
-
-    Flux<TrainRouteResponse> planRoute(String from, String to, LocalDate date);
+    default Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date) {
+        return Flux.error(new UnsupportedOperationException("Not implemented"));
+    }
+    default Flux<DelayInfo> getDelayInfo(String trainId, String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+        return Flux.error(new UnsupportedOperationException("Not implemented"));
+    }
+    default Flux<TrainRouteResponse> planRoute(String from, String to, LocalDate date) {
+        return Flux.error(new UnsupportedOperationException("Not implemented"));
+    };
+    default Flux<TrainRouteResponse> planRoute(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+        return Flux.error(new UnsupportedOperationException("Not implemented yet"));
+    }
 }
