@@ -50,7 +50,7 @@ public class MessageProcessorConfig {
     }
 
     @Profile("data-source-elvira")
-    @Bean
+    @Bean("messageProcessor")
     public Consumer<Flux<Message<Event<?, ?>>>> elviraMessageProcessor() {
         if (messageProcessor == null) {
             this.messageProcessor = new MessageProcessorImpl(objectMapper, railDataCollector, responseSender, messageProcessingScheduler());
@@ -67,7 +67,7 @@ public class MessageProcessorConfig {
     }
 
     @Profile("data-source-emma")
-    @Bean
+    @Bean("messageProcessor")
     public Consumer<Flux<Message<Event<?, ?>>>> emmaMessageProcessor() {
         if (messageProcessor == null) {
             this.messageProcessor = new GraphQlMessageProcessorImpl(objectMapper, railDataCollector, responseSender, messageProcessingScheduler());

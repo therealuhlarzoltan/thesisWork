@@ -26,11 +26,11 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
     private final HttpGraphQlClient graphQlClient;
     private final CachingYamlGraphQlVariableLoader variableLoader;
 
-    @Value("railway.api.graphql.short-timetable-document")
+    @Value("${railway.api.graphql.short-timetable-document}")
     private String shortTimeTableDocumentName;
-    @Value("railway.api.graphql.long-timetable-document")
+    @Value("${railway.api.graphql.long-timetable-document}")
     private String longTimeTableDocumentName;
-    @Value("railway.api.graphql.short-train-details-document")
+    @Value("${railway.api.graphql.short-train-details-document}")
     private String shortTrainDetailsDocumentName;
     @Value("${railway.api.base-url}")
     private String railwayBaseUrl;

@@ -78,7 +78,7 @@ public class ApplicationConfig {
     @Bean
     @Profile("data-source-emma")
     public YamlGraphQlVariableLoader graphQlVariableLoader() {
-        return new YamlGraphQlVariableLoader("classpath:graphql/emma/default-variables");
+        return new YamlGraphQlVariableLoader("graphql/emma/default-variables");
     }
 
     @Bean

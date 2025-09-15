@@ -15,7 +15,7 @@ railway.api:
 
   rate:
     limit:
-      delay-between-requests: 5000
+      delay-between-requests: 15000
       number-of-concurrent-calls: 24
 
 tcp:
@@ -208,3 +208,13 @@ spring:
     redis:
       host: redis-2
       port: 6379
+
+---
+spring.activate.on-profile: data-source-emma
+railway.api:
+  base-url: https://emma.mav.hu
+  timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
+  train-details-getter-uri: //otp2-backend/otp/routers/default/index/graphql
+  graphql.short-timetable-document: Plan.yml
+  graphql.long-timetable-document: Trip.yml
+  graphql.short-train-details-document: asd.yml
