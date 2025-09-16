@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
@@ -21,10 +22,12 @@ public class GraphQlShortTrainDetailsResponse {
         private List<StopTime> stoptimes;
         private List<VehiclePosition> vehiclePositions;
 
+        @JsonIgnore
         public boolean hasVehiclePositions() {
-           return vehiclePositions == null || vehiclePositions.isEmpty();
+           return vehiclePositions != null && !vehiclePositions.isEmpty();
         }
 
+        @JsonIgnore
         public boolean hasInconsistentStopTimes() {
             int previousArrival = Integer.MIN_VALUE;
             int previousDeparture = Integer.MIN_VALUE;
@@ -85,11 +88,13 @@ public class GraphQlShortTrainDetailsResponse {
         private Double lon;
     }
 
+    @JsonIgnore
     public boolean hasArrived() {
         return !trip.hasVehiclePositions();
     }
 
+    @JsonIgnore
     public boolean isCancelled() {
-        return !trip.hasInconsistentStopTimes();
+        return trip.hasInconsistentStopTimes();
     }
 }

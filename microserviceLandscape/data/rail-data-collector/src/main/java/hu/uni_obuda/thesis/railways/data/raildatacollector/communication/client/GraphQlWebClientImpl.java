@@ -63,15 +63,15 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
 
     @Override
     public Mono<GraphQlShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
-        var variableMap =  Map.<String, Object>of("gtfsId", trainId, "serviceDay", serviceDate.toString());
-        return graphQlClient.documentName(shortTrainDetailsDocumentName)
+        var variableMap =  Map.<String, Object>of("id", trainId, "serviceDay", serviceDate.toString());
+        return graphQlClient.mutate().url(railwayBaseUrl + trainDetailsGetterUri).build().documentName(shortTrainDetailsDocumentName)
                 .variables(mergeWithDefaultVariables(variableMap, shortTrainDetailsDocumentName)
                 )
                 .execute()
                 .flatMap(clientGraphQlResponse -> {
                     if (clientGraphQlResponse.isValid()) {
                         try {
-                            GraphQlShortTrainDetailsResponse parsedResponse = clientGraphQlResponse.field("data").toEntity(GraphQlShortTrainDetailsResponse.class);
+                            GraphQlShortTrainDetailsResponse parsedResponse = clientGraphQlResponse.toEntity(GraphQlShortTrainDetailsResponse.class);
                             return Mono.just(parsedResponse);
                         } catch (RuntimeException e) {
                             return Mono.error(new ExternalApiFormatMismatchException("Could not parse short train details response", e, getUrlFromUriString(timetableGetterUri)));

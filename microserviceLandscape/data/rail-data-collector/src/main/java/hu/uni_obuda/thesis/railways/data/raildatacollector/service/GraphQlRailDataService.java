@@ -120,15 +120,14 @@ public class GraphQlRailDataService implements RailDataService {
         log.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
         if (response.getPlan() == null ||
                 response.getPlan().getItineraries() == null ||
-                response.getPlan().getItineraries() == null ||
                 response.getPlan().getItineraries().isEmpty()) {
-            return Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
+            return Mono.error(new ExternalApiFormatMismatchException("Received an empty timetable response", null));
         }
 
         return response.getPlan().getItineraries().stream()
                 .flatMap(itinerary -> itinerary.getLegs().stream())
-                .filter(leg -> leg.getRoute() != null && leg.getRoute().getLongName() != null
-                        && leg.getRoute().getLongName().contains(trainNumber))
+                .filter(leg -> leg.getRoute() != null && leg.getTrip().getTripShortName() != null
+                        && leg.getTrip().getTripShortName().contains(trainNumber))
                 .findFirst()
                 .map(Mono::just)
                 .orElseGet(() -> Mono.error(new TrainNotInServiceException(trainNumber, date)));
