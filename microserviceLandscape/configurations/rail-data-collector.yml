@@ -8,11 +8,6 @@ server:
   error.include-message: always
   forward-headers-strategy: framework
 
-  rate:
-    limit:
-      delay-between-requests: 15000
-      number-of-concurrent-calls: 24
-
 tcp:
     connection:
       timeout-in-ms: 30000
@@ -210,6 +205,10 @@ railway.api:
   base-url: http://apiv2.oroszi.net/elvira
   timetable-getter-uri: /
   train-details-getter-uri: /details
+  rate:
+    limit:
+      delay-between-requests: 2000
+      number-of-concurrent-calls: 24
 
 ---
 spring.activate.on-profile: data-source-emma
@@ -220,3 +219,7 @@ railway.api:
   graphql.short-timetable-document: Plan
   graphql.long-timetable-document: asd
   graphql.short-train-details-document: Trip
+  rate:
+    limit:
+      delay-between-requests: 8000
+      number-of-concurrent-calls: 24

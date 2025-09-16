@@ -51,7 +51,7 @@ services:
     build: data/delay-data-collector
     mem_limit: 3048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,production,data-source-emma
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
