@@ -4,7 +4,6 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -59,7 +58,7 @@ public class GraphQlRailDataService implements RailDataService {
                         log.info("Getting timetable with start station {} and end station {} on date {}", from, to, date);
                         return gateway.getShortTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
                                 .flatMap(response -> {
-                                    if (!response.getData().getPlan().getItineraries().isEmpty()) {
+                                    if (!response.getPlan().getItineraries().isEmpty()) {
                                         log.info("Caching timetable with start station {} and end station {} on date {}", from, to, date);
                                         return timetableCache.cache(from, to, date, response)
                                                 .thenReturn(response);
@@ -119,14 +118,14 @@ public class GraphQlRailDataService implements RailDataService {
 
     private static Mono<GraphQlShortTimetableResponse.Leg> extractTimetableEntry(GraphQlShortTimetableResponse response, String trainNumber, LocalDate date) {
         log.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
-        if (response.getData() == null ||
-                response.getData().getPlan() == null ||
-                response.getData().getPlan().getItineraries() == null ||
-                response.getData().getPlan().getItineraries().isEmpty()) {
+        if (response.getPlan() == null ||
+                response.getPlan().getItineraries() == null ||
+                response.getPlan().getItineraries() == null ||
+                response.getPlan().getItineraries().isEmpty()) {
             return Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
         }
 
-        return response.getData().getPlan().getItineraries().stream()
+        return response.getPlan().getItineraries().stream()
                 .flatMap(itinerary -> itinerary.getLegs().stream())
                 .filter(leg -> leg.getRoute() != null && leg.getRoute().getLongName() != null
                         && leg.getRoute().getLongName().contains(trainNumber))

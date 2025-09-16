@@ -42,14 +42,14 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
     @Override
     public Mono<GraphQlShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
         var variableMap =  Map.<String, Object>of("fromPlace", concatenatePlaceWithCoordinates(from, fromLatitude, fromLongitude), "toPlace", concatenatePlaceWithCoordinates(to, toLatitude, toLongitude), "date", date.toString());
-        return graphQlClient.documentName(shortTimeTableDocumentName)
+        return graphQlClient.mutate().url(railwayBaseUrl + timetableGetterUri).build().documentName(shortTimeTableDocumentName)
                 .variables(mergeWithDefaultVariables(variableMap, shortTimeTableDocumentName)
                 )
                 .execute()
                 .flatMap(clientGraphQlResponse -> {
                     if (clientGraphQlResponse.isValid()) {
                         try {
-                            GraphQlShortTimetableResponse parsedResponse = clientGraphQlResponse.field("data").toEntity(GraphQlShortTimetableResponse.class);
+                            GraphQlShortTimetableResponse parsedResponse = clientGraphQlResponse.toEntity(GraphQlShortTimetableResponse.class);
                             parsedResponse.removeUnnecessaryData();
                             return Mono.just(parsedResponse);
                         } catch (RuntimeException e) {

@@ -1,5 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
@@ -12,17 +13,11 @@ import java.util.List;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GraphQlShortTimetableResponse {
-    private Plan data;
+    private Plan plan;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Plan {
-        private Itineraries plan;
-    }
-
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Itineraries {
         private List<Itinerary> itineraries = new ArrayList<>();
     }
 
@@ -44,13 +39,20 @@ public class GraphQlShortTimetableResponse {
         private Trip trip;       // nullable for WALK
 
 
+        @JsonIgnore
         public LocalTime getStartLocalTime() {
             return startTime != null ? LocalTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.systemDefault()) : null;
         }
+
+        @JsonIgnore
         public LocalTime getEndLocalTime()   {
             return endTime != null ? LocalTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.systemDefault()) : null;
         }
+
+        @JsonIgnore
         public boolean isTransitLeg()    { return trip != null || route != null; }
+
+        @JsonIgnore
         public long getDurationSeconds() {
             return (startTime != null && endTime != null) ? (endTime - startTime) / 1000 : -1;
         }
@@ -71,11 +73,12 @@ public class GraphQlShortTimetableResponse {
         private String id;             // opaque GraphQL id, e.g. "VHJpcDoxOjI2ODkyNDA4"
     }
 
+    @JsonIgnore
     public void removeUnnecessaryData() {
-        for (Itinerary itinerary : data.getPlan().getItineraries()) {
+        for (Itinerary itinerary : plan.getItineraries()) {
             itinerary.getLegs().removeIf(leg -> !"RAIL".equalsIgnoreCase(leg.getMode()));
         }
 
-        data.getPlan().getItineraries().removeIf(itinerary -> itinerary.getLegs().isEmpty());
+        plan.getItineraries().removeIf(itinerary -> itinerary.getLegs().isEmpty());
     }
 }

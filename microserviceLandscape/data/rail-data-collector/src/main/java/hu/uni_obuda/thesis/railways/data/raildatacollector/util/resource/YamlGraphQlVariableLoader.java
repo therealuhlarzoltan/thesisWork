@@ -2,6 +2,7 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.config.YamlMapFactoryBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -22,7 +23,7 @@ public class YamlGraphQlVariableLoader {
 
     public DefaultGraphQlVariables loadForDocument(String documentName) {
         try {
-            return new DefaultGraphQlVariables(loadYamlFromClasspath(classPathDirectory + "/" + documentName));
+            return new DefaultGraphQlVariables(loadYamlFromClasspath(classPathDirectory + "/" + documentName + ".yml"));
         } catch (IOException e) {
             log.error("An IO Exception occurred: {}", e.getMessage());
             throw new RuntimeException(e);
@@ -32,19 +33,14 @@ public class YamlGraphQlVariableLoader {
     public Map<String, Object> loadYamlFromClasspath(String path) throws IOException {
 
         Resource resource = new ClassPathResource(path);
-        if (!resource.exists()) throw new FileNotFoundException("YAML not found: " + path);
-
-        YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
-        List<PropertySource<?>> propertySourceList = loader.load("yaml:" + path, resource);
-
-        Map<String, Object> propertyMap = new LinkedHashMap<>();
-        for (PropertySource<?> ppropertySource : propertySourceList) {
-            MapPropertySource mapPropertySource = (MapPropertySource) ppropertySource;
-            for (String name : mapPropertySource.getPropertyNames()) {
-                propertyMap.put(name, mapPropertySource.getProperty(name));
-            }
+        if (!resource.exists()) {
+            throw new FileNotFoundException("YAML not found: " + path);
         }
 
-        return propertyMap;
+        YamlMapFactoryBean yaml = new YamlMapFactoryBean();
+        yaml.setResources(resource);
+        Map<String, Object> propertyMap = yaml.getObject();
+
+        return propertyMap != null ? propertyMap : Map.of();
     }
 }

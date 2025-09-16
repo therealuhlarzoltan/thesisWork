@@ -13,10 +13,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.*;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.graphql.client.HttpGraphQlClient;
 import org.springframework.graphql.support.CachingDocumentSource;
@@ -52,19 +49,19 @@ public class ApplicationConfig {
 
     @Bean
     @Profile("data-source-emma")
-    public HttpGraphQlClient graphQlClient(WebClient.Builder webClientBuilder) {
+    public HttpGraphQlClient graphQlClient(WebClient.Builder webClientBuilder, DocumentSource documentSource) {
         WebClient webClient = webClientBuilder.baseUrl(railwayApiUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
                 .build();
-        return HttpGraphQlClient.builder(webClient).build();
+        return HttpGraphQlClient.builder(webClient).documentSource(documentSource).build();
     }
 
     @Bean
     @Profile("data-source-emma")
     public DocumentSource graphQlDocumentSource() {
         return new CachingDocumentSource(
-                new ResourceDocumentSource(List.of(new ClassPathResource("classpath:graphql/emma")), ResourceDocumentSource.FILE_EXTENSIONS)
+                new ResourceDocumentSource(List.of(new ClassPathResource("graphql/emma/")), ResourceDocumentSource.FILE_EXTENSIONS)
         );
     }
 
