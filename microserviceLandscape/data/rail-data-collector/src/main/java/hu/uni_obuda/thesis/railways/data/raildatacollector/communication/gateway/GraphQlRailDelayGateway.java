@@ -36,7 +36,7 @@ public class GraphQlRailDelayGateway implements RailDelayGateway {
     private final RateLimiterRegistry rateLimiterRegistry;
 
     @Override
-    public Mono<GraphQlShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+    public Mono<EmmaShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
         log.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getShortTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTimetableApi")))
@@ -46,7 +46,7 @@ public class GraphQlRailDelayGateway implements RailDelayGateway {
     }
 
     @Override
-    public Mono<GraphQlShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
+    public Mono<EmmaShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
         log.debug("Called train details gateway with id {}", trainId);
         return webClient.getShortTrainDetails(trainId, serviceDate)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTrainDetailsApi")))
@@ -56,7 +56,7 @@ public class GraphQlRailDelayGateway implements RailDelayGateway {
     }
 
     @Override
-    public Mono<GraphQlTimetableResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+    public Mono<EmmaTimetableResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
         log.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getFullTimetableApi")))

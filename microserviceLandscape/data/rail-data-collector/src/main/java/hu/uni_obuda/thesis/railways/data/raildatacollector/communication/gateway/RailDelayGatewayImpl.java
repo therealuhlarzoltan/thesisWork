@@ -1,9 +1,9 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.RailDelayWebClient;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
@@ -40,7 +40,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     private final RateLimiterRegistry rateLimiterRegistry;
 
     @Override
-    public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
+    public Mono<ElviraShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
         LOG.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getShortTimetable(from, to, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTimetableApi")))
@@ -50,7 +50,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     }
 
     @Override
-    public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
+    public Mono<ElviraShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
         LOG.debug("Called train details gateway with uri {}", trainUri);
         return webClient.getShortTrainDetails(trainUri)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTrainDetailsApi")))
@@ -60,7 +60,7 @@ public class RailDelayGatewayImpl implements RailDelayGateway {
     }
 
     @Override
-    public Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date) {
+    public Mono<ElviraTimetableResponse> getTimetable(String from, String to, LocalDate date) {
         LOG.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getTimetable(from, to, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getFullTimetableApi")))

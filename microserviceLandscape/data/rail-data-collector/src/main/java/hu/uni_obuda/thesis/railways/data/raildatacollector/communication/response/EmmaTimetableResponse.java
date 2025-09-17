@@ -3,5 +3,5 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respon
 import lombok.Data;
 
 @Data
-public class GraphQlTimetableResponse {
+public class EmmaTimetableResponse {
 }

@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.components;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @Component
 public class ElviraTimetableCacheImpl implements ElviraTimetableCache {
 
-    private final ReactiveRedisTemplate<String, ShortTimetableResponse> timetableRedisTemplate;
+    private final ReactiveRedisTemplate<String, ElviraShortTimetableResponse> timetableRedisTemplate;
     private final ReactiveRedisTemplate<String, String> keysRedisTemplate;
 
     @Value("${caching.timetable.cache-duration:6}")
@@ -29,7 +29,7 @@ public class ElviraTimetableCacheImpl implements ElviraTimetableCache {
     }
 
     @Override
-    public Mono<Void> cache(String from, String to, LocalDate date, ShortTimetableResponse timetable) {
+    public Mono<Void> cache(String from, String to, LocalDate date, ElviraShortTimetableResponse timetable) {
         String key = toKey(from, to, date);
         return timetableRedisTemplate
                 .opsForValue()
@@ -39,7 +39,7 @@ public class ElviraTimetableCacheImpl implements ElviraTimetableCache {
     }
 
     @Override
-    public Mono<ShortTimetableResponse> get(String from, String to, LocalDate date) {
+    public Mono<ElviraShortTimetableResponse> get(String from, String to, LocalDate date) {
         return timetableRedisTemplate.opsForValue().get(toKey(from, to, date));
     }
 

@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.components;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.GraphQlShortTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.EmmaShortTimetableResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class EmmaTimetableCacheImpl implements EmmaTimetableCache {
 
-    private final ReactiveRedisTemplate<String, GraphQlShortTimetableResponse> timetableRedisTemplate;
+    private final ReactiveRedisTemplate<String, EmmaShortTimetableResponse> timetableRedisTemplate;
     private final ReactiveRedisTemplate<String, String> keysRedisTemplate;
 
     @Value("${caching.timetable.cache-duration:6}")
@@ -29,7 +29,7 @@ public class EmmaTimetableCacheImpl implements EmmaTimetableCache {
     }
 
     @Override
-    public Mono<Void> cache(String from, String to, LocalDate date, GraphQlShortTimetableResponse timetable) {
+    public Mono<Void> cache(String from, String to, LocalDate date, EmmaShortTimetableResponse timetable) {
         String key = toKey(from, to, date);
         return timetableRedisTemplate
                 .opsForValue()
@@ -39,7 +39,7 @@ public class EmmaTimetableCacheImpl implements EmmaTimetableCache {
     }
 
     @Override
-    public Mono<GraphQlShortTimetableResponse> get(String from, String to, LocalDate date) {
+    public Mono<EmmaShortTimetableResponse> get(String from, String to, LocalDate date) {
         return timetableRedisTemplate.opsForValue().get(toKey(from, to, date));
     }
 

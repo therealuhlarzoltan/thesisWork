@@ -12,7 +12,7 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GraphQlShortTimetableResponse {
+public class EmmaShortTimetableResponse {
     private Plan plan;
 
     @Data

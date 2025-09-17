@@ -5,21 +5,21 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimetableResponseDeserializer extends JsonDeserializer<TimetableResponse> {
+public class TimetableResponseDeserializer extends JsonDeserializer<ElviraTimetableResponse> {
 
     @Override
-    public TimetableResponse deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public ElviraTimetableResponse deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         ObjectMapper mapper = (ObjectMapper) p.getCodec();
         JsonNode root = mapper.readTree(p);
 
         JsonNode timetableNode = root.get("timetable");
-        List<TimetableResponse.TimetableEntry> filteredEntries = new ArrayList<>();
+        List<ElviraTimetableResponse.TimetableEntry> filteredEntries = new ArrayList<>();
 
         if (timetableNode != null && timetableNode.isArray()) {
             for (JsonNode entryNode : timetableNode) {
@@ -37,13 +37,13 @@ public class TimetableResponseDeserializer extends JsonDeserializer<TimetableRes
                 }
 
                 if (!hasLocalTransport) {
-                    TimetableResponse.TimetableEntry entry =
-                            mapper.treeToValue(entryNode, TimetableResponse.TimetableEntry.class);
+                    ElviraTimetableResponse.TimetableEntry entry =
+                            mapper.treeToValue(entryNode, ElviraTimetableResponse.TimetableEntry.class);
                     filteredEntries.add(entry);
                 }
             }
         }
 
-        return new TimetableResponse(filteredEntries);
+        return new ElviraTimetableResponse(filteredEntries);
     }
 }
