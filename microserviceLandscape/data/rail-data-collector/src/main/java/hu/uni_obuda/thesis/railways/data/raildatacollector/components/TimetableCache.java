@@ -12,12 +12,6 @@ public interface TimetableCache {
     String KEY_SET_PREFIX = CACHE_PREFIX + ":" + "keys";
 
     Mono<Boolean> isCached(String from, String to, LocalDate date);
-    Mono<Void> cache(String from, String to, LocalDate date, ShortTimetableResponse timetable);
-
-    Mono<Void> cache(String from, String to, LocalDate date, GraphQlShortTimetableResponse timetable);
-
-    Mono<ShortTimetableResponse> get(String from, String to, LocalDate date);
-    Mono<GraphQlShortTimetableResponse> getGraphQl(String from, String to, LocalDate date);
     Mono<Void> evictAll();
 
     default String toKey(String from, String to, LocalDate date) {
