@@ -40,7 +40,7 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
     private String trainDetailsGetterUri;
 
     @Override
-    public Mono<GraphQlShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+    public Mono<EmmaShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
         var variableMap =  Map.<String, Object>of("fromPlace", concatenatePlaceWithCoordinates(from, fromLatitude, fromLongitude), "toPlace", concatenatePlaceWithCoordinates(to, toLatitude, toLongitude), "date", date.toString());
         return graphQlClient.mutate().url(railwayBaseUrl + timetableGetterUri).build().documentName(shortTimeTableDocumentName)
                 .variables(mergeWithDefaultVariables(variableMap, shortTimeTableDocumentName)
@@ -49,7 +49,7 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
                 .flatMap(clientGraphQlResponse -> {
                     if (clientGraphQlResponse.isValid()) {
                         try {
-                            GraphQlShortTimetableResponse parsedResponse = clientGraphQlResponse.toEntity(GraphQlShortTimetableResponse.class);
+                            EmmaShortTimetableResponse parsedResponse = clientGraphQlResponse.toEntity(EmmaShortTimetableResponse.class);
                             parsedResponse.removeUnnecessaryData();
                             return Mono.just(parsedResponse);
                         } catch (RuntimeException e) {
@@ -62,7 +62,7 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
     }
 
     @Override
-    public Mono<GraphQlShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
+    public Mono<EmmaShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
         var variableMap =  Map.<String, Object>of("id", trainId, "serviceDay", serviceDate.toString());
         return graphQlClient.mutate().url(railwayBaseUrl + trainDetailsGetterUri).build().documentName(shortTrainDetailsDocumentName)
                 .variables(mergeWithDefaultVariables(variableMap, shortTrainDetailsDocumentName)
@@ -71,7 +71,7 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
                 .flatMap(clientGraphQlResponse -> {
                     if (clientGraphQlResponse.isValid()) {
                         try {
-                            GraphQlShortTrainDetailsResponse parsedResponse = clientGraphQlResponse.toEntity(GraphQlShortTrainDetailsResponse.class);
+                            EmmaShortTrainDetailsResponse parsedResponse = clientGraphQlResponse.toEntity(EmmaShortTrainDetailsResponse.class);
                             return Mono.just(parsedResponse);
                         } catch (RuntimeException e) {
                             return Mono.error(new ExternalApiFormatMismatchException("Could not parse short train details response", e, getUrlFromUriString(timetableGetterUri)));
@@ -83,7 +83,7 @@ public class GraphQlWebClientImpl implements RailDelayWebClient {
     }
 
     @Override
-    public Mono<GraphQlTimetableResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+    public Mono<EmmaTimetableResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
         return Mono.error(new UnsupportedOperationException("Not implemented yet"));
     }
 

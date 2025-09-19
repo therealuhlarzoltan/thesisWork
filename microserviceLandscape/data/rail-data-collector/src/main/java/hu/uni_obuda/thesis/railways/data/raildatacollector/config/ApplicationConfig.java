@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.CachingYamlGraphQlVariableLoader;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.YamlGraphQlVariableLoader;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.serializer.TimetableResponseDeserializer;
@@ -81,7 +81,7 @@ public class ApplicationConfig {
     @Bean
     public ObjectMapper objectMapper() {
         SimpleModule timetableModule = new SimpleModule();
-        timetableModule.addDeserializer(TimetableResponse.class, new TimetableResponseDeserializer());
+        timetableModule.addDeserializer(ElviraTimetableResponse.class, new TimetableResponseDeserializer());
         return new ObjectMapper()
                 .registerModule(timetableModule)
                 .registerModule(new JavaTimeModule())

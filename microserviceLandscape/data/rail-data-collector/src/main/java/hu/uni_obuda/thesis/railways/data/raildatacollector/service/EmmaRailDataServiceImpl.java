@@ -2,8 +2,9 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.components.EmmaTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -37,7 +38,7 @@ import java.util.function.Function;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class GraphQlRailDataService implements RailDataService {
+public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
     private static final Map<Character, Character> stationCodeMapping = Map.of(
             'ő', 'õ',
@@ -45,7 +46,7 @@ public class GraphQlRailDataService implements RailDataService {
     );
 
     private final RailDelayGateway gateway;
-    private final TimetableCache timetableCache;
+    private final EmmaTimetableCache timetableCache;
 
     @Override
     public Flux<DelayInfo> getDelayInfo(String trainNumber, String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
@@ -53,7 +54,7 @@ public class GraphQlRailDataService implements RailDataService {
                 .flatMap(isCached -> {
                     if (Boolean.TRUE.equals(isCached)) {
                         log.info("Timetable with start station {} and end station {} on date {} is already cached, reusing cached object", from, to, date);
-                        return timetableCache.getGraphQl(from, to, date);
+                        return timetableCache.get(from, to, date);
                     } else {
                         log.info("Getting timetable with start station {} and end station {} on date {}", from, to, date);
                         return gateway.getShortTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
@@ -84,9 +85,13 @@ public class GraphQlRailDataService implements RailDataService {
                 .flatMapMany(Flux::fromIterable);
     }
 
+    @Override
+    public Flux<TrainRouteResponse> planRoute(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+        return Flux.error(new UnsupportedOperationException("Not implemented yet"));
+    }
 
 
-    private Mono<GraphQlShortTimetableResponse.Leg> checkSchedule(Tuple4<LocalTime, LocalTime, String, GraphQlShortTimetableResponse.Leg> schedule) {
+    private Mono<EmmaShortTimetableResponse.Leg> checkSchedule(Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg> schedule) {
         LocalTime now = LocalTime.now();
         if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(LocalTime.MIDNIGHT.plusHours(4))) {
             log.info("Not checking schedule in the early hours of the day, proceeding...");
@@ -104,7 +109,7 @@ public class GraphQlRailDataService implements RailDataService {
         }
     }
 
-    private Mono<Tuple4<LocalTime, LocalTime, String, GraphQlShortTimetableResponse.Leg>> extractSchedule(GraphQlShortTimetableResponse.Leg entry, String trainNumber) {
+    private Mono<Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg>> extractSchedule(EmmaShortTimetableResponse.Leg entry, String trainNumber) {
         LocalTime arrivalTime = entry.getEndLocalTime();
         LocalTime departureTime = entry.getStartLocalTime();
 
@@ -116,7 +121,7 @@ public class GraphQlRailDataService implements RailDataService {
         return Mono.just(Tuples.of(departureTime, arrivalTime, trainNumber, entry));
     }
 
-    private static Mono<GraphQlShortTimetableResponse.Leg> extractTimetableEntry(GraphQlShortTimetableResponse response, String trainNumber, LocalDate date) {
+    private static Mono<EmmaShortTimetableResponse.Leg> extractTimetableEntry(EmmaShortTimetableResponse response, String trainNumber, LocalDate date) {
         log.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
         if (response.getPlan() == null ||
                 response.getPlan().getItineraries() == null ||
@@ -133,7 +138,7 @@ public class GraphQlRailDataService implements RailDataService {
                 .orElseGet(() -> Mono.error(new TrainNotInServiceException(trainNumber, date)));
     }
 
-    private static Mono<String> extractTrainId(GraphQlShortTimetableResponse.Leg timetableEntry, String trainNumber, LocalDate date) {
+    private static Mono<String> extractTrainId(EmmaShortTimetableResponse.Leg timetableEntry, String trainNumber, LocalDate date) {
         log.info("Extracting train URI for train number {}", trainNumber);
         var trip = timetableEntry.getTrip();
         if (trip == null) {
@@ -142,7 +147,7 @@ public class GraphQlRailDataService implements RailDataService {
         return Mono.just(trip.getGtfsId());
     }
 
-    private Mono<List<DelayInfo>> mapToDelayInfo(GraphQlShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
+    private Mono<List<DelayInfo>> mapToDelayInfo(EmmaShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
         if (!response.hasArrived()) {
             log.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
             return Mono.just(Collections.emptyList());
@@ -160,7 +165,7 @@ public class GraphQlRailDataService implements RailDataService {
         int realArrivalRollover = findRolloverIndex(response.getTrip().getStoptimes(), localStartTime, station -> station.getRealtimeArrival());
 
         for (int i = 0; i < response.getTrip().getStoptimes().size(); i++) {
-            GraphQlShortTrainDetailsResponse.StopTime currentStation = response.getTrip().getStoptimes().get(i);
+            EmmaShortTrainDetailsResponse.StopTime currentStation = response.getTrip().getStoptimes().get(i);
             DelayInfo delayInfo = DelayInfo.builder()
                     .stationCode(adjustStationCodeFormat(currentStation.getStop().getName()))
                     .thirdPartyStationUrl("")
@@ -220,10 +225,10 @@ public class GraphQlRailDataService implements RailDataService {
         return Mono.just(delayInfos);
     }
 
-    private int findRolloverIndex(List<GraphQlShortTrainDetailsResponse.StopTime> stations, LocalTime startTime, Function<GraphQlShortTrainDetailsResponse.StopTime, Integer> epochSecondsGetter) {
+    private int findRolloverIndex(List<EmmaShortTrainDetailsResponse.StopTime> stations, LocalTime startTime, Function<EmmaShortTrainDetailsResponse.StopTime, Integer> epochSecondsGetter) {
         LocalTime previousTime = startTime;
         for (int i = 0; i < stations.size(); i++) {
-            GraphQlShortTrainDetailsResponse.StopTime currentStation = stations.get(i);
+            EmmaShortTrainDetailsResponse.StopTime currentStation = stations.get(i);
             Integer timeProperty = epochSecondsGetter.apply(currentStation);
             if (timeProperty != null) {
                 LocalTime currentTime = toLocalTime(timeProperty);
