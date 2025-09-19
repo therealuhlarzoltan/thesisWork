@@ -207,7 +207,7 @@ railway.api:
   train-details-getter-uri: /details
   rate:
     limit:
-      delay-between-requests: 2000
+      delay-between-requests: 1500
       number-of-concurrent-calls: 24
 
 ---
@@ -221,5 +221,5 @@ railway.api:
   graphql.short-train-details-document: Trip
   rate:
     limit:
-      delay-between-requests: 8000
+      delay-between-requests: 5000
       number-of-concurrent-calls: 24
