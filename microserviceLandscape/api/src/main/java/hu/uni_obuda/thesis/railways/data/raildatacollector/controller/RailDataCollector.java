@@ -12,6 +12,13 @@ import java.time.LocalDate;
 public interface RailDataCollector {
     @GetMapping("/collect-delay")
     Flux<DelayInfo> getDelayInfo(@RequestParam String trainNumber, @RequestParam String from, @RequestParam String to, @RequestParam LocalDate date);
+
+    @GetMapping("/collect-/v2")
+    Flux<DelayInfo> getDelayInfo(String trainId, String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date);
+
     @GetMapping("/plan-route")
     Flux<TrainRouteResponse> planRoute(@RequestParam String from, @RequestParam String to, @RequestParam LocalDate date);
+
+    @GetMapping("/plan-route/v2")
+    Flux<TrainRouteResponse> planRoute(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date);
 }
