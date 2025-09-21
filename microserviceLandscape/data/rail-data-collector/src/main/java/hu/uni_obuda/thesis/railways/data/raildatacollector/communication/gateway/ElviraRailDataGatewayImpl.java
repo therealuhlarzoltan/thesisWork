@@ -1,7 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.ElviraRailDataWebClient;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.RailDelayWebClient;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
