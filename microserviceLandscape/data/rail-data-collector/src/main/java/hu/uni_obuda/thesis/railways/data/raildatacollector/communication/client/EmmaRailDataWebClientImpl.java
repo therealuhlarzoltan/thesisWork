@@ -21,7 +21,7 @@ import java.util.Map;
 @Profile("data-source-emma")
 @Component
 @RequiredArgsConstructor
-public class GraphQlWebClientImpl implements RailDelayWebClient {
+public class EmmaRailDataWebClientImpl implements EmmaRailDataWebClient {
 
     private final HttpGraphQlClient graphQlClient;
     private final CachingYamlGraphQlVariableLoader variableLoader;

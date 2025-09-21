@@ -23,9 +23,9 @@ import java.time.LocalDate;
 @Profile("data-source-elvira")
 @Component
 @RequiredArgsConstructor
-public class RailDelayWebClientImpl implements RailDelayWebClient {
+public class ElviraRailDataWebClientImpl implements ElviraRailDataWebClient {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RailDelayWebClientImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataWebClientImpl.class);
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
