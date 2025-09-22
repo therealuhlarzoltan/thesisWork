@@ -40,7 +40,7 @@ public class MessageProcessorConfig {
     Integer taskQueueSize;
     @Value("${railway.api.rate.limit.delay-between-requests:1000}")
     Integer delayBetweenRequests;
-    @Value("${railway.api.rate.limit.number-of-concurrent-calls:3}")
+    @Value("${railway.api.rate.limit.number-of-concurrent-calls:5}")
     Integer numberOfConcurrentCalls;
 
     @Bean(name = "messageProcessingScheduler")
@@ -57,7 +57,7 @@ public class MessageProcessorConfig {
         return flux -> flux
                 .publishOn(messageProcessingScheduler())
                 .delayElements(Duration.ofMillis(delayBetweenRequests))
-                .flatMap(this::processSingleMessage)
+                .flatMap(this::processSingleMessage, numberOfConcurrentCalls)
                 .onErrorContinue((error, obj) -> {
                     LOG.error("Error during processing: {}", error.getMessage(), error);
                 });
@@ -72,7 +72,7 @@ public class MessageProcessorConfig {
         return flux -> flux
                 .publishOn(messageProcessingScheduler())
                 .delayElements(Duration.ofMillis(delayBetweenRequests))
-                .flatMap(this::processSingleMessage)
+                .flatMap(this::processSingleMessage, numberOfConcurrentCalls)
                 .onErrorContinue((error, obj) -> {
                     LOG.error("Error during processing: {}", error.getMessage(), error);
                 });
