@@ -45,6 +45,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
     );
 
     private static final long SECONDS_IN_DAY = 24 * 60 * 60;
+    private static final LocalTime FOUR_AM = LocalTime.MIDNIGHT.plusHours(4);
 
     private final EmmaRailDelayGateway gateway;
     private final EmmaTimetableCache timetableCache;
@@ -77,6 +78,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
                 .flatMap(timetableResponse -> extractTimetableEntry(timetableResponse, trainNumber, date))
                 .flatMap(entry -> extractSchedule(entry, trainNumber))
                 .flatMap(this::checkSchedule)
+                .flatMap(this::checkOvernightTrain)
                 .flatMap(entry -> extractTrainId(entry, trainNumber, date))
                 .flatMap(trainId -> gateway.getShortTrainDetails(trainId, date))
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
@@ -94,7 +96,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
     private Mono<EmmaShortTimetableResponse.Leg> checkSchedule(Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg> schedule) {
         LocalTime now = LocalTime.now();
-        if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(LocalTime.MIDNIGHT.plusHours(4))) {
+        if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(FOUR_AM)) {
             log.info("Not checking schedule in the early hours of the day, proceeding...");
             return Mono.just(schedule.getT4());
         }
@@ -108,6 +110,31 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
             log.info("Train should have arrived by now according to schedule, proceeding...");
             return Mono.just(schedule.getT4());
         }
+    }
+
+    private Mono<EmmaShortTimetableResponse.Leg> checkOvernightTrain(EmmaShortTimetableResponse.Leg transportLeg) {
+        LocalTime startTime = transportLeg.getStartLocalTime();
+        LocalTime endTime = transportLeg.getEndLocalTime();
+        if (startTime == null || endTime == null) {
+            log.warn("Could not infer schedule, proceeding...");
+            return Mono.just(transportLeg);
+        }
+        if (endTime.isBefore(FOUR_AM)) {
+            if (endTime.isBefore(startTime)) { // overnight train, proceed immediately
+                log.info("Train {} ({}) is making an overnight journey, proceeding...", transportLeg.getTrip().getTripShortName(), transportLeg.getRoute().getLongName());
+                return Mono.just(transportLeg);
+            }
+            if ((startTime.equals(LocalTime.MIDNIGHT) || startTime.isAfter(LocalTime.MIDNIGHT))) { // 00:00 - 04:00
+                log.info("Train {} ({}) is a night train, proceeding...", transportLeg.getTrip().getTripShortName(), transportLeg.getRoute().getLongName());
+                return Mono.just(transportLeg);
+            }
+            LocalTime now = LocalTime.now();
+            if (now.equals(LocalTime.MIDNIGHT) || now.isBefore(FOUR_AM)) { // did not manage to record delay for today
+                log.error("Delay data is not available for train {} ({}) because it arrived yesterday, aborting...", transportLeg.getTrip().getTripShortName(), transportLeg.getRoute().getLongName());
+                return Mono.empty();
+            }
+        }
+        return Mono.just(transportLeg);
     }
 
     private Mono<Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg>> extractSchedule(EmmaShortTimetableResponse.Leg entry, String trainNumber) {
