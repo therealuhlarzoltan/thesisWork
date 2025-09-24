@@ -25,12 +25,9 @@ import reactor.util.function.Tuples;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Profile("data-source-emma")
@@ -211,41 +208,25 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
             if (currentStation.getRealtimeArrival() != null && i != 0) {
                 LocalDateTime realtimeArrival = operationDayMidnight.plusSeconds(currentStation.getRealtimeArrival());
                 delayInfo.setScheduledArrival(realtimeArrival.toString());
+                delayInfo.setArrivalDelay(calculateDelay(currentStation.getArrivalDelay()));
             }
 
             if (currentStation.getRealtimeDeparture() != null && i != response.getTrip().getStoptimes().size() - 1) {
                 LocalDateTime realtimeDeparture = operationDayMidnight.plusSeconds(currentStation.getRealtimeDeparture());
                 delayInfo.setScheduledDeparture(realtimeDeparture.toString());
+                delayInfo.setDepartureDelay(calculateDelay(currentStation.getDepartureDelay()));
             }
-
-            delayInfo.setArrivalDelay(calculateDelay(delayInfo.getScheduledArrival(), delayInfo.getActualArrival()));
-            delayInfo.setDepartureDelay(calculateDelay(delayInfo.getScheduledDeparture(), delayInfo.getActualDeparture()));
 
             delayInfos.add(delayInfo);
         }
         return Mono.just(delayInfos);
     }
 
-    private static LocalTime toLocalTime(Integer seconds) {
-        if (seconds == null) {
-            return null;
-        }
-        long normalized = Math.floorMod(seconds, SECONDS_IN_DAY);
-        return LocalTime.ofSecondOfDay(normalized);
-    }
-
-    private Integer calculateDelay(String scheduled, String actual) {
-        if (scheduled == null || scheduled.isBlank() || actual == null || actual.isBlank()) {
-            return null;
-        } else {
-            try {
-                LocalDateTime scheduledDate = LocalDateTime.parse(scheduled, DateTimeFormatter.ISO_DATE_TIME);
-                LocalDateTime actualDate = LocalDateTime.parse(actual, DateTimeFormatter.ISO_DATE_TIME);
-                return (int) Duration.between(scheduledDate, actualDate).toMinutes();
-            } catch (DateTimeParseException e) {
-                return null;
-            }
-        }
+    private Integer calculateDelay(Integer delayInSeconds) {
+       if (delayInSeconds == null) {
+           return null;
+       }
+       return delayInSeconds / 60;
     }
 
     private ExternalApiException mapNotFoundToExternalApiException(WebClientResponseException.NotFound notFound) {
