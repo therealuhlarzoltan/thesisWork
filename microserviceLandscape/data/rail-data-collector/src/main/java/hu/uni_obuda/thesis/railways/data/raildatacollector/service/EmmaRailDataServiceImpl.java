@@ -41,7 +41,6 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
             'ű', 'û'
     );
 
-    private static final long SECONDS_IN_DAY = 24 * 60 * 60;
     private static final LocalTime FOUR_AM = LocalTime.MIDNIGHT.plusHours(4);
 
     private final EmmaRailDelayGateway gateway;

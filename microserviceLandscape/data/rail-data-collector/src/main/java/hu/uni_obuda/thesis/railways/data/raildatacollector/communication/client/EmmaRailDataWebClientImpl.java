@@ -4,7 +4,8 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respons
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.CachingYamlGraphQlVariableLoader;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.graphql.client.HttpGraphQlClient;
@@ -20,10 +21,12 @@ import java.util.Map;
 
 @Profile("data-source-emma")
 @Component
-@RequiredArgsConstructor
 public class EmmaRailDataWebClientImpl implements EmmaRailDataWebClient {
 
-    private final HttpGraphQlClient graphQlClient;
+    private final HttpGraphQlClient shortTimetableClient;
+    private final HttpGraphQlClient shortTrainDetailsClient;
+    private final HttpGraphQlClient timetableClient;
+
     private final CachingYamlGraphQlVariableLoader variableLoader;
 
     @Value("${railway.api.graphql.short-timetable-document}")
@@ -39,10 +42,18 @@ public class EmmaRailDataWebClientImpl implements EmmaRailDataWebClient {
     @Value("${railway.api.train-details-getter-uri}")
     private String trainDetailsGetterUri;
 
+    @Autowired
+    public EmmaRailDataWebClientImpl(@Qualifier("shortTimetableClient") HttpGraphQlClient shortTimetableClient, @Qualifier("shortTrainDetailsClient") HttpGraphQlClient shortTrainDetailsClient, @Qualifier("timetableClient") HttpGraphQlClient timetableClient, CachingYamlGraphQlVariableLoader variableLoader) {
+        this.shortTimetableClient = shortTimetableClient;
+        this.shortTrainDetailsClient = shortTrainDetailsClient;
+        this.timetableClient = timetableClient;
+        this.variableLoader = variableLoader;
+    }
+
     @Override
     public Mono<EmmaShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
         var variableMap =  Map.<String, Object>of("fromPlace", concatenatePlaceWithCoordinates(from, fromLatitude, fromLongitude), "toPlace", concatenatePlaceWithCoordinates(to, toLatitude, toLongitude), "date", date.toString());
-        return graphQlClient.mutate().url(railwayBaseUrl + timetableGetterUri).build().documentName(shortTimeTableDocumentName)
+        return shortTimetableClient.documentName(shortTimeTableDocumentName)
                 .variables(mergeWithDefaultVariables(variableMap, shortTimeTableDocumentName)
                 )
                 .execute()
@@ -64,7 +75,7 @@ public class EmmaRailDataWebClientImpl implements EmmaRailDataWebClient {
     @Override
     public Mono<EmmaShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
         var variableMap =  Map.<String, Object>of("id", trainId, "serviceDay", serviceDate.toString());
-        return graphQlClient.mutate().url(railwayBaseUrl + trainDetailsGetterUri).build().documentName(shortTrainDetailsDocumentName)
+        return shortTrainDetailsClient.documentName(shortTrainDetailsDocumentName)
                 .variables(mergeWithDefaultVariables(variableMap, shortTrainDetailsDocumentName)
                 )
                 .execute()
