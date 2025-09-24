@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 
-public interface ElviraRailDataService extends RailDataService {
+public interface ElviraRailDataService {
     Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date);
     Flux<TrainRouteResponse> planRoute(String from, String to, LocalDate date);
 }

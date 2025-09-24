@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.ElviraRailDataGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
@@ -46,7 +46,7 @@ public class ElviraRailDataServiceImpl implements ElviraRailDataService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataServiceImpl.class);
 
-    private final RailDelayGateway gateway;
+    private final ElviraRailDataGateway gateway;
     private final ElviraTimetableCache timetableCache;
 
     @Override

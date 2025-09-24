@@ -1,7 +1,9 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.RailDelayWebClient;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client.ElviraRailDataWebClient;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException;
@@ -14,7 +16,8 @@ import io.github.resilience4j.reactor.ratelimiter.operator.RateLimiterOperator;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.RetryRegistry;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -24,21 +27,22 @@ import reactor.core.publisher.Mono;
 import java.net.MalformedURLException;
 import java.time.LocalDate;
 
-@Profile("data-source-emma")
+@Profile("data-source-elvira")
 @Component
-@Slf4j
 @RequiredArgsConstructor
-public class GraphQlRailDelayGateway implements RailDelayGateway {
+public class ElviraRailDataGatewayImpl implements ElviraRailDataGateway {
 
-    private final RailDelayWebClient webClient;
+    private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataGatewayImpl.class);
+
+    private final ElviraRailDataWebClient webClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
     private final RateLimiterRegistry rateLimiterRegistry;
 
     @Override
-    public Mono<EmmaShortTimetableResponse> getShortTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
-        log.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
-        return webClient.getShortTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
+    public Mono<ElviraShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
+        LOG.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
+        return webClient.getShortTimetable(from, to, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTimetableApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTimetableApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getTimetableApi")))
@@ -46,9 +50,9 @@ public class GraphQlRailDelayGateway implements RailDelayGateway {
     }
 
     @Override
-    public Mono<EmmaShortTrainDetailsResponse> getShortTrainDetails(String trainId, LocalDate serviceDate) {
-        log.debug("Called train details gateway with id {}", trainId);
-        return webClient.getShortTrainDetails(trainId, serviceDate)
+    public Mono<ElviraShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
+        LOG.debug("Called train details gateway with uri {}", trainUri);
+        return webClient.getShortTrainDetails(trainUri)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTrainDetailsApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTrainDetailsApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getTrainDetailsApi")))
@@ -56,9 +60,9 @@ public class GraphQlRailDelayGateway implements RailDelayGateway {
     }
 
     @Override
-    public Mono<EmmaTimetableResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
-        log.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
-        return webClient.getTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
+    public Mono<ElviraTimetableResponse> getTimetable(String from, String to, LocalDate date) {
+        LOG.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
+        return webClient.getTimetable(from, to, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getFullTimetableApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getFullTimetableApi")))
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getFullTimetableApi")))
@@ -67,15 +71,15 @@ public class GraphQlRailDelayGateway implements RailDelayGateway {
 
     private <T> Mono<T> handleFallback(Throwable throwable) {
         if (throwable instanceof CallNotPermittedException callNotPermittedException) {
-            log.error("Circuit breaker is open", callNotPermittedException);
+            LOG.error("Circuit breaker is open", callNotPermittedException);
         } else if (throwable instanceof RequestNotPermitted requestNotPermittedException) {
-            log.error("Rate limit is exceeded", requestNotPermittedException);
+            LOG.error("Rate limit is exceeded", requestNotPermittedException);
         }
         ApiException apiException;
         try {
             apiException = resolveApiException(throwable);
         } catch (MalformedURLException e) {
-            log.error("Encountered a Malformed URL while trying to resolve API Exception", e);
+            LOG.error("Encountered a Malformed URL while trying to resolve API Exception", e);
             apiException = new InternalApiException("Encountered a Malformed URL while trying to resolve API Exception", null);
         }
         return Mono.error(apiException);

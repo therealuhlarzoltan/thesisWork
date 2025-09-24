@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.EmmaRailDelayGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.components.EmmaTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
@@ -25,14 +25,10 @@ import reactor.util.function.Tuples;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.function.Function;
 
 @Profile("data-source-emma")
 @Service
@@ -40,12 +36,14 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
-    private static final Map<Character, Character> stationCodeMapping = Map.of(
+    private static final Map<Character, Character> STATION_CODE_MAPPING = Map.of(
             'ő', 'õ',
             'ű', 'û'
     );
 
-    private final RailDelayGateway gateway;
+    private static final LocalTime FOUR_AM = LocalTime.MIDNIGHT.plusHours(4);
+
+    private final EmmaRailDelayGateway gateway;
     private final EmmaTimetableCache timetableCache;
 
     @Override
@@ -76,6 +74,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
                 .flatMap(timetableResponse -> extractTimetableEntry(timetableResponse, trainNumber, date))
                 .flatMap(entry -> extractSchedule(entry, trainNumber))
                 .flatMap(this::checkSchedule)
+                .flatMap(this::checkOvernightTrain)
                 .flatMap(entry -> extractTrainId(entry, trainNumber, date))
                 .flatMap(trainId -> gateway.getShortTrainDetails(trainId, date))
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
@@ -93,7 +92,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
     private Mono<EmmaShortTimetableResponse.Leg> checkSchedule(Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg> schedule) {
         LocalTime now = LocalTime.now();
-        if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(LocalTime.MIDNIGHT.plusHours(4))) {
+        if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(FOUR_AM)) {
             log.info("Not checking schedule in the early hours of the day, proceeding...");
             return Mono.just(schedule.getT4());
         }
@@ -107,6 +106,31 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
             log.info("Train should have arrived by now according to schedule, proceeding...");
             return Mono.just(schedule.getT4());
         }
+    }
+
+    private Mono<EmmaShortTimetableResponse.Leg> checkOvernightTrain(EmmaShortTimetableResponse.Leg transportLeg) {
+        LocalTime startTime = transportLeg.getStartLocalTime();
+        LocalTime endTime = transportLeg.getEndLocalTime();
+        if (startTime == null || endTime == null) {
+            log.warn("Could not infer schedule, proceeding...");
+            return Mono.just(transportLeg);
+        }
+        if (endTime.isBefore(FOUR_AM)) {
+            if (endTime.isBefore(startTime)) { // overnight train, proceed immediately
+                log.info("Train {} ({}) is making an overnight journey, proceeding...", transportLeg.getTrip().getTripShortName(), transportLeg.getRoute().getLongName());
+                return Mono.just(transportLeg);
+            }
+            if ((startTime.equals(LocalTime.MIDNIGHT) || startTime.isAfter(LocalTime.MIDNIGHT))) { // 00:00 - 04:00
+                log.info("Train {} ({}) is a night train, proceeding...", transportLeg.getTrip().getTripShortName(), transportLeg.getRoute().getLongName());
+                return Mono.just(transportLeg);
+            }
+            LocalTime now = LocalTime.now();
+            if (now.equals(LocalTime.MIDNIGHT) || now.isBefore(FOUR_AM)) { // did not manage to record delay for today
+                log.error("Delay data is not available for train {} ({}) because it arrived yesterday, aborting...", transportLeg.getTrip().getTripShortName(), transportLeg.getRoute().getLongName());
+                return Mono.empty();
+            }
+        }
+        return Mono.just(transportLeg);
     }
 
     private Mono<Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg>> extractSchedule(EmmaShortTimetableResponse.Leg entry, String trainNumber) {
@@ -139,7 +163,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
     }
 
     private static Mono<String> extractTrainId(EmmaShortTimetableResponse.Leg timetableEntry, String trainNumber, LocalDate date) {
-        log.info("Extracting train URI for train number {}", trainNumber);
+        log.info("Extracting train id for train number {}", trainNumber);
         var trip = timetableEntry.getTrip();
         if (trip == null) {
             return Mono.error(new TrainNotInServiceException(trainNumber, date));
@@ -156,13 +180,8 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
             log.warn("Train {} has been cancelled", trainNumber);
             return Mono.error(new TrainNotInServiceException(trainNumber, date));
         }
-        LocalTime localStartTime = toLocalTime(response.getTrip().getStoptimes().getFirst().getScheduledDeparture());
+        LocalDateTime operationDayMidnight = date.atStartOfDay();
         List<DelayInfo> delayInfos = new ArrayList<>();
-
-        int scheduledDepartureRollover = findRolloverIndex(response.getTrip().getStoptimes(), localStartTime, station -> station.getScheduledDeparture());
-        int scheduledArrivalRollover = findRolloverIndex(response.getTrip().getStoptimes(), localStartTime, station -> station.getScheduledArrival());
-        int realDepartureRollover = findRolloverIndex(response.getTrip().getStoptimes(), localStartTime, station -> station.getRealtimeDeparture());
-        int realArrivalRollover = findRolloverIndex(response.getTrip().getStoptimes(), localStartTime, station -> station.getRealtimeArrival());
 
         for (int i = 0; i < response.getTrip().getStoptimes().size(); i++) {
             EmmaShortTrainDetailsResponse.StopTime currentStation = response.getTrip().getStoptimes().get(i);
@@ -175,108 +194,38 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
                     .build();
 
 
-            if (currentStation.getScheduledArrival() != null) {
-                if (scheduledArrivalRollover != -1 && i >= scheduledArrivalRollover) {
-                    delayInfo.setScheduledArrival(toLocalTime(currentStation.getScheduledArrival()).atDate(date).plusDays(1).toString());
-                } else {
-                    delayInfo.setScheduledArrival(toLocalTime(currentStation.getScheduledArrival()).atDate(date).toString());
-                }
+            if (currentStation.getScheduledArrival() != null && i != 0) {
+                LocalDateTime scheduledArrival = operationDayMidnight.plusSeconds(currentStation.getScheduledArrival());
+                delayInfo.setScheduledArrival(scheduledArrival.toString());
             }
 
-            if (currentStation.getScheduledDeparture() != null) {
-                if (scheduledDepartureRollover != -1 && i >= scheduledDepartureRollover) {
-                    delayInfo.setScheduledDeparture(toLocalTime(currentStation.getScheduledDeparture()).atDate(date).plusDays(1).toString());
-                } else {
-                    delayInfo.setScheduledDeparture(toLocalTime(currentStation.getScheduledDeparture()).atDate(date).toString());
-                }
+            if (currentStation.getScheduledDeparture() != null && i != response.getTrip().getStoptimes().size() - 1) {
+                LocalDateTime scheduledDeparture = operationDayMidnight.plusSeconds(currentStation.getScheduledDeparture());
+                delayInfo.setScheduledDeparture(scheduledDeparture.toString());
             }
 
-            if (currentStation.getScheduledArrival() != null) {
-                if (realArrivalRollover != -1 && i >= realArrivalRollover) {
-                    delayInfo.setActualArrival((toLocalTime(currentStation.getRealtimeArrival())).atDate(date).plusDays(1).toString());
-                } else {
-                    delayInfo.setActualArrival(toLocalTime(currentStation.getRealtimeArrival()).atDate(date).toString());
-                }
+            if (currentStation.getRealtimeArrival() != null && i != 0) {
+                LocalDateTime realtimeArrival = operationDayMidnight.plusSeconds(currentStation.getRealtimeArrival());
+                delayInfo.setScheduledArrival(realtimeArrival.toString());
+                delayInfo.setArrivalDelay(calculateDelay(currentStation.getArrivalDelay()));
             }
 
-            if (currentStation.getRealtimeDeparture() != null) {
-                if (realDepartureRollover != -1 && i >= realDepartureRollover) {
-                    delayInfo.setActualDeparture(toLocalTime(currentStation.getRealtimeDeparture()).atDate(date).plusDays(1).toString());
-                } else {
-                    delayInfo.setActualDeparture(toLocalTime(currentStation.getRealtimeDeparture()).atDate(date).toString());
-                }
+            if (currentStation.getRealtimeDeparture() != null && i != response.getTrip().getStoptimes().size() - 1) {
+                LocalDateTime realtimeDeparture = operationDayMidnight.plusSeconds(currentStation.getRealtimeDeparture());
+                delayInfo.setScheduledDeparture(realtimeDeparture.toString());
+                delayInfo.setDepartureDelay(calculateDelay(currentStation.getDepartureDelay()));
             }
-
-            if (i == 0) {
-                delayInfo.setActualArrival(null);
-                delayInfo.setScheduledArrival(null);
-            }
-
-            if (i == response.getTrip().getStoptimes().size()- 1) {
-                delayInfo.setScheduledDeparture(null);
-                delayInfo.setActualDeparture(null);
-            }
-
-            delayInfo.setArrivalDelay(calculateDelay(delayInfo.getScheduledArrival(), delayInfo.getActualArrival()));
-            delayInfo.setDepartureDelay(calculateDelay(delayInfo.getScheduledDeparture(), delayInfo.getActualDeparture()));
 
             delayInfos.add(delayInfo);
         }
         return Mono.just(delayInfos);
     }
 
-    private int findRolloverIndex(List<EmmaShortTrainDetailsResponse.StopTime> stations, LocalTime startTime, Function<EmmaShortTrainDetailsResponse.StopTime, Integer> epochSecondsGetter) {
-        LocalTime previousTime = startTime;
-        for (int i = 0; i < stations.size(); i++) {
-            EmmaShortTrainDetailsResponse.StopTime currentStation = stations.get(i);
-            Integer timeProperty = epochSecondsGetter.apply(currentStation);
-            if (timeProperty != null) {
-                LocalTime currentTime = toLocalTime(timeProperty);
-                if (currentTime.isBefore(previousTime)) {
-                    return i;
-                }
-                previousTime = toLocalTime(timeProperty);
-            }
-        }
-        return -1;
-    }
-
-    private <T> int findRolloverIndexForRoutes(List<T> scheduledObjects, LocalTime startTime, Function<T, Integer> epochSecondsGetter) {
-        LocalTime previousTime = startTime;
-        for (int i = 0; i < scheduledObjects.size(); i++) {
-            T currentStop = scheduledObjects.get(i);
-            Integer timeProperty = epochSecondsGetter.apply(currentStop);
-            if (timeProperty != null) {
-                LocalTime currentTime = toLocalTime(timeProperty);
-                if (currentTime.isBefore(previousTime)) {
-                    return i;
-                }
-                previousTime = toLocalTime(timeProperty);
-            }
-        }
-        return -1;
-    }
-
-    private static LocalTime parseTimeSafe(String timeStr) {
-        return LocalTime.parse(timeStr.equals("24:00") ? "00:00" : timeStr);
-    }
-
-    private static LocalTime toLocalTime(Integer seconds) {
-        return seconds != null ? LocalTime.ofSecondOfDay(seconds) : null;
-    }
-
-    private Integer calculateDelay(String scheduled, String actual) {
-        if (scheduled == null || scheduled.isBlank() || actual == null || actual.isBlank()) {
-            return null;
-        } else {
-            try {
-                LocalDateTime scheduledDate = LocalDateTime.parse(scheduled, DateTimeFormatter.ISO_DATE_TIME);
-                LocalDateTime actualDate = LocalDateTime.parse(actual, DateTimeFormatter.ISO_DATE_TIME);
-                return (int) Duration.between(scheduledDate, actualDate).toMinutes();
-            } catch (DateTimeParseException e) {
-                return null;
-            }
-        }
+    private Integer calculateDelay(Integer delayInSeconds) {
+       if (delayInSeconds == null) {
+           return null;
+       }
+       return delayInSeconds / 60;
     }
 
     private ExternalApiException mapNotFoundToExternalApiException(WebClientResponseException.NotFound notFound) {
@@ -311,8 +260,8 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
     private String adjustStationCodeFormat(@NonNull String stationCode) {
         for (int i = 0; i < stationCode.length(); i++) {
-            if (stationCodeMapping.containsKey(stationCode.charAt(i))) {
-                stationCode = stationCode.replace(stationCode.charAt(i), stationCodeMapping.get(stationCode.charAt(i)));
+            if (STATION_CODE_MAPPING.containsKey(stationCode.charAt(i))) {
+                stationCode = stationCode.replace(stationCode.charAt(i), STATION_CODE_MAPPING.get(stationCode.charAt(i)));
             }
         }
         return stationCode;
