@@ -206,13 +206,13 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
             if (currentStation.getRealtimeArrival() != null && i != 0) {
                 LocalDateTime realtimeArrival = operationDayMidnight.plusSeconds(currentStation.getRealtimeArrival());
-                delayInfo.setScheduledArrival(realtimeArrival.toString());
+                delayInfo.setActualArrival(realtimeArrival.toString());
                 delayInfo.setArrivalDelay(calculateDelay(currentStation.getArrivalDelay()));
             }
 
             if (currentStation.getRealtimeDeparture() != null && i != response.getTrip().getStoptimes().size() - 1) {
                 LocalDateTime realtimeDeparture = operationDayMidnight.plusSeconds(currentStation.getRealtimeDeparture());
-                delayInfo.setScheduledDeparture(realtimeDeparture.toString());
+                delayInfo.setActualDeparture(realtimeDeparture.toString());
                 delayInfo.setDepartureDelay(calculateDelay(currentStation.getDepartureDelay()));
             }
 
