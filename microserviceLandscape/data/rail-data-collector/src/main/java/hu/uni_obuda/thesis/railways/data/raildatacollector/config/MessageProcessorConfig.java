@@ -60,10 +60,10 @@ public class MessageProcessorConfig {
                 .flatMap(this::processSingleMessage, numberOfConcurrentCalls)
                 .onErrorContinue((error, obj) -> {
                     LOG.error("Error during processing: {}", error.getMessage(), error);
-                });
+                }).subscribe();
     }
 
-    @ConditionalOnBean(ElviraRailDataCollector.class)
+    @ConditionalOnBean(EmmaRailDataCollector.class)
     @Bean("messageProcessor")
     public Consumer<Flux<Message<Event<?, ?>>>> emmaMessageProcessor(EmmaRailDataCollector emmaRailDataCollector) {
         if (messageProcessor == null) {
@@ -75,7 +75,7 @@ public class MessageProcessorConfig {
                 .flatMap(this::processSingleMessage, numberOfConcurrentCalls)
                 .onErrorContinue((error, obj) -> {
                     LOG.error("Error during processing: {}", error.getMessage(), error);
-                });
+                }).subscribe();
     }
 
     private Mono<Void> processSingleMessage(Message<Event<?, ?>> eventMessage) {
