@@ -13,6 +13,10 @@ import java.time.LocalDate;
 public class DelayInfoRequest {
     private String trainNumber;
     private String from;
+    private double fromLatitude;
+    private double fromLongitude;
     private String to;
+    private double toLatitude;
+    private double toLongitude;
     private LocalDate date;
 }

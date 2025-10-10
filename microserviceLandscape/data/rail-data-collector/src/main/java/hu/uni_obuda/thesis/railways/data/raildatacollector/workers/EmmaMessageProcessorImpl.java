@@ -6,37 +6,30 @@ import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 import hu.uni_obuda.thesis.railways.data.event.ResponsePayload;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.controller.RailDataCollector;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.controller.EmmaRailDataCollector;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-import java.time.Duration;
+public class EmmaMessageProcessorImpl implements MessageProcessor {
 
-public class MessageProcessorImpl implements MessageProcessor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MessageProcessorImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EmmaMessageProcessorImpl.class);
 
     private final ObjectMapper objectMapper;
-    private final RailDataCollector railDataCollector;
+    private final EmmaRailDataCollector emmaRailDataCollector;
     private final ResponseMessageSender responseSender;
     private final Scheduler messageProcessingScheduler;
 
-    public MessageProcessorImpl(ObjectMapper objectMapper, RailDataCollector railDataCollector,
-                                ResponseMessageSender responseSender, Scheduler messageProcessingScheduler) {
+    public EmmaMessageProcessorImpl(ObjectMapper objectMapper, EmmaRailDataCollector emmaRailDataCollector, ResponseMessageSender responseSender, Scheduler messageProcessingScheduler) {
         this.objectMapper = objectMapper;
-        this.railDataCollector = railDataCollector;
+        this.emmaRailDataCollector = emmaRailDataCollector;
         this.responseSender = responseSender;
         this.messageProcessingScheduler = messageProcessingScheduler;
     }
@@ -51,7 +44,6 @@ public class MessageProcessorImpl implements MessageProcessor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private CrudEvent<String, DelayInfoRequest> retrieveCrudEvent(Event<?, ?> genericEvent) {
         if (!(genericEvent instanceof CrudEvent<?, ?> crudEvent)) {
             LOG.error("Unexpected event parameters, expected a CrudEvent");
@@ -85,7 +77,7 @@ public class MessageProcessorImpl implements MessageProcessor {
         switch (eventType) {
             case GET -> {
                 DelayInfoRequest request = crudEvent.getData();
-                Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
+                Flux<DelayInfo> delayInfoFlux = emmaRailDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getFromLatitude(), request.getFromLongitude(), request.getTo(), request.getToLatitude(), request.getToLongitude(), request.getDate());
                 delayInfoFlux
                         .map(delayInfo -> {
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
@@ -119,7 +111,7 @@ public class MessageProcessorImpl implements MessageProcessor {
         switch (eventType) {
             case GET -> {
                 DelayInfoRequest request = crudEvent.getData();
-                Flux<DelayInfo> delayInfoFlux = railDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getTo(), request.getDate());
+                Flux<DelayInfo> delayInfoFlux = emmaRailDataCollector.getDelayInfo(request.getTrainNumber(), request.getFrom(), request.getFromLatitude(), request.getFromLongitude(), request.getTo(), request.getToLatitude(), request.getToLongitude(), request.getDate());
                 delayInfoFlux
                         .map(delayInfo -> {
                             ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(delayInfo), HttpStatus.OK);
@@ -158,7 +150,7 @@ public class MessageProcessorImpl implements MessageProcessor {
             responseSender.sendResponseMessage("railDataResponses-out-0", errorEvent);
         }
     }
-    
+
     private void handleIncorrectEventTypeError(CrudEvent<String, DelayInfoRequest> crudEvent, String correlationId) {
         ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(new MessageFormatException("The received event had an unsupported event type")), HttpStatus.METHOD_NOT_ALLOWED);
         HttpResponseEvent errorEvent = new HttpResponseEvent(HttpResponseEvent.Type.ERROR, crudEvent.getKey(), responsePayload);
