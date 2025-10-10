@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
-import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
@@ -21,16 +20,18 @@ import java.util.logging.Level;
 @RequiredArgsConstructor
 public class HealthCheckServiceImpl implements HealthCheckService {
 
+    private final WebClient webClient;
+
     @Value("${app.rail-data-collector-url}")
     private String railDataCollectorUrl;
-    @Value("${app.weather-data-collector-url}")
-    private String weatherDataCollectorUrl;
     @Value("${app.geocoding-service-url}")
     private String geocodingServiceUrl;
+    @Value("${app.weather-data-collector-url}")
+    private String weatherDataCollectorUrl;
+    @Value("${app.delay-predictor-service-url}")
+    private String delayPredictorServiceUrl;
     @Value("${app.health-check-uri}")
     private String healthCheckUri;
-
-    private final WebClient webClient;
 
     @Override
     public Mono<Health> getRailDataCollectorHealth() {
@@ -50,15 +51,21 @@ public class HealthCheckServiceImpl implements HealthCheckService {
         return checkHealth(url, true);
     }
 
+    @Override
+    public Mono<Health> getDelayPredictorServiceHealth() {
+        String url = delayPredictorServiceUrl + healthCheckUri;
+        return checkHealth(url, false);
+    }
+
     private Mono<Health> checkHealth(String url, boolean isNecessary) {
         log.debug("Will call the Health API on URL: {} with retries", url);
         return webClient.get().uri(url).retrieve().toBodilessEntity()
                 .map(_ -> Health.up().build())
                 .timeout(Duration.ofSeconds(3))
                 .retryWhen(Retry.backoff(2, Duration.ofMillis(300))
-                        .maxBackoff(Duration.ofSeconds(2))
-                        .jitter(0.5)
-                        .filter(this::shouldRetry)
+                    .maxBackoff(Duration.ofSeconds(2))
+                    .jitter(0.5)
+                    .filter(this::shouldRetry)
                 )
                 .onErrorResume(ex -> {
                     if (isNecessary) {

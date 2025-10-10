@@ -38,7 +38,7 @@ public class ReactiveRailWebClient implements RailWebClient {
     public Flux<TrainRouteResponse> makeRouteRequest(String from, String to, LocalDate date) {
         URI routeUri = UriComponentsBuilder.fromUriString(baseUrl)
                 .path(routePlannerUri)
-                .queryParam("from", from) // raw value
+                .queryParam("from", from)
                 .queryParam("to", to)
                 .queryParam("date", date.toString())
                 .build(false)

@@ -20,9 +20,9 @@ public class HealthCheckConfig {
     @Bean
     public ReactiveHealthContributor dataCollectorServices() {
         final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
-        registry.put("rail-data-collector", () -> healthService.getRailDataCollectorHealth());
-        registry.put("weather-data-collector", () -> healthService.getWeatherDataCollectorHealth());
-        registry.put("geocoding-service", () -> healthService.getGeocodingServiceHealth());
+        registry.put("rail-data-collector", healthService::getRailDataCollectorHealth);
+        registry.put("weather-data-collector", healthService::getWeatherDataCollectorHealth);
+        registry.put("geocoding-service", healthService::getGeocodingServiceHealth);
         return CompositeReactiveHealthContributor.fromMap(registry);
     }
 }
