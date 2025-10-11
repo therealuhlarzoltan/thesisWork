@@ -58,7 +58,7 @@ public class HealthCheckServiceImpl implements HealthCheckService {
     }
 
     private Mono<Health> checkHealth(String url, boolean isNecessary) {
-        log.debug("Will call the Health API on URL: {} with retries", url);
+        log.info("Will call the Health API on URL: {} with retries", url);
         return webClient.get().uri(url).retrieve().toBodilessEntity()
                 .map(_ -> Health.up().build())
                 .timeout(Duration.ofSeconds(3))
