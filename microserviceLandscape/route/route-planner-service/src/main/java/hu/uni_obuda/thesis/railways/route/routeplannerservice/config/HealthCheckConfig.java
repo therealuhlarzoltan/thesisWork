@@ -32,6 +32,7 @@ public class HealthCheckConfig {
     @Bean
     public ReactiveHealthContributor predictionDataCollectorServices() {
         Map<String, ReactiveHealthIndicator> statuses = new LinkedHashMap<>();
+        statuses.put("delay-data-collector", healthCheckService::getDelayDataCollectorHealth);
         statuses.put("weather-data-collector", healthCheckService::getWeatherDataCollectorHealth);
         return CompositeReactiveHealthContributor.fromMap(statuses);
     }

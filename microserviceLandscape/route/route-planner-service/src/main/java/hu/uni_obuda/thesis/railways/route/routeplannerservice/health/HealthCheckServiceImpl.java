@@ -22,6 +22,8 @@ public class HealthCheckServiceImpl implements HealthCheckService {
 
     private final WebClient webClient;
 
+    @Value("${app.delay-data-collector-url}")
+    private String delayDataCollectorUrl;
     @Value("${app.rail-data-collector-url}")
     private String railDataCollectorUrl;
     @Value("${app.geocoding-service-url}")
@@ -32,6 +34,12 @@ public class HealthCheckServiceImpl implements HealthCheckService {
     private String delayPredictorServiceUrl;
     @Value("${app.health-check-uri}")
     private String healthCheckUri;
+
+    @Override
+    public Mono<Health> getDelayDataCollectorHealth() {
+        String url = delayDataCollectorUrl + healthCheckUri;
+        return checkHealth(url, false);
+    }
 
     @Override
     public Mono<Health> getRailDataCollectorHealth() {
