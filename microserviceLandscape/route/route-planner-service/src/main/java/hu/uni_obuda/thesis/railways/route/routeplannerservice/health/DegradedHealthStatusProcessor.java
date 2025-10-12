@@ -41,7 +41,8 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
             if (systemHealth.getStatus() == DEGRADED) {
                 return systemHealth;
             }
-            boolean isDegraded = isSystemDegraded(systemHealth.getComponents().values());
+            boolean isDown = systemHealth.getStatus() == Status.DOWN;
+            boolean isDegraded = !isDown && isSystemDegraded(systemHealth.getComponents().values());
             return createSystemHealth(ApiVersion.LATEST, isDegraded ? DEGRADED : systemHealth.getStatus(), systemHealth.getComponents(), systemHealth.getGroups());
         }
         return originalResult;
@@ -53,7 +54,8 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
                 if (systemHealth.getStatus() == DEGRADED) {
                     return systemHealth;
                 }
-                boolean isDegraded = isSystemDegraded(systemHealth.getComponents().values());
+                boolean isDown = systemHealth.getStatus() == Status.DOWN;
+                boolean isDegraded = !isDown && isSystemDegraded(systemHealth.getComponents().values());
                 return createSystemHealth(ApiVersion.LATEST, isDegraded ? DEGRADED : systemHealth.getStatus(), systemHealth.getComponents(), systemHealth.getGroups());
             }
             return result;
