@@ -38,7 +38,7 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
 
     protected static Object originalHealthDescriptorOrNewSystemHealth(Object originalResult) {
         if (originalResult instanceof SystemHealth systemHealth) {
-            if (systemHealth.getStatus() == DEGRADED) {
+            if (systemHealth.getStatus() != Status.UP) {
                 return systemHealth;
             }
             boolean isDegraded = isSystemDegraded(systemHealth.getComponents().values());
@@ -50,7 +50,7 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
     protected static Mono<?> originalHealthDescriptorOrNewSystemHealth(Mono<?> originalResult) {
         return originalResult.map(result -> {
             if (result instanceof SystemHealth systemHealth) {
-                if (systemHealth.getStatus() == DEGRADED) {
+                if (systemHealth.getStatus() != Status.UP) {
                     return systemHealth;
                 }
                 boolean isDegraded = isSystemDegraded(systemHealth.getComponents().values());
