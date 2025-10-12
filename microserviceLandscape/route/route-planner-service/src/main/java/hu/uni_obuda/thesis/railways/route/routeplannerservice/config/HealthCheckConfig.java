@@ -1,16 +1,19 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.config;
 
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.health.DegradedHealthEndpointExtensionProcessor;
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.health.DegradedHealthEndpointProcessor;
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.health.DegradedReactiveHealthEndpointExtensionProcessor;
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.health.HealthCheckService;
-import hu.uni_obuda.thesis.railways.route.routeplannerservice.health.PrimaryGroupStatusAggregator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.actuate.endpoint.SecurityContext;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.actuate.health.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
@@ -40,57 +43,21 @@ public class HealthCheckConfig {
         return CompositeReactiveHealthContributor.fromMap(statuses);
     }
 
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     @Bean
-    public HealthEndpointGroups degradablePrimaryHealthEndpointGroups(HealthEndpointGroups delegate) {
-        StatusAggregator statusAggregatorBean = delegate.getPrimary().getStatusAggregator();
-        StatusAggregator degradableStatusAggregator = new PrimaryGroupStatusAggregator(statusAggregatorBean);
+    public BeanPostProcessor healthEndpointWebExtensionPostProcessor() {
+        return new DegradedHealthEndpointExtensionProcessor();
+    }
 
-        return new HealthEndpointGroups() {
-            @Override
-            public HealthEndpointGroup getPrimary() {
-                HealthEndpointGroup original = delegate.getPrimary();
-                return new HealthEndpointGroup() {
-                    @Override
-                    public boolean isMember(String name) {
-                        return original.isMember(name);
-                    }
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
+    @Bean
+    public BeanPostProcessor reactiveHealthEndpointWebExtensionPostProcessor() {
+        return new DegradedReactiveHealthEndpointExtensionProcessor();
+    }
 
-                    @Override
-                    public boolean showComponents(SecurityContext securityContext) {
-                        return original.showComponents(securityContext);
-                    }
-
-                    @Override
-                    public boolean showDetails(SecurityContext securityContext) {
-                        return original.showDetails(securityContext);
-                    }
-
-                    @Override
-                    public StatusAggregator getStatusAggregator() {
-                        return degradableStatusAggregator;
-                    }
-
-                    @Override
-                    public HttpCodeStatusMapper getHttpCodeStatusMapper() {
-                        return original.getHttpCodeStatusMapper();
-                    }
-
-                    @Override
-                    public AdditionalHealthEndpointPath getAdditionalPath() {
-                        return original.getAdditionalPath();
-                    }
-                };
-            }
-
-            @Override
-            public Set<String> getNames() {
-                return delegate.getNames();
-            }
-
-            @Override
-            public HealthEndpointGroup get(String name) {
-                return delegate.get(name);
-            }
-        };
+    @ConditionalOnBean(HealthEndpoint.class)
+    @Bean
+    public BeanPostProcessor predictionEndpointWebExtensionPostProcessor() {
+        return new DegradedHealthEndpointProcessor();
     }
 }
