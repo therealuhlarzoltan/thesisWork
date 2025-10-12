@@ -28,7 +28,7 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
     @Override
     public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName) throws BeansException {
         if (healthEndpointClass.equals(bean.getClass())) {
-            log.info("Bean with class {} and name {} is a candidate to post processing, processing it...", bean.getClass(), beanName);
+            log.info("Bean with {} and name {} is a candidate to post processing, processing it...", bean.getClass(), beanName);
             return performPostProcessing(bean, beanName);
         }
         return bean;

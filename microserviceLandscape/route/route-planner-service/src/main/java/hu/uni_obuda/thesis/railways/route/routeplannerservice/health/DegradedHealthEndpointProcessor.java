@@ -21,11 +21,11 @@ public non-sealed class DegradedHealthEndpointProcessor extends DegradedHealthSt
 
     @Override
     protected Object performPostProcessing(@NonNull Object bean, @NonNull String beanName) {
-        log.info("Creating proxy factory for bean with class {} and name {}", bean.getClass(), beanName);
+        log.info("Creating proxy factory for bean with {} and name {}", bean.getClass(), beanName);
         ProxyFactory proxyFactory = new ProxyFactory(bean);
         proxyFactory.setProxyTargetClass(true);
         proxyFactory.addAdvisor(new HealthEndpointAggregateDescriptorsAdvisor());
-        log.info("Added advisor for method health() for bean with class {} and name {}", bean.getClass(), beanName);
+        log.info("Added advisor for method health() for bean with {} and name {}", bean.getClass(), beanName);
         return proxyFactory.getProxy();
     }
 
@@ -46,7 +46,7 @@ public non-sealed class DegradedHealthEndpointProcessor extends DegradedHealthSt
             if (method.getParameterTypes().length != 0) {
                 return false;
             }
-            log.info("Method to decorate was indeed found inside bean with class {}", HealthEndpoint.class);
+            log.info("Method to decorate was indeed found inside bean with {}", HealthEndpoint.class);
             return true;
         }
 

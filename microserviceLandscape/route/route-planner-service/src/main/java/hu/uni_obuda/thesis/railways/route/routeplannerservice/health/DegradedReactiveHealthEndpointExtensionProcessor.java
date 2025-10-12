@@ -27,11 +27,11 @@ public non-sealed class DegradedReactiveHealthEndpointExtensionProcessor extends
 
     @Override
     protected Object performPostProcessing(@NonNull Object bean, @NonNull String beanName) {
-        log.info("Creating proxy factory for bean with class {} and name {}", bean.getClass(), beanName);
+        log.info("Creating proxy factory for bean with {} and name {}", bean.getClass(), beanName);
         ProxyFactory proxyFactory = new ProxyFactory(bean);
         proxyFactory.setProxyTargetClass(true);
         proxyFactory.addAdvisor(new ReactiveHealthEndpointWebExtensionAggregateDescriptorsAdvisor());
-        log.info("Added advisor for method aggregateDescriptors(ApiVersion, Map, StatusAggregator, boolean, Set) for bean with class {} and name {}", bean.getClass(), beanName);
+        log.info("Added advisor for method health(ApiVersion, WebServerNamespace, SecurityContext) for bean with {} and name {}", bean.getClass(), beanName);
         return proxyFactory.getProxy();
     }
 
@@ -58,7 +58,7 @@ public non-sealed class DegradedReactiveHealthEndpointExtensionProcessor extends
             if (!signatureMatches) {
                 return false;
             }
-            log.info("Method to decorate was indeed found inside bean with class {}", HealthEndpoint.class);
+            log.info("Method to decorate was indeed found inside bean with {}", HealthEndpoint.class);
             return true;
         }
 
