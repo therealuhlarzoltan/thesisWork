@@ -236,6 +236,18 @@ springdoc:
     - hu.uni_obuda.thesis.railways.route.routeplannerservice
 
 management.endpoint.health.show-details: "ALWAYS"
+management:
+  endpoint:
+    health:
+      # Applies to the PRIMARY group only
+      status:
+        order: UP, DEGRADED, OUT_OF_SERVICE, DOWN, UNKNOWN
+        http-mapping:
+          UP: 200
+          DEGRADED: 200 # Custom status
+          OUT_OF_SERVICE: 503
+          DOWN: 503
+          UNKNOWN: 200
 management.endpoints.web.exposure.include: "*"
 
 logging:

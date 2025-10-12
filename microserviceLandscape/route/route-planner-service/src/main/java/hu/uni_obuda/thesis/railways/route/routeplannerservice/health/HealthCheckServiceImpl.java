@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.health;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

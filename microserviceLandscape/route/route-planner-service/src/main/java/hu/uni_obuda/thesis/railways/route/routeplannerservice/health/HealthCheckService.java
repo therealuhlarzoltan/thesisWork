@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.health;
 
 import org.springframework.boot.actuate.health.Health;
 import reactor.core.publisher.Mono;
