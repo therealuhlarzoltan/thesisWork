@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.health;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
-import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
@@ -47,7 +46,7 @@ public class HealthCheckServiceImpl implements HealthCheckService {
     @Override
     public Mono<Health> getGeocodingServiceHealth() {
         String url = geocodingServiceUrl + healthCheckUri;
-        return checkHealth(url, true);
+        return checkHealth(url, false);
     }
 
     private Mono<Health> checkHealth(String url, boolean isNecessary) {

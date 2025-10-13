@@ -38,10 +38,10 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
 
     protected static Object originalHealthDescriptorOrNewSystemHealth(Object originalResult) {
         if (originalResult instanceof SystemHealth systemHealth) {
-            if (systemHealth.getStatus() != Status.UP) {
+            if (!systemHealth.getStatus().equals(Status.UP)) {
                 return systemHealth;
             }
-            boolean isDown = systemHealth.getStatus() == Status.DOWN;
+            boolean isDown = systemHealth.getStatus().equals(Status.DOWN);
             boolean isDegraded = !isDown && isSystemDegraded(systemHealth.getComponents().values());
             return createSystemHealth(ApiVersion.LATEST, isDegraded ? DEGRADED : systemHealth.getStatus(), systemHealth.getComponents(), systemHealth.getGroups());
         }
@@ -51,10 +51,10 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
     protected static Mono<?> originalHealthDescriptorOrNewSystemHealth(Mono<?> originalResult) {
         return originalResult.map(result -> {
             if (result instanceof SystemHealth systemHealth) {
-                if (systemHealth.getStatus() != Status.UP) {
+                if (!systemHealth.getStatus().equals(Status.UP)) {
                     return systemHealth;
                 }
-                boolean isDown = systemHealth.getStatus() == Status.DOWN;
+                boolean isDown = systemHealth.getStatus().equals(Status.DOWN);
                 boolean isDegraded = !isDown && isSystemDegraded(systemHealth.getComponents().values());
                 return createSystemHealth(ApiVersion.LATEST, isDegraded ? DEGRADED : systemHealth.getStatus(), systemHealth.getComponents(), systemHealth.getGroups());
             }
@@ -64,7 +64,7 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
 
     protected static boolean isSystemDegraded(Collection<HealthComponent> components) {
         for (var component : components) {
-            if (component.getStatus() == DEGRADED || isSubSystemOutOfService(component)) {
+            if (component.getStatus().equals(DEGRADED) || isSubSystemOutOfService(component)) {
                 return true;
             }
         }
@@ -73,14 +73,14 @@ public sealed abstract class DegradedHealthStatusProcessor<E> implements BeanPos
 
     protected static boolean isSubSystemOutOfService(HealthComponent component) {
         if (component instanceof Health health) {
-            return health.getStatus() == Status.OUT_OF_SERVICE;
+            return health.getStatus().equals(Status.OUT_OF_SERVICE);
         }
         if (component instanceof SystemHealth systemHealth) {
-            return systemHealth.getStatus() == Status.OUT_OF_SERVICE;
+            return systemHealth.getStatus().equals(Status.OUT_OF_SERVICE);
         }
         if (component instanceof CompositeHealth compositeHealth) {
             for (var c : compositeHealth.getComponents().values()) {
-                if (c.getStatus() == Status.OUT_OF_SERVICE) {
+                if (c.getStatus().equals(Status.OUT_OF_SERVICE)) {
                     return true;
                 }
             }
