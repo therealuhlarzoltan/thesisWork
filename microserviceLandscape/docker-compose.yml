@@ -4,10 +4,7 @@ services:
   rail-data-collector:
     build: data/rail-data-collector
     mem_limit: 2048m
-    ports:
-      - "5005:5005"
     environment:
-      - JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       - SPRING_PROFILES_ACTIVE=docker,data-source-emma
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
@@ -16,8 +13,17 @@ services:
       - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
       - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
     depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   weather-data-collector:
     build: data/weather-data-collector
@@ -31,8 +37,17 @@ services:
       - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
       - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
     depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   geocoding-service:
     build: data/geocoding-service
@@ -47,17 +62,24 @@ services:
       - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
       - MAPS_API_KEY=${MAPS_API_KEY}
     depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
       rabbitmq:
         condition: service_healthy
+      redis-2:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   delay-data-collector:
     build: data/delay-data-collector
     mem_limit: 3048m
-    ports:
-      - "5006:5005"
-      - "8080:8080"
     environment:
-      - JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       - SPRING_PROFILES_ACTIVE=docker,production,data-source-emma
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
@@ -69,10 +91,27 @@ services:
       - POSTGRES_USERNAME=${POSTGRES_USER_NAME}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
       rabbitmq:
+        condition: service_healthy
+      rail-data-collector:
+        condition: service_healthy
+      geocoding-service:
+        condition: service_healthy
+      weather-data-collector:
         condition: service_healthy
       postgresql-1:
         condition: service_healthy
+      redis-1:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   delay-predictor-service:
     build: model/delay-predictor-service
@@ -81,26 +120,45 @@ services:
       - CONFIG_SERVER_URL=http://config-server:8888
       - CONFIG_PROFILE=docker
     depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       postgresql-2:
         condition: service_healthy
       delay-data-collector:
-        condition: service_healthy
+        condition: service_started
 
   route-planner-service:
     build: route/route-planner-service
     mem_limit: 3048m
-    ports:
-      - "8081:8080"
-      - "5007:5005"
     environment:
-      - JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      delay-data-collector:
+        condition: service_started
+      geocoding-service:
+        condition: service_healthy
+      rail-data-collector:
+        condition: service_healthy
+      weather-data-collector:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
 
   api-gateway:
     build: cloud/api-gateway
@@ -126,6 +184,8 @@ services:
     ports:
       - "8443:8443"
     depends_on:
+      config-server:
+        condition: service_healthy
       eureka-server:
         condition: service_healthy
       security-server:
@@ -146,8 +206,17 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
     depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
       postgresql-3:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:9999/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   postgresql-1:
     image: postgres:17
@@ -228,6 +297,14 @@ services:
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - EUREKA_USERNAME=${EUREKA_USERNAME}
       - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   rabbitmq:
     image: rabbitmq:3.11.8-management
@@ -252,3 +329,8 @@ services:
       - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PASSWORD}
     volumes:
       - $PWD/configurations:/configurations
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8888/actuator/health" ]
+      interval: 15s
+      timeout: 2s
+      retries: 90
