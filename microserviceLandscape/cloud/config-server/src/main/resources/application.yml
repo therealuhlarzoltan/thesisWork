@@ -23,3 +23,6 @@ logging:
 spring.config.activate.on-profile: docker
 
 spring.cloud.config.server.native.searchLocations: file:/configurations
+
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
