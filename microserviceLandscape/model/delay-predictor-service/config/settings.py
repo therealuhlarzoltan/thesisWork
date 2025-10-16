@@ -88,6 +88,9 @@ INSTALLED_APPS = [
     'prediction.apps.PredictionConfig',
 
     'django_apscheduler',
+    'health_check',
+    'health_check.db',
+    'health_check.contrib.rabbitmq'
 ]
 
 MIDDLEWARE = [
