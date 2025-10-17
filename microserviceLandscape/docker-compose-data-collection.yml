@@ -193,7 +193,7 @@ services:
     volumes:
       - $PWD/configurations:/configurations
     healthcheck:
-      test: [ "CMD", "curl", "-fs", "http://localhost:8888/actuator/health" ]
+      test: [ "CMD", "curl", "-fs", "http:/localhost:8888/actuator/health" ]
       interval: 15s
       timeout: 2s
       retries: 90
