@@ -130,6 +130,11 @@ services:
         condition: service_healthy
       delay-data-collector:
         condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
 
   route-planner-service:
     build: route/route-planner-service
