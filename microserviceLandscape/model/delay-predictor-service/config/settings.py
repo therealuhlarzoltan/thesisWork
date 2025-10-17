@@ -88,6 +88,9 @@ INSTALLED_APPS = [
     'prediction.apps.PredictionConfig',
 
     'django_apscheduler',
+    'health_check',
+    'health_check.db',
+    'health_check.contrib.rabbitmq'
 ]
 
 MIDDLEWARE = [
@@ -179,5 +182,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+BROKER_URL = "amqp://rabbitmq:5672"
 
 

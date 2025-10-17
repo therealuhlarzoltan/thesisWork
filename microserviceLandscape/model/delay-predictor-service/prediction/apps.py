@@ -3,7 +3,6 @@ import re
 import socket
 import atexit
 import signal
-import sys
 from django.apps import AppConfig
 import py_eureka_client.eureka_client as eureka_client
 from spring_config import ClientConfigurationBuilder
