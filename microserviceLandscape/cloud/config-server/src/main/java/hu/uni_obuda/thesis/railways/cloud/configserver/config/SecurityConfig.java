@@ -20,7 +20,7 @@ public class SecurityConfig {
     SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher(EndpointRequest.toAnyEndpoint())
-            .authorizeHttpRequests(a -> a
+            .authorizeHttpRequests(auth -> auth
                     .requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
                     .requestMatchers(EndpointRequest.to("info")).permitAll()
                     .anyRequest().authenticated()
@@ -35,7 +35,7 @@ public class SecurityConfig {
     SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(a -> a
+            .authorizeHttpRequests(auth -> auth
                     .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults());
