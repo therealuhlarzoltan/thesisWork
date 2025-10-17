@@ -19,14 +19,14 @@ public class SecurityConfig {
     @Order(0)
     SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher(EndpointRequest.toAnyEndpoint()) // only actuator
-                .authorizeHttpRequests(a -> a
-                        .requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
-                        .requestMatchers(EndpointRequest.to("info")).permitAll()
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable);
+            .securityMatcher(EndpointRequest.toAnyEndpoint())
+            .authorizeHttpRequests(a -> a
+                    .requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
+                    .requestMatchers(EndpointRequest.to("info")).permitAll()
+                    .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults())
+            .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
@@ -34,11 +34,11 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain applicationChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(a -> a
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(Customizer.withDefaults());
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(a -> a
+                    .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 
