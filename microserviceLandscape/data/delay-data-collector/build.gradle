@@ -39,8 +39,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    //implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    //implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
     implementation "io.github.resilience4j:resilience4j-spring-boot3"
     implementation 'org.springframework.amqp:spring-rabbit-stream'
     implementation 'org.springframework.cloud:spring-cloud-bus'
@@ -52,7 +50,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
     compileOnly 'org.projectlombok:lombok'
-    //runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
     implementation 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
@@ -64,6 +61,12 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+configurations {
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
 }
 
 dependencyManagement {
