@@ -1,0 +1,199 @@
+version: "2.1"
+
+services:
+  rail-data-collector:
+    build: data/rail-data-collector
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,data-source-emma
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  weather-data-collector:
+    build: data/weather-data-collector
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  geocoding-service:
+    build: data/geocoding-service
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+      - MAPS_API_KEY=${MAPS_API_KEY}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis-2:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  delay-data-collector:
+    build: data/delay-data-collector
+    mem_limit: 3048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,production,data-source-emma
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+      - RABBIT_MQ_USERNAME=${RABBIT_MQ_USERNAME}
+      - RABBIT_MQ_PASSWORD=${RABBIT_MQ_PASSWORD}
+      - POSTGRES_DB_NAME=${POSTGRES_DB_NAME}
+      - POSTGRES_USERNAME=${POSTGRES_USER_NAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      rail-data-collector:
+        condition: service_healthy
+      geocoding-service:
+        condition: service_healthy
+      weather-data-collector:
+        condition: service_healthy
+      postgresql-1:
+        condition: service_healthy
+      redis-1:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  postgresql-1:
+    image: postgres:17
+    mem_limit: 4096m
+    container_name: postgresql-1
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 20s
+      timeout: 3s
+      retries: 10
+
+  redis-1:
+    image: redis:7.2-alpine
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-2:
+    image: redis:7.2-alpine
+    container_name: redis-2
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  eureka-server:
+    build: cloud/eureka-server
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - EUREKA_USERNAME=${EUREKA_USERNAME}
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  rabbitmq:
+    image: rabbitmq:3.11.8-management
+    mem_limit: 4096m
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  config-server:
+    build: cloud/config-server
+    mem_limit: 1024m
+    environment:
+      - PWD=${PWD}
+      - SPRING_PROFILES_ACTIVE=native,docker
+      - ENCRYPT_KEY=${CONFIG_SERVER_ENCRYPT_KEY}
+      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USER}
+      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+    volumes:
+      - $PWD/configurations:/configurations
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http:/localhost:8888/actuator/health" ]
+      interval: 15s
+      timeout: 2s
+      retries: 90

@@ -14,6 +14,8 @@ COPY --from=builder extracted/spring-boot-loader/ ./
 COPY --from=builder extracted/snapshot-dependencies/ ./
 COPY --from=builder extracted/application/ ./
 
-EXPOSE 8080
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8080 5005
 
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

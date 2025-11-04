@@ -3,8 +3,6 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respon
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.util.serializer.TimetableResponseDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class TimetableResponse {
+public class ElviraTimetableResponse {
 
     @JsonProperty("timetable")
     private List<TimetableEntry> timetable;

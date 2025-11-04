@@ -2,32 +2,30 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.client
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
+@Profile("data-source-elvira")
 @Component
 @RequiredArgsConstructor
-public class RailDelayWebClientImpl implements RailDelayWebClient {
+public class ElviraRailDataWebClientImpl implements ElviraRailDataWebClient {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RailDelayWebClientImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataWebClientImpl.class);
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -40,7 +38,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
     private String trainDetailsGetterUri;
 
     @Override
-    public Mono<ShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
+    public Mono<ElviraShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
         URI timetableUri = UriComponentsBuilder.fromPath(timetableGetterUri)
                 .queryParam("from", from)
                 .queryParam("to", to)
@@ -52,7 +50,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {
                             try {
-                                ShortTimetableResponse parsedResponse = objectMapper.readValue(response, ShortTimetableResponse.class);
+                                ElviraShortTimetableResponse parsedResponse = objectMapper.readValue(response, ElviraShortTimetableResponse.class);
                                 parsedResponse.removeUnnecessaryData();
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
@@ -66,7 +64,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
     }
 
     @Override
-    public Mono<ShortTrainDetailsResponse> getShortTrainDetails(String thirdPartyUrl) {
+    public Mono<ElviraShortTrainDetailsResponse> getShortTrainDetails(String thirdPartyUrl) {
         LOG.debug("Getting train details on url {}", thirdPartyUrl);
         URI trainDetailsUri = URI.create(railwayBaseUrl + trainDetailsGetterUri + "?url=" + URLEncoder.encode(thirdPartyUrl, StandardCharsets.UTF_8));
         return webClient.get().uri(trainDetailsUri).exchangeToMono(apiResponse -> {
@@ -74,7 +72,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
                 return Mono.from(apiResponse.bodyToMono(String.class))
                         .flatMap(response -> {
                             try {
-                                ShortTrainDetailsResponse parsedResponse = objectMapper.readValue(response, ShortTrainDetailsResponse.class);
+                                ElviraShortTrainDetailsResponse parsedResponse = objectMapper.readValue(response, ElviraShortTrainDetailsResponse.class);
                                 LOG.debug("Got train details response!");
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
@@ -88,7 +86,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
     }
 
     @Override
-    public Mono<TimetableResponse> getTimetable(String from, String to, LocalDate date) {
+    public Mono<ElviraTimetableResponse> getTimetable(String from, String to, LocalDate date) {
         URI timetableUri = UriComponentsBuilder.fromPath(timetableGetterUri)
                 .queryParam("from", from)
                 .queryParam("to", to)
@@ -100,7 +98,7 @@ public class RailDelayWebClientImpl implements RailDelayWebClient {
                         return Mono.from(apiResponse.bodyToMono(String.class))
                                 .flatMap(response -> {
                                     try {
-                                        TimetableResponse parsedResponse = objectMapper.readValue(response, TimetableResponse.class);
+                                        ElviraTimetableResponse parsedResponse = objectMapper.readValue(response, ElviraTimetableResponse.class);
                                         return Mono.just(parsedResponse);
                                     } catch (IOException ioException) {
                                         return Mono.error(mapMappingExceptionToException(ioException, timetableUri.toString()));
