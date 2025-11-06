@@ -20,6 +20,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobRepository {
 
+    private static final long PER_JOB_TIMEOUT_IN_SECONDS = 5;
+    private static final long INIT_TIMEOUT_IN_SECONDS = 30;
     private static final long EVENT_HANDLING_TIMEOUT_IN_SECONDS = 10;
 
     private final ReactiveCrudRepository<JobEntity, Integer> jobRepository;
@@ -32,32 +34,7 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
     private volatile boolean initialized = false;
 
     public void init() {
-       jobRepository.findAll()
-            .flatMap(job ->
-                    Mono.zip(
-                            intervalRepository
-                                    .findAll()
-                                    .filter(intervalEntity -> intervalEntity.getJobId().equals(job.getId()))
-                                    .next()
-                                    .defaultIfEmpty(null),
-                            cronRepository
-                                    .findAll()
-                                    .filter(cronEntity -> cronEntity.getJobId().equals(job.getId()))
-                                    .collectList(),
-                            (interval, cronEntities) -> new ScheduledJob(job, interval, cronEntities)
-                    )
-            )
-            .doOnNext(this::addJobAndLog)
-            .doOnError(e -> log.error("CompositeJobRepository initialization failed", e))
-            .subscribeOn(scheduler)
-            .subscribe(
-                    sj -> {},
-                    e -> log.error("CompositeJobRepository initialization failed", e),
-                    () -> {
-                        initialized = true;
-                        log.info("CompositeJobRepository initialization completed, loaded {} jobs", scheduledJobs.size());
-                    }
-            );
+        loadJobs().subscribeOn(scheduler).subscribe();
     }
 
     @Override
@@ -84,6 +61,42 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
     @Override
     public Flux<ScheduledJob> getScheduledJobs() {
         return initialized ? Flux.fromIterable(scheduledJobs) : Flux.error(new IllegalStateException("CompositeJobRepository is not (yet) initialized"));
+    }
+
+    private Mono<Void> loadJobs() {
+        return jobRepository.findAll()
+                .flatMap(job -> {
+                    Mono<IntervalEntity> intervalMono =
+                            intervalRepository.findAll()
+                                    .filter(i -> i.getJobId().equals(job.getId()))
+                                    .next()
+                                    .timeout(Duration.ofSeconds(PER_JOB_TIMEOUT_IN_SECONDS))
+                                    .onErrorResume(e -> {
+                                        log.error("Interval load timed out/failed for job {}", job.getName());
+                                        return Mono.empty();
+                                    });
+
+                    Mono<List<CronEntity>> cronsMono =
+                            cronRepository.findAll()
+                                    .filter(c -> c.getJobId().equals(job.getId()))
+                                    .collectList()
+                                    .timeout(Duration.ofSeconds(PER_JOB_TIMEOUT_IN_SECONDS))
+                                    .onErrorResume(e -> {
+                                        log.error("Cron load timed out/failed for job {}", job.getName());
+                                        return Mono.just(List.of());
+                                    });
+
+                    return Mono.zip(intervalMono.defaultIfEmpty(null), cronsMono)
+                            .map(t -> new ScheduledJob(job, t.getT1(), t.getT2()));
+                })
+                .doOnNext(this::addJobAndLog)
+                .timeout(Duration.ofSeconds(INIT_TIMEOUT_IN_SECONDS))
+                .doOnError(e -> log.error("CompositeJobRepository initialization failed", e))
+                .doOnTerminate(() -> {
+                    initialized = true;
+                    log.info("CompositeJobRepository initialization completed, loaded {} jobs", scheduledJobs.size());
+                })
+                .then();
     }
 
     private void addJobAndLog(ScheduledJob scheduledJob) {

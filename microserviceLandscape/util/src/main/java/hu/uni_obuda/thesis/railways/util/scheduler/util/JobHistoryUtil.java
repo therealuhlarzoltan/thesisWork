@@ -1,10 +1,8 @@
 package hu.uni_obuda.thesis.railways.util.scheduler.util;
 
-import hu.uni_obuda.thesis.railways.util.collection.Tuple;
-import hu.uni_obuda.thesis.railways.util.collection.Tuple.Tuple2;
+import hu.uni_obuda.thesis.railways.util.scheduler.model.JobScheduleDelta;
 import hu.uni_obuda.thesis.railways.util.scheduler.model.ScheduledJob;
 import hu.uni_obuda.thesis.railways.util.scheduler.model.ScheduledTaskEntry;
-import hu.uni_obuda.thesis.railways.util.scheduler.model.JobScheduleDelta;
 import org.springframework.lang.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,7 +29,6 @@ public final class JobHistoryUtil {
                 });
     }
 
-    /** Convenience collector. */
     public static Mono<List<JobScheduleDelta>> differenceAsList(
             Flux<ScheduledJob> newJobs,
             Map<String, ScheduledTaskEntry> currentJobs
@@ -44,55 +41,50 @@ public final class JobHistoryUtil {
             @Nullable ScheduledJob wanted,
             @Nullable ScheduledTaskEntry scheduled
     ) {
-        // desired
-        Optional<Duration> desiredFixed = Optional.ofNullable(wanted)
-                .map(ScheduledJob::getInterval)
-                .map(Duration::ofSeconds);
-        Set<String> desiredCrons = Optional.ofNullable(wanted)
-                .map(ScheduledJob::getCrons)
-                .map(HashSet::new)
-                .orElseGet(HashSet::new);
 
-        // current
-        Optional<Duration> currentFixed = Optional.ofNullable(scheduled)
+        Optional<Duration> desiredFixed =
+                Optional.ofNullable(wanted)
+                        .map(ScheduledJob::getInterval)
+                        .map(ms -> ms == null ? null : Duration.ofMillis(ms));
+        Set<String> desiredCrons =
+                Optional.ofNullable(wanted)
+                        .map(ScheduledJob::getCrons)
+                        .map(HashSet::new)
+                        .orElseGet(HashSet::new);
+
+        Optional<Duration> currentFixed = Optional
+                .ofNullable(scheduled)
                 .flatMap(ScheduledTaskEntry::getFixedRateInterval);
-        Set<String> currentCrons = Optional.ofNullable(scheduled)
+        Set<String> currentCrons = Optional
+                .ofNullable(scheduled)
                 .map(ScheduledTaskEntry::getCronExpressions)
                 .map(HashSet::new)
                 .orElseGet(HashSet::new);
 
-        // fixed: add/remove (+ interval change => remove+add)
         boolean wantFixed = desiredFixed.isPresent();
-        boolean hasFixed  = currentFixed.isPresent();
-        boolean intervalDiff = wantFixed && hasFixed && !desiredFixed.get().equals(currentFixed.get());
+        boolean hasFixed = currentFixed.isPresent();
+        boolean intervalDiff  = wantFixed && hasFixed && !desiredFixed.get().equals(currentFixed.get());
 
-        Tuple2<String, Duration> fixedToAdd = null;
-        List<String> fixedToRemove = new ArrayList<>(1);
+        Duration fixedToAdd = (wantFixed && (!hasFixed || intervalDiff)) ? desiredFixed.get() : null;
 
-        if (wantFixed && (!hasFixed || intervalDiff)) {
-            fixedToAdd = Tuple.of(name, desiredFixed.get());
-        }
-        if ((!wantFixed && hasFixed) || intervalDiff) {
-            fixedToRemove.add(name);
-        }
 
-        // cron: adds/removes
-        Set<String> cronAddsSet = desiredCrons.stream()
+        Duration fixedToRemove = ((!wantFixed && hasFixed) || intervalDiff) ? currentFixed.orElse(Duration.ZERO) : null;
+
+
+        Set<String> cronsToAdd = desiredCrons.stream()
                 .filter(expr -> !currentCrons.contains(expr))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        Tuple2<String, Set<String>> cronToAdd =
-                cronAddsSet.isEmpty() ? null : Tuple.of(name, cronAddsSet);
 
-        List<Tuple2<String, String>> cronToRemove = currentCrons.stream()
+        Set<String> cronsToRemove = currentCrons.stream()
                 .filter(expr -> !desiredCrons.contains(expr))
-                .map(expr -> Tuple.of(name, expr))
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         return new JobScheduleDelta(
+                name,
                 fixedToAdd,
-                cronToAdd,
-                Collections.unmodifiableList(fixedToRemove),
-                Collections.unmodifiableList(cronToRemove)
+                Collections.unmodifiableSet(cronsToAdd),
+                fixedToRemove,
+                Collections.unmodifiableSet(cronsToRemove)
         );
     }
 }

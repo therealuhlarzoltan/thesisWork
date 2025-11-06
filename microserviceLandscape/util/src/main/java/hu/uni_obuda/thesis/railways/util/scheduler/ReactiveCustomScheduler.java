@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
-import org.springframework.context.event.ContextStartedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.ScheduledMethodRunnable;
@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -46,12 +47,16 @@ public class ReactiveCustomScheduler {
     private final Scheduler repositoryScheduler;
     private final TaskScheduler taskScheduler;
     private final Map<String, ScheduledTaskEntry> futures = new ConcurrentHashMap<>();
+    private final TimeZone timeZone = TimeZone.getDefault();
     private Flux<Tuple2<String, ScheduledMethodRunnable>> cachedMethods;
+    private Mono<Map<String, ScheduledMethodRunnable>> cachedMethodMap;
+
 
     public void startSchedulingAfterEvent(ApplicationEvent event) {
-        if (event instanceof ContextStartedEvent) {
+        if (event instanceof ContextRefreshedEvent) {
             log.info("Scheduling jobs after startup...");
             cachedMethods = jobScanner.scan(applicationContext).cache();
+            cachedMethodMap = cachedMethods.collectMap(Tuple2::getT1, Tuple2::getT2).cache();
             Mono.fromRunnable(() -> scheduleJobs(getScheduledJobsSafely(jobRepository), cachedMethods))
                     .subscribeOn(repositoryScheduler)
                     .subscribe();
@@ -102,10 +107,11 @@ public class ReactiveCustomScheduler {
     }
 
     private void scheduleJobs(Flux<ScheduledJob> jobs, Flux<Tuple2<String, ScheduledMethodRunnable>> methods) {
-        Mono<Map<String, ScheduledMethodRunnable>> methodMapMono = methods.collectMap(Tuple2::getT1, Tuple2::getT2);
+        Mono<Map<String, ScheduledMethodRunnable>> methodMapMono = cachedMethodMap != null ? cachedMethodMap
+                : methods.collectMap(Tuple2::getT1, Tuple2::getT2);
         JobHistoryUtil.differenceAsList(jobs, futures)
-                .flatMap(deltas -> methodMapMono.map(methodMap -> Tuples.of(deltas, methodMap)))
-                .flatMap(tuple -> {
+                .zipWith(methodMapMono, Tuples::of)
+                .doOnNext(tuple -> {
                     List<JobScheduleDelta> deltas = tuple.getT1();
                     Map<String, ScheduledMethodRunnable> methodMap = tuple.getT2();
 
@@ -131,38 +137,27 @@ public class ReactiveCustomScheduler {
                             scheduleFixedRate(jobName, runnable, delta.fixedToAdd());
                         }
                     });
-
-                    // flatMap requires a Publisher
-                    return Mono.empty();
                 })
                 .subscribeOn(repositoryScheduler)
                 .subscribe();
     }
 
     private void scheduleCron(String name, Runnable task, String cron) {
-        ScheduledFuture<?> future = taskScheduler.schedule(task, new CronTrigger(cron));
-        futures.computeIfPresent(name, (k, v) -> {
-            v.addCronTask(cron, future);
-            return v;
-        });
-        futures.computeIfAbsent(name, (k) -> {
-            var entry = new ScheduledTaskEntry(name);
+        log.info("Scheduling cron job {} with expression {}", name, cron);
+        ScheduledFuture<?> future = taskScheduler.schedule(task, new CronTrigger(cron, timeZone));
+        futures.compute(name, (k, entry) -> {
+            if (entry == null) entry = new ScheduledTaskEntry(name);
             entry.addCronTask(cron, future);
             return entry;
         });
     }
 
     private void scheduleFixedRate(String name, Runnable task, Duration period) {
-        cancelFixedRate(name);
-        log.info("Scheduling fixed rate job {}...", name);
+        log.info("Scheduling fixed rate job {} with period {}", name, period);
         ScheduledFuture<?> future = taskScheduler.scheduleAtFixedRate(task, period);
-        futures.computeIfPresent(name, (k, v) -> {
-            v.getFixedRateTask().ifPresent(_ -> cancelFixedRate(name));
-            v.setFixedRateTask(period, future);
-            return v;
-        });
-        futures.computeIfAbsent(name, (k) -> {
-            var entry = new ScheduledTaskEntry(name);
+        futures.compute(name, (k, entry) -> {
+            if (entry == null) entry = new ScheduledTaskEntry(name);
+            entry.getFixedRateTask().ifPresent(old -> old.cancel(false));
             entry.setFixedRateTask(period, future);
             return entry;
         });
