@@ -29,7 +29,7 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
     private final Scheduler scheduler;
     private final JobModifiedEventHandler modifiedEventHandler;
 
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
 
     public void init() {
        jobRepository.findAll()
@@ -37,14 +37,14 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
                     Mono.zip(
                             intervalRepository
                                     .findAll()
-                                    .filter(i -> i.getJobId().equals(job.getId()))
+                                    .filter(intervalEntity -> intervalEntity.getJobId().equals(job.getId()))
                                     .next()
                                     .defaultIfEmpty(null),
                             cronRepository
                                     .findAll()
-                                    .filter(c -> c.getJobId().equals(job.getId()))
+                                    .filter(cronEntity -> cronEntity.getJobId().equals(job.getId()))
                                     .collectList(),
-                            (interval, crons) -> new ScheduledJob(job, interval, crons)
+                            (interval, cronEntities) -> new ScheduledJob(job, interval, cronEntities)
                     )
             )
             .doOnNext(this::addJobAndLog)
@@ -53,12 +53,15 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
             .subscribe(
                     sj -> {},
                     e -> log.error("CompositeJobRepository initialization failed", e),
-                    () -> log.info("CompositeJobRepository initialization completed, loaded {} jobs", scheduledJobs.size())
+                    () -> {
+                        initialized = true;
+                        log.info("CompositeJobRepository initialization completed, loaded {} jobs", scheduledJobs.size());
+                    }
             );
     }
 
     @Override
-    public Mono<Void> handleJobAdded(JobEntity jobEntity) {
+    public Mono<Void> onJobAdded(JobEntity jobEntity) {
        return modifiedEventHandler.onJobAdded(jobEntity, scheduledJobs, Duration.ofSeconds(EVENT_HANDLING_TIMEOUT_IN_SECONDS))
                .doOnError(throwable -> log.error("An exception occurred while handling job added event", throwable))
                .onErrorComplete();
@@ -80,7 +83,7 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
 
     @Override
     public Flux<ScheduledJob> getScheduledJobs() {
-        return Flux.fromIterable(scheduledJobs);
+        return initialized ? Flux.fromIterable(scheduledJobs) : Flux.error(new IllegalStateException("CompositeJobRepository is not (yet) initialized"));
     }
 
     private void addJobAndLog(ScheduledJob scheduledJob) {

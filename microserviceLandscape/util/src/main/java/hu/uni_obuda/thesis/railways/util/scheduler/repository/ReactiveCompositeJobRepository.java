@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface ReactiveCompositeJobRepository {
-    Mono<Void> handleJobAdded(JobEntity jobEntity);
+    Mono<Void> onJobAdded(JobEntity jobEntity);
 
     Mono<Void> onJobModified(JobEntity jobEntity);
 
