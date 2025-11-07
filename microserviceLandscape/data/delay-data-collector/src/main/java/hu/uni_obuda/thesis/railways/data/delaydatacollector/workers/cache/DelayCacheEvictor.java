@@ -17,7 +17,7 @@ public class DelayCacheEvictor {
 
     @ScheduledJob("delayCacheEviction")
     public void evict() {
-        LOG.info("Evicting delay info cache at 3 AM...");
+        LOG.info("Evicting delay info cache...");
         delayInfoCache.evictAll()
             .doOnSuccess(_ -> LOG.info("Delay info cache eviction completed."))
             .doOnError(e -> LOG.error("Failed to evict delay info cache", e))

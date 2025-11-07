@@ -20,7 +20,7 @@ public class CoordinatesCacheEvictor {
 
     @ScheduledJob("coordinatesCacheEviction")
     public void evictAndSave() {
-        LOG.info("Evicting coordinates cache and saving them to the repository at 3 AM...");
+        LOG.info("Evicting coordinates cache and saving them to the repository...");
         coordinatesCache.getAll()
                 .flatMap(coordinates ->
                         trainStationRepository.findById(coordinates.getAddress())
@@ -39,5 +39,4 @@ public class CoordinatesCacheEvictor {
                 .then()
                 .subscribe();
     }
-
 }

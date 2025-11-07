@@ -15,9 +15,9 @@ public class TrainStatusCacheEvictor {
 
     private final TrainStatusCache trainStatusCache;
 
-    @ScheduledJob("trainStatusCacheEvictor")
+    @ScheduledJob("trainStatusCacheEviction")
     public void evict() {
-        LOG.info("Evicting train status cache at 3 AM...");
+        LOG.info("Evicting train status cache...");
         trainStatusCache.evictAll()
                 .doOnSuccess(_ -> LOG.info("TrainStatus cache eviction completed."))
                 .doOnError(e -> LOG.error("Failed to evict train status cache", e))

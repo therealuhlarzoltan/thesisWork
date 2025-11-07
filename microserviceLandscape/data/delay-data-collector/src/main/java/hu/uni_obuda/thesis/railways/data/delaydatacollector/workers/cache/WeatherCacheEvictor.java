@@ -17,7 +17,7 @@ public class WeatherCacheEvictor {
 
     @ScheduledJob("weatherCacheEviction")
     public void evict() {
-        LOG.info("Evicting weather info cache at 3 AM...");
+        LOG.info("Evicting weather info cache...");
         weatherInfoCache.evictAll()
                 .doOnSuccess(_ -> LOG.info("Weather info cache eviction completed."))
                 .doOnError(e -> LOG.error("Failed to evict weather info cache", e))
