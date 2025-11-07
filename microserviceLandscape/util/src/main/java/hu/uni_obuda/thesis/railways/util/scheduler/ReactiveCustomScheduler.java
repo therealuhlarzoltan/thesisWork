@@ -12,6 +12,7 @@ import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJ
 import hu.uni_obuda.thesis.railways.util.scheduler.scanner.ReactiveScheduledJobScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.TaskScheduler;
@@ -50,7 +51,7 @@ public class ReactiveCustomScheduler {
     private Mono<Map<String, ScheduledMethodRunnable>> cachedMethodMap;
 
     public void startSchedulingAfterEvent(ApplicationEvent event) {
-        if (event instanceof ContextRefreshedEvent) {
+        if (event instanceof ApplicationReadyEvent) {
             log.info("Scheduling jobs after startup...");
             cachedMethods = jobScanner.scan().cache();
             cachedMethodMap = cachedMethods.collectMap(Tuple2::getT1, Tuple2::getT2).cache();
