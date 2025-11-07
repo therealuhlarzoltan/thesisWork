@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.component;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache;
 
 import reactor.core.publisher.Mono;
 

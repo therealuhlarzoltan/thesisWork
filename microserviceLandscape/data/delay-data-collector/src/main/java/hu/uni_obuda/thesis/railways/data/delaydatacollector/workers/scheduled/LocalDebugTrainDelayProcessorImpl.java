@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.scheduled;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;

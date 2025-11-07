@@ -1,10 +1,9 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.component;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache;
 
 
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 

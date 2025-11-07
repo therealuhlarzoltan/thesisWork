@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.CoordinatesCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.CoordinatesCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.CoordinatesRegistry;

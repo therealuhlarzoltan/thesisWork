@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.component;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.logger;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

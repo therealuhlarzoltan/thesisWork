@@ -1,15 +1,12 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.component;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.impl;
 
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.CoordinatesCache;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.time.LocalDate;
 
 @RequiredArgsConstructor
 @Component

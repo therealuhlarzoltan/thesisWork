@@ -1,5 +1,6 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.component;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.impl;
 
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;

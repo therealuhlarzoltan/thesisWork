@@ -1,12 +1,11 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.CoordinatesCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.CoordinatesCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 

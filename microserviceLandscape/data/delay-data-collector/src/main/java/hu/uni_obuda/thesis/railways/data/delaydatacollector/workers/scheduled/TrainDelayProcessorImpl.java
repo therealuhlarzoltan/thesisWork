@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.scheduled;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;
@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
