@@ -12,7 +12,6 @@ import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJ
 import hu.uni_obuda.thesis.railways.util.scheduler.scanner.ReactiveScheduledJobScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.TaskScheduler;
@@ -49,7 +48,6 @@ public class ReactiveCustomScheduler {
     private final TimeZone timeZone = TimeZone.getDefault();
     private Flux<Tuple2<String, ScheduledMethodRunnable>> cachedMethods;
     private Mono<Map<String, ScheduledMethodRunnable>> cachedMethodMap;
-
 
     public void startSchedulingAfterEvent(ApplicationEvent event) {
         if (event instanceof ContextRefreshedEvent) {
