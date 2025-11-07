@@ -18,18 +18,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobRepository {
+public class ReactiveCompositeJobRepositoryImpl<J extends JobEntity, I extends IntervalEntity, C extends CronEntity> implements ReactiveCompositeJobRepository<J> {
 
     private static final long PER_JOB_TIMEOUT_IN_SECONDS = 5;
     private static final long INIT_TIMEOUT_IN_SECONDS = 30;
     private static final long EVENT_HANDLING_TIMEOUT_IN_SECONDS = 10;
 
-    private final ReactiveCrudRepository<JobEntity, Integer> jobRepository;
-    private final ReactiveCrudRepository<IntervalEntity, Integer> intervalRepository;
-    private final ReactiveCrudRepository<CronEntity, Integer> cronRepository;
+    private final ReactiveCrudRepository<J, Integer> jobRepository;
+    private final ReactiveCrudRepository<I, Integer> intervalRepository;
+    private final ReactiveCrudRepository<C, Integer> cronRepository;
     private final List<ScheduledJob> scheduledJobs = new CopyOnWriteArrayList<>();
     private final Scheduler scheduler;
-    private final JobModifiedEventHandler modifiedEventHandler;
+    private final JobModifiedEventHandler<J, I, C> modifiedEventHandler;
 
     private volatile boolean initialized = false;
 
@@ -38,14 +38,14 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
     }
 
     @Override
-    public Mono<Void> onJobAdded(JobEntity jobEntity) {
+    public Mono<Void> onJobAdded(J jobEntity) {
        return modifiedEventHandler.onJobAdded(jobEntity, scheduledJobs, Duration.ofSeconds(EVENT_HANDLING_TIMEOUT_IN_SECONDS))
                .doOnError(throwable -> log.error("An exception occurred while handling job added event", throwable))
                .onErrorComplete();
     }
 
     @Override
-    public Mono<Void> onJobModified(JobEntity jobEntity) {
+    public Mono<Void> onJobModified(J jobEntity) {
         return modifiedEventHandler.onJobModified(jobEntity, scheduledJobs, Duration.ofSeconds(EVENT_HANDLING_TIMEOUT_IN_SECONDS))
                 .doOnError(throwable -> log.error("An exception occurred while handling job modified event", throwable))
                 .onErrorComplete();
@@ -66,7 +66,7 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
     private Mono<Void> loadJobs() {
         return jobRepository.findAll()
                 .flatMap(job -> {
-                    Mono<IntervalEntity> intervalMono =
+                    Mono<I> intervalMono =
                             intervalRepository.findAll()
                                     .filter(i -> i.getJobId().equals(job.getId()))
                                     .next()
@@ -76,7 +76,7 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
                                         return Mono.empty();
                                     });
 
-                    Mono<List<CronEntity>> cronsMono =
+                    Mono<List<C>> cronsMono =
                             cronRepository.findAll()
                                     .filter(c -> c.getJobId().equals(job.getId()))
                                     .collectList()
@@ -87,7 +87,7 @@ public class ReactiveCompositeJobRepositoryImpl implements ReactiveCompositeJobR
                                     });
 
                     return Mono.zip(intervalMono.defaultIfEmpty(null), cronsMono)
-                            .map(t -> new ScheduledJob(job, t.getT1(), t.getT2()));
+                            .map(tuple -> new ScheduledJob(job, tuple.getT1(), tuple.getT2()));
                 })
                 .doOnNext(this::addJobAndLog)
                 .timeout(Duration.ofSeconds(INIT_TIMEOUT_IN_SECONDS))

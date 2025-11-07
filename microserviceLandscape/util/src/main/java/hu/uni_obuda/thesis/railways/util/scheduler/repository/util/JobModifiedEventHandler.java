@@ -15,20 +15,19 @@ import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
-public class JobModifiedEventHandler {
+public class JobModifiedEventHandler<J extends JobEntity, I extends IntervalEntity, C extends CronEntity> {
 
-    private final ReactiveCrudRepository<JobEntity, Integer> jobRepository;
-    private final ReactiveCrudRepository<IntervalEntity, Integer> intervalRepository;
-    private final ReactiveCrudRepository<CronEntity, Integer> cronRepository;
+    private final ReactiveCrudRepository<I, Integer> intervalRepository;
+    private final ReactiveCrudRepository<C, Integer> cronRepository;
 
-    public Mono<Void> onJobAdded(JobEntity jobEntity, List<ScheduledJob> jobs, Duration timeout) {
+    public Mono<Void> onJobAdded(J jobEntity, List<ScheduledJob> jobs, Duration timeout) {
         return buildScheduledJob(jobEntity)
                 .doOnNext(scheduledJob -> addAndLog(scheduledJob, jobs))
                 .timeout(timeout)
                 .then();
     }
 
-    public Mono<Void> onJobModified(JobEntity jobEntity, List<ScheduledJob> jobs, Duration timeout) {
+    public Mono<Void> onJobModified(J jobEntity, List<ScheduledJob> jobs, Duration timeout) {
         return buildScheduledJob(jobEntity)
                 .doOnNext(scheduledJob -> reAddAndLog(scheduledJob, jobs))
                 .timeout(timeout)
@@ -45,7 +44,7 @@ public class JobModifiedEventHandler {
         }).timeout(timeout).then();
     }
 
-    private Mono<ScheduledJob> buildScheduledJob(JobEntity jobEntity) {
+    private Mono<ScheduledJob> buildScheduledJob(J jobEntity) {
         Integer jobId = jobEntity.getId();
         return Mono.zip(
                         retrieveIntervalEntity(jobId),
@@ -55,7 +54,7 @@ public class JobModifiedEventHandler {
                 .switchIfEmpty(Mono.error(new IllegalStateException("No config found for job " + jobId)));
     }
 
-    private Mono<Optional<IntervalEntity>> retrieveIntervalEntity(Integer jobId) {
+    private Mono<Optional<I>> retrieveIntervalEntity(Integer jobId) {
         return intervalRepository
                 .findAll()
                 .filter(intervalEntity -> intervalEntity.getJobId().equals(jobId))
@@ -64,7 +63,7 @@ public class JobModifiedEventHandler {
                 .defaultIfEmpty(Optional.empty());
     }
 
-    private Mono<List<CronEntity>> retrieveCronEntities(Integer jobId) {
+    private Mono<List<C>> retrieveCronEntities(Integer jobId) {
         return cronRepository
                 .findAll()
                 .filter(cronEntity -> cronEntity.getJobId().equals(jobId))

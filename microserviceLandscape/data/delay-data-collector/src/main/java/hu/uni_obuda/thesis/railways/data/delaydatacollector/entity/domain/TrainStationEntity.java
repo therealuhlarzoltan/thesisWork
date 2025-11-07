@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.entity;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

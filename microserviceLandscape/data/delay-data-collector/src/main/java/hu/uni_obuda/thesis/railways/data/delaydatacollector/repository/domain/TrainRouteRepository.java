@@ -1,7 +1,6 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.repository;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainRouteEntity;
-import org.springframework.data.r2dbc.repository.Modifying;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Mono;

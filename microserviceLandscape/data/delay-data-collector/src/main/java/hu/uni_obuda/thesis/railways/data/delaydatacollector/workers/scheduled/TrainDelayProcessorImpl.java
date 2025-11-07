@@ -1,11 +1,12 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.scheduled;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainRouteEntity;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainStationEntity;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainRouteRepository;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayFetcherService;
+import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +27,6 @@ import java.util.Map;
 public class TrainDelayProcessorImpl implements TrainDelayProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(TrainDelayProcessorImpl.class);
-    private static final long PROCESSING_INTERVAL_IN_MILLIS = 3_600_000; // every hour
-
     private static final Map<Character, Character> stationCodeMapping = Map.of(
             'ő', 'õ',
             'ű', 'û'
@@ -49,7 +48,7 @@ public class TrainDelayProcessorImpl implements TrainDelayProcessor {
         this.trainStationRepository = trainStationRepository;
     }
 
-    @Scheduled(fixedDelay = PROCESSING_INTERVAL_IN_MILLIS)
+    @ScheduledJob("dataFetch")
     @Override
     public void processTrainRoutes() {
         LOG.info("Data fetch started...");

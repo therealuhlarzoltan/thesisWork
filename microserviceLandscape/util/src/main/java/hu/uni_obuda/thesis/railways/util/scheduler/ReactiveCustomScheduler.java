@@ -41,7 +41,6 @@ public class ReactiveCustomScheduler {
     private static final Duration INITIAL_BACKOFF_DURATION = Duration.ofMillis(250);
     private static final Duration MAX_BACKOFF_DURATION = Duration.ofSeconds(2);
 
-    private final ApplicationContext applicationContext;
     private final ReactiveScheduledJobScanner jobScanner;
     private final ReactiveCompositeJobRepository jobRepository;
     private final Scheduler repositoryScheduler;
@@ -55,7 +54,7 @@ public class ReactiveCustomScheduler {
     public void startSchedulingAfterEvent(ApplicationEvent event) {
         if (event instanceof ContextRefreshedEvent) {
             log.info("Scheduling jobs after startup...");
-            cachedMethods = jobScanner.scan(applicationContext).cache();
+            cachedMethods = jobScanner.scan().cache();
             cachedMethodMap = cachedMethods.collectMap(Tuple2::getT1, Tuple2::getT2).cache();
             Mono.fromRunnable(() -> scheduleJobs(getScheduledJobsSafely(jobRepository), cachedMethods))
                     .subscribeOn(repositoryScheduler)

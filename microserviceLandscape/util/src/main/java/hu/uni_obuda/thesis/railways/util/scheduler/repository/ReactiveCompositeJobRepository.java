@@ -5,10 +5,13 @@ import hu.uni_obuda.thesis.railways.util.scheduler.model.ScheduledJob;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface ReactiveCompositeJobRepository {
-    Mono<Void> onJobAdded(JobEntity jobEntity);
+public interface ReactiveCompositeJobRepository<J extends JobEntity> {
 
-    Mono<Void> onJobModified(JobEntity jobEntity);
+    void init();
+
+    Mono<Void> onJobAdded(J jobEntity);
+
+    Mono<Void> onJobModified(J jobEntity);
 
     Mono<Void> onJobRemoved(Integer jobId);
 

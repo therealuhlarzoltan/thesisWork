@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.DelayInfoCache;
+import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ public class DelayCacheEvictor {
 
     private final DelayInfoCache delayInfoCache;
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @ScheduledJob("delayCacheEviction")
     public void evict() {
         LOG.info("Evicting delay info cache at 3 AM...");
         delayInfoCache.evictAll()

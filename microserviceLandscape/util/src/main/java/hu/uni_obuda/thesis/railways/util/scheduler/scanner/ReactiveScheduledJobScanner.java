@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.util.scheduler.scanner;
 
 import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
+import lombok.RequiredArgsConstructor;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.MethodIntrospector;
@@ -16,10 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
+@RequiredArgsConstructor
 public class ReactiveScheduledJobScanner {
 
-    public Flux<Tuple2<String, ScheduledMethodRunnable>> scan(ApplicationContext applicationContext) {
+    private final ApplicationContext applicationContext;
+
+    public Flux<Tuple2<String, ScheduledMethodRunnable>> scan() {
         return Flux.fromIterable(findMethods(applicationContext))
                 .map(methodTuple ->
                         Tuples.of(methodTuple.getT1(), new ScheduledMethodRunnable(methodTuple.getT2(), methodTuple.getT3())));
@@ -36,9 +39,9 @@ public class ReactiveScheduledJobScanner {
             );
 
             methods.forEach((method, annotation) -> {
-                String jobName = annotation.name().isEmpty()
+                String jobName = annotation.value().isEmpty()
                         ? targetClass.getSimpleName() + "#" + method.getName()
-                        : annotation.name();
+                        : annotation.value();
                 foundMethods.add(Tuples.of(jobName, bean, method));
             });
         }

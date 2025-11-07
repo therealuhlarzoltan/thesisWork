@@ -1,7 +1,8 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.CoordinatesCache;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ public class CoordinatesCacheEvictor {
     private final CoordinatesCache coordinatesCache;
     private final TrainStationRepository trainStationRepository;
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @ScheduledJob("coordinatesCacheEviction")
     public void evictAndSave() {
         LOG.info("Evicting coordinates cache and saving them to the repository at 3 AM...");
         coordinatesCache.getAll()
