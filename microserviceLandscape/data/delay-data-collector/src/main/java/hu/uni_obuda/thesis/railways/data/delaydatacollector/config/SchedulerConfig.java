@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -34,17 +36,18 @@ public class SchedulerConfig {
 
     @Bean
     public JobModifiedEventHandler<ScheduledJobEntity, ScheduledIntervalEntity, ScheduledDateEntity> jobModifiedEventHandler(
-            ScheduledDateRepository dateRepository,
-            ScheduledIntervalRepository intervalRepository) {
+            @Lazy ScheduledDateRepository dateRepository,
+            @Lazy ScheduledIntervalRepository intervalRepository) {
         return new JobModifiedEventHandler<>(intervalRepository, dateRepository);
     }
 
-    @Bean(initMethod = "init")
+    @DependsOn("flyway")
+    @Bean
     public ReactiveCompositeJobRepository<ScheduledJobEntity> compositeJobRepository(
-            ScheduledJobRepository jobRepository,
-            ScheduledDateRepository dateRepository,
-            ScheduledIntervalRepository intervalRepository,
-            JobModifiedEventHandler<ScheduledJobEntity, ScheduledIntervalEntity, ScheduledDateEntity> eventHandler,
+            @Lazy ScheduledJobRepository jobRepository,
+            @Lazy ScheduledDateRepository dateRepository,
+            @Lazy ScheduledIntervalRepository intervalRepository,
+            @Lazy JobModifiedEventHandler<ScheduledJobEntity, ScheduledIntervalEntity, ScheduledDateEntity> eventHandler,
             @Qualifier("jobRepositoryScheduler") Scheduler scheduler) {
         return new ReactiveCompositeJobRepositoryImpl<>(
                 jobRepository,
@@ -58,7 +61,7 @@ public class SchedulerConfig {
     @Bean
     public ReactiveCustomScheduler customScheduler(
             ReactiveScheduledJobScanner jobScanner,
-            ReactiveCompositeJobRepository<ScheduledJobEntity> jobRepository,
+            @Lazy ReactiveCompositeJobRepository<ScheduledJobEntity> jobRepository,
             TaskScheduler taskScheduler,
             @Qualifier("jobRepositoryScheduler") Scheduler repositoryScheduler) {
         return new ReactiveCustomScheduler(jobScanner, jobRepository, repositoryScheduler, taskScheduler);

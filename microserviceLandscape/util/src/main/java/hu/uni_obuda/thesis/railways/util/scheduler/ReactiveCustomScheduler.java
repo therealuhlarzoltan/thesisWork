@@ -88,7 +88,7 @@ public class ReactiveCustomScheduler {
     }
 
     private Flux<ScheduledJob> getScheduledJobsSafely(ReactiveCompositeJobRepository repository) {
-        return repository.getScheduledJobs()
+        return Flux.defer(repository::getScheduledJobs)
                 .retryWhen(
                         Retry.backoff(MAX_REPOSITORY_RETRIES, INITIAL_BACKOFF_DURATION)
                                 .maxBackoff(MAX_BACKOFF_DURATION)
@@ -107,6 +107,7 @@ public class ReactiveCustomScheduler {
     private void scheduleJobs(Flux<ScheduledJob> jobs, Flux<Tuple2<String, ScheduledMethodRunnable>> methods) {
         Mono<Map<String, ScheduledMethodRunnable>> methodMapMono = cachedMethodMap != null ? cachedMethodMap
                 : methods.collectMap(Tuple2::getT1, Tuple2::getT2);
+        log.info("Methods obtained from cache!");
         JobHistoryUtil.differenceAsList(jobs, futures)
                 .zipWith(methodMapMono, Tuples::of)
                 .doOnNext(tuple -> {

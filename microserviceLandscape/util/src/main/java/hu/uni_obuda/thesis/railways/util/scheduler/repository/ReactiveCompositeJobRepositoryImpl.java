@@ -14,6 +14,7 @@ import reactor.core.scheduler.Scheduler;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
@@ -34,6 +35,7 @@ public class ReactiveCompositeJobRepositoryImpl<J extends JobEntity, I extends I
     private volatile boolean initialized = false;
 
     public void init() {
+        log.info("Initializing Composite Job Repository...");
         loadJobs().subscribeOn(scheduler).subscribe();
     }
 
@@ -60,20 +62,26 @@ public class ReactiveCompositeJobRepositoryImpl<J extends JobEntity, I extends I
 
     @Override
     public Flux<ScheduledJob> getScheduledJobs() {
-        return initialized ? Flux.fromIterable(scheduledJobs) : Flux.error(new IllegalStateException("CompositeJobRepository is not (yet) initialized"));
+        return Flux.defer(() ->
+                initialized ? Flux.fromIterable(scheduledJobs)
+                        : Flux.error(new IllegalStateException("CompositeJobRepository is not (yet) initialized"))
+        );
     }
 
     private Mono<Void> loadJobs() {
+        log.info("Loading jobs...");
         return jobRepository.findAll()
                 .flatMap(job -> {
-                    Mono<I> intervalMono =
+                    Mono<Optional<I>> intervalMono =
                             intervalRepository.findAll()
                                     .filter(i -> i.getJobId().equals(job.getId()))
                                     .next()
+                                    .map(Optional::of)
+                                    .defaultIfEmpty(Optional.empty())
                                     .timeout(Duration.ofSeconds(PER_JOB_TIMEOUT_IN_SECONDS))
                                     .onErrorResume(e -> {
                                         log.error("Interval load timed out/failed for job {}", job.getName());
-                                        return Mono.empty();
+                                        return Mono.just(Optional.empty());
                                     });
 
                     Mono<List<C>> cronsMono =
@@ -86,8 +94,8 @@ public class ReactiveCompositeJobRepositoryImpl<J extends JobEntity, I extends I
                                         return Mono.just(List.of());
                                     });
 
-                    return Mono.zip(intervalMono.defaultIfEmpty(null), cronsMono)
-                            .map(tuple -> new ScheduledJob(job, tuple.getT1(), tuple.getT2()));
+                    return Mono.zip(intervalMono, cronsMono)
+                            .map(tuple -> new ScheduledJob(job, tuple.getT1().orElse(null), tuple.getT2()));
                 })
                 .doOnNext(this::addJobAndLog)
                 .timeout(Duration.ofSeconds(INIT_TIMEOUT_IN_SECONDS))
