@@ -87,7 +87,7 @@ public class SchedulerControllerImpl implements SchedulerController {
 
     @PutMapping("intervals/{intervalId}")
     Mono<ScheduledIntervalResponse> updateInterval(@PathVariable("intervalId") int id, @Valid ScheduledIntervalRequest request) {
-        return intervalService.update(request);
+        return intervalService.update(id, request);
     }
 
     @DeleteMapping("intervals/{intervalId}")

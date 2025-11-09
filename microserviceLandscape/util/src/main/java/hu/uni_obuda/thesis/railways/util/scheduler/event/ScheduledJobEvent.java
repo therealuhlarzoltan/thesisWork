@@ -7,16 +7,16 @@ import org.springframework.context.ApplicationEvent;
 import java.time.Clock;
 
 @Getter
-public sealed abstract class ScheduledJobEvent extends ApplicationEvent permits ScheduledJobAddedEvent, ScheduledJobModifiedEvent, ScheduledJobRemovedEvent{
+public sealed abstract class ScheduledJobEvent<E extends JobEntity> extends ApplicationEvent permits ScheduledJobAddedEvent, ScheduledJobModifiedEvent, ScheduledJobRemovedEvent{
 
-    protected final JobEntity jobEntity;
+    protected final E jobEntity;
 
-    protected ScheduledJobEvent(Object source, JobEntity jobEntity) {
+    protected ScheduledJobEvent(Object source, E jobEntity) {
         super(source);
         this.jobEntity = jobEntity;
     }
 
-    protected ScheduledJobEvent(Object source, JobEntity jobEntity, Clock clock) {
+    protected ScheduledJobEvent(Object source, E jobEntity, Clock clock) {
         super(source, clock);
         this.jobEntity = jobEntity;
     }

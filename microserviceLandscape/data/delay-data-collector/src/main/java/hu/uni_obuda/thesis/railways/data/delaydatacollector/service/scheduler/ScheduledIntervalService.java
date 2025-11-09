@@ -15,7 +15,7 @@ public interface ScheduledIntervalService {
 
     Mono<ScheduledIntervalResponse> create(ScheduledIntervalRequest interval);
 
-    Mono<ScheduledIntervalResponse> update(ScheduledIntervalRequest interval);
+    Mono<ScheduledIntervalResponse> update(int id, ScheduledIntervalRequest interval);
 
     Mono<Void> delete(int id);
 }
