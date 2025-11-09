@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data;
 
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import reactor.core.publisher.Mono;

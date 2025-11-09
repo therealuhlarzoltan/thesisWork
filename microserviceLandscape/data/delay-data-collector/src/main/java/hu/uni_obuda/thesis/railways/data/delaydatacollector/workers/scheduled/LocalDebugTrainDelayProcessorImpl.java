@@ -5,7 +5,7 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainR
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayFetcherService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayFetcherService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

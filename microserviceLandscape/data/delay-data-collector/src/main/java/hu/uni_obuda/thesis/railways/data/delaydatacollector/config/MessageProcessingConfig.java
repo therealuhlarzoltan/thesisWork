@@ -2,7 +2,7 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.IncomingMessageSink;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.CoordinateProcessorImpl;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors.DataRequestProcessorImpl;

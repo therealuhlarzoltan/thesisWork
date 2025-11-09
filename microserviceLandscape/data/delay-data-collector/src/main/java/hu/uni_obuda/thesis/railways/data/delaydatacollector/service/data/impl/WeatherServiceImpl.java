@@ -1,6 +1,7 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.impl;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.WeatherInfoCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.WeatherService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.WeatherInfoRegistry;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;

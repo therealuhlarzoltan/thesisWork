@@ -2,7 +2,7 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.controller;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainRouteRequest;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainRouteResponse;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.TrainRouteService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.domain.TrainRouteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

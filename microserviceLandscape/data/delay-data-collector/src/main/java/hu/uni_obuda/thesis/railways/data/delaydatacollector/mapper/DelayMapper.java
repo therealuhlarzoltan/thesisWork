@@ -10,8 +10,6 @@ import org.mapstruct.Mappings;
 @Mapper(componentModel = "spring")
 public interface DelayMapper {
 
-    static final int EARLY_ARRIVAL_THRESHOLD_HOURS = 12;
-
     @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "weather", ignore = true),

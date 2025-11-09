@@ -1,10 +1,11 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.service.domain.impl;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainRouteRequest;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.TrainRouteMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.domain.TrainRouteService;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

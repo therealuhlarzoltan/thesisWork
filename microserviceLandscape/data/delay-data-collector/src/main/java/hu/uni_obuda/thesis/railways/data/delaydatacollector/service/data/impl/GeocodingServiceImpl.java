@@ -1,7 +1,8 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.service;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.impl;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.CoordinatesCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.GeocodingService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.registry.CoordinatesRegistry;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
