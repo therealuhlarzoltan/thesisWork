@@ -32,7 +32,7 @@ dependencies {
     implementation project(':api')
     implementation project(':util')
     implementation 'io.r2dbc:r2dbc-spi:0.9.1.RELEASE'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.7.0'
     implementation 'org.flywaydb:flyway-core:9.22.3'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
@@ -52,7 +52,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
-    implementation 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
+    implementation "org.postgresql:r2dbc-postgresql:1.0.7.RELEASE"
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
     implementation "org.mapstruct:mapstruct:${mapStructVersion}"
