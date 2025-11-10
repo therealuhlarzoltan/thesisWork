@@ -12,7 +12,6 @@ import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFound
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobModifiedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalEventPublisher;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -62,8 +61,7 @@ public class ScheduledDateServiceImpl implements ScheduledDateService {
                                 jobRepository.findById(savedDate.getJobId())
                                         .switchIfEmpty(Mono.error(new EntityNotFoundException(savedDate.getJobId(), ScheduledJobEntity.class)))
                                         .delayUntil(job -> transactionalEventPublisher.publishEvent(
-                                                ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, job))
-                                        ))
+                                                ctx -> new ScheduledJobModifiedEvent<>(ctx, job)))
                                         .thenReturn(savedDate)
                         )
         ).map(mapper::entityToApi);
@@ -89,7 +87,7 @@ public class ScheduledDateServiceImpl implements ScheduledDateService {
                                 jobRepository.findById(savedDate.getJobId())
                                         .switchIfEmpty(Mono.error(new EntityNotFoundException(id, ScheduledJobEntity.class)))
                                         .delayUntil(job ->
-                                                transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, job))))
+                                                transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobModifiedEvent<>(ctx, job)))
                                         .thenReturn(savedDate)
                         )
         ).map(mapper::entityToApi);
@@ -105,7 +103,7 @@ public class ScheduledDateServiceImpl implements ScheduledDateService {
                                         .then(jobRepository.findById(intervalEntity.getJobId()))
                                         .switchIfEmpty(Mono.error(new EntityNotFoundException(intervalEntity.getJobId(), ScheduledJobEntity.class)))
                         )
-                        .delayUntil(saved -> transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, saved))))
+                        .delayUntil(job -> transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobModifiedEvent<>(ctx, job)))
         ).then();
     }
 
