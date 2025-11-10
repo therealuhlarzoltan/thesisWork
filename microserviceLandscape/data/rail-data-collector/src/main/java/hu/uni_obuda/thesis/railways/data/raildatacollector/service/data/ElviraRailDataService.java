@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.service.data;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;

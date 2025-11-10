@@ -2,7 +2,7 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.controller;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.service.ElviraRailDataService;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.ElviraRailDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.RestController;
