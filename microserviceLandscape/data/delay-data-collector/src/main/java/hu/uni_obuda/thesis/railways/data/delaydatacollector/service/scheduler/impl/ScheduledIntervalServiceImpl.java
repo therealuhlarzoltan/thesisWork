@@ -12,7 +12,6 @@ import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFound
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobModifiedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalEventPublisher;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -61,9 +60,9 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
                         .flatMap(savedInterval ->
                                 jobRepository.findById(savedInterval.getJobId())
                                         .switchIfEmpty(Mono.error(new EntityNotFoundException(savedInterval.getJobId(), ScheduledJobEntity.class)))
-                                        .delayUntil(job -> transactionalEventPublisher.publishEvent(
-                                                ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, job))
-                                        ))
+                                        .delayUntil(job ->
+                                                transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobModifiedEvent<>(ctx, job))
+                                        )
                                         .thenReturn(savedInterval)
                         )
         ).map(mapper::entityToApi);
@@ -72,7 +71,7 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
     @Override
     public Mono<ScheduledIntervalResponse> update(int id, ScheduledIntervalRequest interval) {
         return transactionalOperator.transactional(
-            intervalRepository.findByJobId(id)
+            intervalRepository.findById(id)
             .switchIfEmpty(Mono.error(new EntityNotFoundException(id, ScheduledIntervalEntity.class)))
             .map(intervalEntity -> updateScheduledIntervalEntity(intervalEntity, interval))
                     .flatMap(intervalEntity -> {
@@ -89,7 +88,8 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
                     jobRepository.findById(savedInterval.getJobId())
                             .switchIfEmpty(Mono.error(new EntityNotFoundException(id, ScheduledJobEntity.class)))
                             .delayUntil(job ->
-                                    transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, job))))
+                                    transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobModifiedEvent<>(ctx, job))
+                            )
                             .thenReturn(savedInterval)
             )
         ).map(mapper::entityToApi);
@@ -105,7 +105,7 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
                             .then(jobRepository.findById(intervalEntity.getJobId()))
                             .switchIfEmpty(Mono.error(new EntityNotFoundException(intervalEntity.getJobId(), ScheduledJobEntity.class)))
                     )
-                    .delayUntil(saved -> transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, saved))))
+                    .delayUntil(job -> transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobModifiedEvent<>(ctx, job)))
         ).then();
     }
 
