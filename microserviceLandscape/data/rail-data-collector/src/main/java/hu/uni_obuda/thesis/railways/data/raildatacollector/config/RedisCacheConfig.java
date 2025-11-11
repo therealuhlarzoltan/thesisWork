@@ -10,14 +10,15 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.Reactive
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveIntervalRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveJobRepositoryAdapter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @RequiredArgsConstructor
@@ -26,6 +27,19 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class RedisCacheConfig {
 
     private final ObjectMapper objectMapper;
+
+    @Bean(name = "idRedisTemplate")
+    public ReactiveRedisTemplate<String, Integer> idRedisTemplate(ReactiveRedisConnectionFactory factory) {
+        StringRedisSerializer keySer = new StringRedisSerializer();
+        GenericToStringSerializer<Integer> valSer = new GenericToStringSerializer<>(Integer.class);
+
+        RedisSerializationContext<String, Integer> ctx =
+                RedisSerializationContext.<String, Integer>newSerializationContext(keySer)
+                        .value(valSer)
+                        .build();
+
+        return new ReactiveRedisTemplate<>(factory, ctx);
+    }
 
     @Bean
     public ReactiveRedisTemplate<String, ElviraShortTimetableResponse> timetableResponseRedisTemplate(ReactiveRedisConnectionFactory factory) {
@@ -88,17 +102,17 @@ public class RedisCacheConfig {
     }
 
     @Bean
-    public ReactiveCrudRepository<ScheduledJobEntity, Integer> reactiveJobRepository(ReactiveRedisTemplate<String, Integer> keyTemplate, ReactiveRedisTemplate<String, ScheduledJobEntity> entityTemplate) {
+    public ReactiveJobRepositoryAdapter reactiveJobRepository(@Qualifier("idRedisTemplate") ReactiveRedisTemplate<String, Integer> keyTemplate, ReactiveRedisTemplate<String, ScheduledJobEntity> entityTemplate) {
         return new ReactiveJobRepositoryAdapter(keyTemplate, entityTemplate);
     }
 
     @Bean
-    public ReactiveCrudRepository<ScheduledDateEntity, Integer> reactiveDateRepository(ReactiveRedisTemplate<String, Integer> keyTemplate, ReactiveRedisTemplate<String, ScheduledDateEntity> entityTemplate) {
+    public ReactiveDateRepositoryAdapter reactiveDateRepository(@Qualifier("idRedisTemplate") ReactiveRedisTemplate<String, Integer> keyTemplate, ReactiveRedisTemplate<String, ScheduledDateEntity> entityTemplate) {
         return new ReactiveDateRepositoryAdapter(keyTemplate, entityTemplate);
     }
 
     @Bean
-    public ReactiveCrudRepository<ScheduledIntervalEntity, Integer> reactiveIntervalRepository(ReactiveRedisTemplate<String, Integer> keyTemplate, ReactiveRedisTemplate<String, ScheduledIntervalEntity> entityTemplate) {
+    public ReactiveIntervalRepositoryAdapter reactiveIntervalRepository(@Qualifier("idRedisTemplate") ReactiveRedisTemplate<String, Integer> keyTemplate, ReactiveRedisTemplate<String, ScheduledIntervalEntity> entityTemplate) {
         return new ReactiveIntervalRepositoryAdapter(keyTemplate, entityTemplate);
     }
 }

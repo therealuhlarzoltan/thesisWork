@@ -1,7 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledDateEntity;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledIntervalEntity;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
