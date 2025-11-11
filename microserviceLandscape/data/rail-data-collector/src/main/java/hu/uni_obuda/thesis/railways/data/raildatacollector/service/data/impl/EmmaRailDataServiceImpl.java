@@ -2,7 +2,7 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.impl;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.EmmaRailDelayGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.components.EmmaTimetableCache;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.EmmaTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.EmmaRailDataService;

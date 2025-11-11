@@ -1,6 +1,6 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.listener;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.component.listener;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.scheduling.ScheduledJobEntity;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledJobEntity;
 import hu.uni_obuda.thesis.railways.util.scheduler.ReactiveCustomScheduler;
 import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJobRepository;
 import lombok.RequiredArgsConstructor;

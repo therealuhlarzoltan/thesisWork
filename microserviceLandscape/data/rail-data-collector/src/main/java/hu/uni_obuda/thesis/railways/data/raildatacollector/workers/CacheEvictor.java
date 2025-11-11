@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.workers;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.TimetableCache;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

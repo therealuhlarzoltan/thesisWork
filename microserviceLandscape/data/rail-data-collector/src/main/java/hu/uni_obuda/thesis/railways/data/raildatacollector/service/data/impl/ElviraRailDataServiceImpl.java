@@ -4,7 +4,7 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.components.ElviraTimetableCache;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.ElviraTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.ElviraRailDataService;
