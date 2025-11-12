@@ -14,4 +14,5 @@ public interface TrainStationRepository extends R2dbcRepository<TrainStationEnti
     RETURNING *
     """)
     Mono<TrainStationEntity> insertStation(@Param("stationCode") String stationCode);
+    Mono<TrainStationEntity> findByStationCode(@Param("stationCode") String stationCode);
 }

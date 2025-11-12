@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ShortTrainDetailsResponse {
+public class ElviraShortTrainDetailsResponse {
 
     @JsonProperty("stations")
     private List<Station> stations;

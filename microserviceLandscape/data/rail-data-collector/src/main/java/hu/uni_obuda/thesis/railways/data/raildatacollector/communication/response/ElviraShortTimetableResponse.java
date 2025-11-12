@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ShortTimetableResponse {
+public class ElviraShortTimetableResponse {
 
     @JsonProperty("timetable")
     private List<TimetableEntry> timetable;
