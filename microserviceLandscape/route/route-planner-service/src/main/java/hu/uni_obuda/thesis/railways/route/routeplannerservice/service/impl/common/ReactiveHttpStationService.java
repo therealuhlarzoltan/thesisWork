@@ -1,8 +1,9 @@
-package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.common;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.gateway.StationDataGateway;
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.service.StationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;

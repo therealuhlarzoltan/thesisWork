@@ -1,8 +1,9 @@
-package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.common;
 
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.gateway.PredictorGateway;
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.service.PredictionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;

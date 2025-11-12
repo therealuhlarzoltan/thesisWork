@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.route.routeplannerservice.service;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.elvira;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
@@ -7,40 +7,39 @@ import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
 import hu.uni_obuda.thesis.railways.model.dto.WeatherInfoSnakeCase;
 import hu.uni_obuda.thesis.railways.route.dto.RouteResponse;
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.helper.TimetableProcessingHelper;
+import hu.uni_obuda.thesis.railways.route.routeplannerservice.service.*;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Objects;
 
-@Slf4j
+import static hu.uni_obuda.thesis.railways.route.routeplannerservice.util.constant.Constants.STATION_CODE_MAPPING;
+
+@Profile("data-source-elvira")
 @Primary
 @Service
-public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
+@Slf4j
+public class ReactiveHttpElviraRoutePlannerService implements RoutePlannerService {
 
-    private static final Map<Character, Character> stationCodeMapping = Map.of(
-            'õ', 'ő',
-            'û', 'ű'
-    );
-
-    private final TimetableService timetableService;
+    private final ElviraTimetableService timetableService;
     private final StationService stationService;
     private final WeatherService weatherService;
     private final PredictionService predictionService;
     private final TimetableProcessingHelper helper;
 
-    public ReactiveHttpRoutePlannerService(@Qualifier("reactiveHttpTimetableService") TimetableService timetableService,
-                                           @Qualifier("reactiveHttpStationService") StationService stationService,
-                                           @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
-                                           @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
-                                           TimetableProcessingHelper helper) {
+    public ReactiveHttpElviraRoutePlannerService(@Qualifier("reactiveHttpElviraTimetableService") ElviraTimetableService timetableService,
+                                                 @Qualifier("reactiveHttpStationService") StationService stationService,
+                                                 @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
+                                                 @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
+                                                 TimetableProcessingHelper helper) {
         this.timetableService = timetableService;
         this.stationService = stationService;
         this.weatherService = weatherService;
@@ -202,8 +201,8 @@ public class ReactiveHttpRoutePlannerService implements RoutePlannerService {
 
     private String adjustStationCodeFormat(@NonNull String stationCode) {
         for (int i = 0; i < stationCode.length(); i++) {
-            if (stationCodeMapping.containsKey(stationCode.charAt(i))) {
-                stationCode = stationCode.replace(stationCode.charAt(i), stationCodeMapping.get(stationCode.charAt(i)));
+            if (STATION_CODE_MAPPING.containsKey(stationCode.charAt(i))) {
+                stationCode = stationCode.replace(stationCode.charAt(i), STATION_CODE_MAPPING.get(stationCode.charAt(i)));
             }
         }
         return stationCode;
