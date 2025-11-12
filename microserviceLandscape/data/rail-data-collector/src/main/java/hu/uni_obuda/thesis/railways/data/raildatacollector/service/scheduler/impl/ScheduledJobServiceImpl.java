@@ -11,6 +11,8 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.Sch
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveDateRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveIntervalRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveJobRepositoryAdapter;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.hash.UUIDHashFunction;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.validator.KeyAlreadyPresentValidator;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobAddedEvent;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobModifiedEvent;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +50,9 @@ public class ScheduledJobServiceImpl implements ScheduledJobService {
 
     @Override
     public Mono<ScheduledJobResponse> create(ScheduledJobRequest job) {
-
-        return jobRepository.save(buildScheduledJobEntity(job))
+        ScheduledJobEntity scheduledJobEntity = buildScheduledJobEntity(job);
+        return KeyAlreadyPresentValidator.validate(scheduledJobEntity.getId(), jobRepository.getKeys())
+                .then(jobRepository.save(scheduledJobEntity))
                 .delayUntil(this::publishJobAdded)
                 .flatMap(this::buildScheduledJobResponse);
     }
@@ -86,7 +90,9 @@ public class ScheduledJobServiceImpl implements ScheduledJobService {
     }
 
     private static ScheduledJobEntity buildScheduledJobEntity(ScheduledJobRequest jobRequest) {
-        return ScheduledJobEntity.builder().name(jobRequest.getJobName()).build();
+        return ScheduledJobEntity.builder()
+                .id(UUIDHashFunction.apply(UUID.randomUUID()))
+                .name(jobRequest.getJobName()).build();
     }
 
     private static ScheduledJobEntity updatedScheduledJobEntity(ScheduledJobEntity jobEntity, ScheduledJobRequest jobRequest) {

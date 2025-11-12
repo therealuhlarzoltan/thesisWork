@@ -5,6 +5,7 @@ import hu.uni_obuda.thesis.railways.data.common.dto.*;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledDateService;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledIntervalService;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledJobService;
+import hu.uni_obuda.thesis.railways.util.validator.ScheduledDateRequestValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,12 +60,12 @@ public class SchedulerControllerImpl implements SchedulerController {
 
     @Override
     public Mono<ScheduledDateResponse> createDate(@Valid ScheduledDateRequest request) {
-        return dateService.create(request);
+        return ScheduledDateRequestValidator.validate(request).flatMap(dateService::create);
     }
 
     @Override
     public Mono<ScheduledDateResponse> updateDate(@PathVariable("dateId") int id, @Valid ScheduledDateRequest request) {
-        return dateService.update(id, request);
+        return ScheduledDateRequestValidator.validate(request).flatMap(date -> dateService.update(id, date));
     }
 
     @Override

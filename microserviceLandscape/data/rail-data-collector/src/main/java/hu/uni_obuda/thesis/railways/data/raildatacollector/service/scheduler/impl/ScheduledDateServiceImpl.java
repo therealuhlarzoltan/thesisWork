@@ -8,6 +8,7 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.ScheduledDateM
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledDateService;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveDateRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveJobRepositoryAdapter;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.validator.KeyAlreadyPresentValidator;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobModifiedEvent;
@@ -40,7 +41,9 @@ public class ScheduledDateServiceImpl implements ScheduledDateService {
 
     @Override
     public Mono<ScheduledDateResponse> create(ScheduledDateRequest date) {
-        return dateRepository.existsByJobIdAndCronExpression(date.getJobId(), date.getCronExpression())
+        ScheduledDateEntity scheduledDateEntity = mapper.apiToEntity(date);
+        return KeyAlreadyPresentValidator.validate(scheduledDateEntity.getId(), dateRepository.getKeys())
+                .then(dateRepository.existsByJobIdAndCronExpression(date.getJobId(), date.getCronExpression()))
                 .flatMap(exists -> {
                     if (exists) {
                         return Mono.error(new InvalidInputDataException("Scheduled date with cron expression for job already exists"));
@@ -51,7 +54,7 @@ public class ScheduledDateServiceImpl implements ScheduledDateService {
                                 if (!jobExists) {
                                     return Mono.error(new EntityNotFoundException(date.getJobId(), ScheduledJobEntity.class));
                                 }
-                                return dateRepository.save(mapper.apiToEntity(date));
+                                return dateRepository.save(scheduledDateEntity);
                             });
                 })
                 .flatMap(savedDate ->

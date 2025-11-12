@@ -8,6 +8,7 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.ScheduledInter
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledIntervalService;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveIntervalRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveJobRepositoryAdapter;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.validator.KeyAlreadyPresentValidator;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.InvalidInputDataException;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobModifiedEvent;
@@ -41,7 +42,9 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
 
     @Override
     public Mono<ScheduledIntervalResponse> create(ScheduledIntervalRequest interval) {
-        return intervalRepository.existsByJobId(interval.getJobId())
+        ScheduledIntervalEntity intervalEntity = mapper.apiToEntity(interval);
+        return KeyAlreadyPresentValidator.validate(intervalEntity.getId(), intervalRepository.getKeys())
+                .then(intervalRepository.existsByJobId(interval.getJobId()))
                 .flatMap(exists -> {
                     if (exists) {
                         return Mono.error(new InvalidInputDataException("Scheduled interval for job already exists"));
@@ -52,7 +55,7 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
                                 if (!jobExists) {
                                     return Mono.error(new EntityNotFoundException(interval.getJobId(), ScheduledJobEntity.class));
                                 }
-                                return intervalRepository.save(mapper.apiToEntity(interval));
+                                return intervalRepository.save(intervalEntity);
                             });
                 })
                 .flatMap(savedInterval ->

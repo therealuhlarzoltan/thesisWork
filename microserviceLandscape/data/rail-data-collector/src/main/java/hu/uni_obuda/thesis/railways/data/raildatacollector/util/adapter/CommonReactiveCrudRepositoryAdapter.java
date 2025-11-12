@@ -29,6 +29,10 @@ public non-sealed abstract class CommonReactiveCrudRepositoryAdapter<T, ID> exte
 
     protected abstract ID extractId(T entity);
 
+    public Flux<ID> getKeys() {
+        return keyRedisTemplate.opsForSet().members(getKeySet());
+    }
+
     @Override
     public <S extends T> Mono<S> save(S entity) {
         return Mono.defer(() -> {
