@@ -5,18 +5,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.CachingYamlGraphQlVariableLoader;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.util.resource.YamlGraphQlVariableLoader;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.serializer.TimetableResponseDeserializer;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.graphql.client.HttpGraphQlClient;
+import org.springframework.graphql.support.CachingDocumentSource;
+import org.springframework.graphql.support.DocumentSource;
+import org.springframework.graphql.support.ResourceDocumentSource;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -29,20 +36,78 @@ public class ApplicationConfig {
     @Value("${tcp.connection.write.timeout-in-ms:0}")
     private int connectionWriteTimeoutInMs;
     @Value("${railway.api.base-url}")
-    private String railwayApiUrl;
+    private String railwayBaseUrl;
+    @Value("${railway.api.time-table-getter-uri}")
+    private String timetableGetterUri;
+    @Value("${railway.api.train-details-getter-uri}")
+    private String trainDetailsGetterUri;
 
+    @Profile("data-source-elvira")
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
-        return builder.baseUrl(railwayApiUrl)
+        return builder.baseUrl(railwayBaseUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
                 .build();
     }
 
+    @Profile("data-source-emma")
+    @Bean
+    public HttpGraphQlClient shortTimetableClient(WebClient.Builder webClientBuilder, DocumentSource documentSource) {
+        WebClient webClient = webClientBuilder.baseUrl(railwayBaseUrl + timetableGetterUri)
+                .defaultHeader("Content-Type", "application/json")
+                .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
+                .build();
+        return HttpGraphQlClient.builder(webClient).documentSource(documentSource).build();
+    }
+
+    @Profile("data-source-emma")
+    @Bean
+    public HttpGraphQlClient shortTrainDetailsClient(WebClient.Builder webClientBuilder, DocumentSource documentSource) {
+        WebClient webClient = webClientBuilder.baseUrl(railwayBaseUrl + trainDetailsGetterUri)
+                .defaultHeader("Content-Type", "application/json")
+                .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
+                .build();
+        return HttpGraphQlClient.builder(webClient).documentSource(documentSource).build();
+    }
+
+
+    @Profile("data-source-emma")
+    @Bean
+    public HttpGraphQlClient timetableClient(WebClient.Builder webClientBuilder, DocumentSource documentSource) {
+        WebClient webClient = webClientBuilder.baseUrl(railwayBaseUrl + timetableGetterUri)
+                .defaultHeader("Content-Type", "application/json")
+                .clientConnector(new ReactorClientHttpConnector(createHttpClient(connectionTimeoutInMs, connectionReadTimeoutInMs, connectionWriteTimeoutInMs)))
+                .build();
+        return HttpGraphQlClient.builder(webClient).documentSource(documentSource).build();
+    }
+
+
+    @Profile("data-source-emma")
+    @Bean
+    public DocumentSource graphQlDocumentSource() {
+        return new CachingDocumentSource(
+                new ResourceDocumentSource(List.of(new ClassPathResource("graphql/emma/")), ResourceDocumentSource.FILE_EXTENSIONS)
+        );
+    }
+
+    @Profile("data-source-emma")
+    @Lazy
+    @Bean
+    public CachingYamlGraphQlVariableLoader cachingGraphQlVariableLoader(YamlGraphQlVariableLoader nonCachingVariableLoader) {
+        return new CachingYamlGraphQlVariableLoader(nonCachingVariableLoader);
+    }
+
+    @Profile("data-source-emma")
+    @Bean
+    public YamlGraphQlVariableLoader graphQlVariableLoader() {
+        return new YamlGraphQlVariableLoader("graphql/emma/default-variables");
+    }
+
     @Bean
     public ObjectMapper objectMapper() {
         SimpleModule timetableModule = new SimpleModule();
-        timetableModule.addDeserializer(TimetableResponse.class, new TimetableResponseDeserializer());
+        timetableModule.addDeserializer(ElviraTimetableResponse.class, new TimetableResponseDeserializer());
         return new ObjectMapper()
                 .registerModule(timetableModule)
                 .registerModule(new JavaTimeModule())

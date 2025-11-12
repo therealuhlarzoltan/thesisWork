@@ -8,16 +8,6 @@ server:
   error.include-message: always
   forward-headers-strategy: framework
 
-railway.api:
-  base-url: http://apiv2.oroszi.net/elvira
-  timetable-getter-uri: /
-  train-details-getter-uri: /details
-
-  rate:
-    limit:
-      delay-between-requests: 1000
-      number-of-concurrent-calls: 24
-
 tcp:
     connection:
       timeout-in-ms: 30000
@@ -208,3 +198,28 @@ spring:
     redis:
       host: redis-2
       port: 6379
+
+---
+spring.activate.on-profile: data-source-elvira
+railway.api:
+  base-url: http://apiv2.oroszi.net/elvira
+  timetable-getter-uri: /
+  train-details-getter-uri: /details
+  rate:
+    limit:
+      delay-between-requests: 1500
+      number-of-concurrent-calls: 24
+
+---
+spring.activate.on-profile: data-source-emma
+railway.api:
+  base-url: https://emma.mav.hu
+  timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
+  train-details-getter-uri: //otp2-backend/otp/routers/default/index/graphql
+  graphql.short-timetable-document: Plan
+  graphql.long-timetable-document: asd
+  graphql.short-train-details-document: Trip
+  rate:
+    limit:
+      delay-between-requests: 5000
+      number-of-concurrent-calls: 24

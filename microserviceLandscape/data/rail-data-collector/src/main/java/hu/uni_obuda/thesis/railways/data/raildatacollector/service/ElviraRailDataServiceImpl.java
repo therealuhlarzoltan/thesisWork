@@ -1,12 +1,12 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.RailDelayGateway;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTimetableResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ShortTrainDetailsResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.TimetableResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.components.TimetableCache;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.ElviraRailDataGateway;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.components.ElviraTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -14,6 +14,7 @@ import io.netty.handler.timeout.WriteTimeoutException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,6 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
@@ -39,14 +39,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+@Profile("data-source-elvira")
 @Service
 @RequiredArgsConstructor
-public class RailDataServiceImpl implements RailDataService {
+public class ElviraRailDataServiceImpl implements ElviraRailDataService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RailDataServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataServiceImpl.class);
 
-    private final RailDelayGateway gateway;
-    private final TimetableCache timetableCache;
+    private final ElviraRailDataGateway gateway;
+    private final ElviraTimetableCache timetableCache;
 
     @Override
     public Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date) {
@@ -95,7 +96,66 @@ public class RailDataServiceImpl implements RailDataService {
                 .flatMapMany(Flux::fromIterable);
     }
 
-    private Mono<List<TrainRouteResponse>> mapToRouteResponse(TimetableResponse timetableResponse, LocalDate date) {
+    private Mono<ElviraShortTimetableResponse.TimetableEntry> checkSchedule(Tuple4<LocalTime, LocalTime, String, ElviraShortTimetableResponse.TimetableEntry> schedule) {
+        LocalTime now = LocalTime.now();
+        if (now.isAfter(LocalTime.MIDNIGHT) && now.isBefore(LocalTime.MIDNIGHT.plusHours(4))) {
+            LOG.info("Not checking schedule in the early hours of the day, proceeding...");
+            return Mono.just(schedule.getT4());
+        }
+        if (now.isBefore(schedule.getT1())) {
+            LOG.warn("Train {} has not departed yet according to schedule, aborting...", schedule.getT3());
+            return Mono.empty();
+        } else if (now.isBefore(schedule.getT2())) {
+            LOG.warn("Train {} has not arrived yet according to schedule, aborting...", schedule.getT3());
+            return Mono.empty();
+        } else {
+            LOG.info("Train should have arrived by now according to schedule, proceeding...");
+            return Mono.just(schedule.getT4());
+        }
+    }
+
+    private Mono<Tuple4<LocalTime, LocalTime, String, ElviraShortTimetableResponse.TimetableEntry>> extractSchedule(ElviraShortTimetableResponse.TimetableEntry entry, String trainNumber) {
+        String departureString = entry.getStartTime();
+        String arrivalString = entry.getDestinationTime();
+        LocalTime arrivalTime;
+        LocalTime departureTime;
+        try {
+            departureTime = parseTimeSafe(departureString);
+            arrivalTime = parseTimeSafe(arrivalString);
+        } catch (Exception e) {
+            LOG.error("Could not extract scheduled departure and or arrival for train {}", trainNumber, e);
+            LOG.warn("Assuming train {} has just arrived", trainNumber);
+            return Mono.just(Tuples.of(LocalTime.MIDNIGHT, LocalTime.now(), trainNumber, entry));
+        }
+        return Mono.just(Tuples.of(departureTime, arrivalTime, trainNumber, entry));
+    }
+
+    private static Mono<ElviraShortTimetableResponse.TimetableEntry> extractTimetableEntry(ElviraShortTimetableResponse response, String trainNumber, LocalDate date) {
+        LOG.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
+        return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
+                .filter(entry -> entry.getDetails().stream()
+                        .anyMatch(details ->
+                                details.getTrainInfo().getCode().equals(trainNumber)))
+                .findFirst()
+                .map(Mono::just)
+                .orElse(Mono.error(new TrainNotInServiceException(trainNumber, date)))
+                : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
+    }
+
+    private static Mono<String> extractTrainUri(ElviraShortTimetableResponse.TimetableEntry entry, String trainNumber, LocalDate date) {
+        LOG.info("Extracting train URI for train number {}", trainNumber);
+        var details = entry.getDetails();
+        if (details == null) {
+            return Mono.error(new TrainNotInServiceException(trainNumber, date));
+        }
+        return Flux.fromIterable(details)
+                .filter(detail -> trainNumber.equals(detail.getTrainInfo().getCode()))
+                .next()
+                .map(detail -> detail.getTrainInfo().getUrl())
+                .switchIfEmpty(Mono.error(new TrainNotInServiceException(trainNumber, date)));
+    }
+
+    private Mono<List<TrainRouteResponse>> mapToRouteResponse(ElviraTimetableResponse timetableResponse, LocalDate date) {
         List<TrainRouteResponse> routes = new ArrayList<>();
         for (var entry : timetableResponse.getTimetable()) {
             if (entry.getTrainSegments().size() == 1) {
@@ -125,24 +185,24 @@ public class RailDataServiceImpl implements RailDataService {
                 if (scheduledArrivalTime.isBefore(scheduledDepartureTime)) {
                     scheduledArrivalTime = scheduledArrivalTime.plusDays(1);
                 }
-               var train = TrainRouteResponse.Train.builder()
-                    .trainNumber(entry.getTrainSegments().getFirst().getCode())
-                    .lineNumber(entry.getTrainSegments().getFirst().getVszCode())
-                    .fromStation(entry.getDetails().getFirst().getFrom())
-                    .fromTimeScheduled(scheduledDepartureTime.toString())
-                    .fromTimeActual(Objects.toString(actualDepartureTime, ""))
-                    .toStation(entry.getTransferStations().getFirst().getStationName())
-                    .toTimeScheduled(scheduledArrivalTime.toString())
-                    .toTimeActual(Objects.toString(actualArrivalTime, ""))
-                                .build();
+                var train = TrainRouteResponse.Train.builder()
+                        .trainNumber(entry.getTrainSegments().getFirst().getCode())
+                        .lineNumber(entry.getTrainSegments().getFirst().getVszCode())
+                        .fromStation(entry.getDetails().getFirst().getFrom())
+                        .fromTimeScheduled(scheduledDepartureTime.toString())
+                        .fromTimeActual(Objects.toString(actualDepartureTime, ""))
+                        .toStation(entry.getTransferStations().getFirst().getStationName())
+                        .toTimeScheduled(scheduledArrivalTime.toString())
+                        .toTimeActual(Objects.toString(actualArrivalTime, ""))
+                        .build();
                 var route = new TrainRouteResponse(List.of(train));
                 routes.add(route);
             } else {
                 List<TrainRouteResponse.Train> trains = new ArrayList<>();
-                int scheduledDepartureTimeRolloverIndex = findRolloverIndexForRoutes(entry.getDetails(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.JourneyElement::getDep);
-                int scheduledArrivalRolloverIndex = findRolloverIndexForRoutes(entry.getTransferStations(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.TransferStation::getScheduledArrival);
-                int actualDepartureTimeRolloverIndex = findRolloverIndexForRoutes(entry.getDetails(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.JourneyElement::getDep);
-                int actualArrivalTimeRolloverIndex = findRolloverIndexForRoutes(entry.getTransferStations(), LocalTime.parse(entry.getDetails().getFirst().getDep()), TimetableResponse.TransferStation::getRealArrival);
+                int scheduledDepartureTimeRolloverIndex = findRolloverIndexForRoutes(entry.getDetails(), LocalTime.parse(entry.getDetails().getFirst().getDep()), ElviraTimetableResponse.JourneyElement::getDep);
+                int scheduledArrivalRolloverIndex = findRolloverIndexForRoutes(entry.getTransferStations(), LocalTime.parse(entry.getDetails().getFirst().getDep()), ElviraTimetableResponse.TransferStation::getScheduledArrival);
+                int actualDepartureTimeRolloverIndex = findRolloverIndexForRoutes(entry.getDetails(), LocalTime.parse(entry.getDetails().getFirst().getDep()), ElviraTimetableResponse.JourneyElement::getDep);
+                int actualArrivalTimeRolloverIndex = findRolloverIndexForRoutes(entry.getTransferStations(), LocalTime.parse(entry.getDetails().getFirst().getDep()), ElviraTimetableResponse.TransferStation::getRealArrival);
                 try {
                     for (int i = 0; i < entry.getTrainSegments().size(); i++) {
                         String scheduledDep = entry.getDetails().get(i * 2).getDep();
@@ -210,62 +270,7 @@ public class RailDataServiceImpl implements RailDataService {
         return Mono.just(routes);
     }
 
-    private Mono<ShortTimetableResponse.TimetableEntry> checkSchedule(Tuple4<LocalTime, LocalTime, String, ShortTimetableResponse.TimetableEntry> schedule) {
-        LocalTime now = LocalTime.now();
-        if (now.isBefore(schedule.getT1())) {
-            LOG.warn("Train {} has not departed yet according to schedule, aborting...", schedule.getT3());
-            return Mono.empty();
-        } else if (now.isBefore(schedule.getT2())) {
-            LOG.warn("Train {} has not arrived yet according to schedule, aborting...", schedule.getT3());
-            return Mono.empty();
-        } else {
-            LOG.info("Train should have arrived by now according to schedule, proceeding...");
-            return Mono.just(schedule.getT4());
-        }
-    }
-
-    private Mono<Tuple4<LocalTime, LocalTime, String, ShortTimetableResponse.TimetableEntry>> extractSchedule(ShortTimetableResponse.TimetableEntry entry, String trainNumber) {
-        String departureString = entry.getStartTime();
-        String arrivalString = entry.getDestinationTime();
-        LocalTime arrivalTime;
-        LocalTime departureTime;
-        try {
-            departureTime = parseTimeSafe(departureString);
-            arrivalTime = parseTimeSafe(arrivalString);
-        } catch (Exception e) {
-            LOG.error("Could not extract scheduled departure and or arrival for train {}", trainNumber, e);
-            LOG.warn("Assuming train {} has just arrived", trainNumber);
-            return Mono.just(Tuples.of(LocalTime.MIDNIGHT, LocalTime.now(), trainNumber, entry));
-        }
-        return Mono.just(Tuples.of(departureTime, arrivalTime, trainNumber, entry));
-    }
-
-    private static Mono<ShortTimetableResponse.TimetableEntry> extractTimetableEntry(ShortTimetableResponse response, String trainNumber, LocalDate date) {
-        LOG.info("Extracting timetable entry for train number {} on date {}", trainNumber, date);
-        return !response.getTimetable().isEmpty() ? response.getTimetable().stream()
-                .filter(entry -> entry.getDetails().stream()
-                        .anyMatch(details ->
-                                details.getTrainInfo().getCode().equals(trainNumber)))
-                .findFirst()
-                .map(Mono::just)
-                .orElse(Mono.error(new TrainNotInServiceException(trainNumber, date)))
-                : Mono.error(new ExternalApiFormatMismatchException("Received an empty response", null));
-    }
-
-    private static Mono<String> extractTrainUri(ShortTimetableResponse.TimetableEntry entry, String trainNumber, LocalDate date) {
-        LOG.info("Extracting train URI for train number {}", trainNumber);
-        var details = entry.getDetails();
-        if (details == null) {
-            return Mono.error(new TrainNotInServiceException(trainNumber, date));
-        }
-        return Flux.fromIterable(details)
-                .filter(detail -> trainNumber.equals(detail.getTrainInfo().getCode()))
-                .next()
-                .map(detail -> detail.getTrainInfo().getUrl())
-                .switchIfEmpty(Mono.error(new TrainNotInServiceException(trainNumber, date)));
-    }
-
-    private Mono<List<DelayInfo>> mapToDelayInfo(ShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
+    private Mono<List<DelayInfo>> mapToDelayInfo(ElviraShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
         if (response.getStations().getLast().getRealArrival() == null || response.getStations().getLast().getRealArrival().isBlank()) {
             LOG.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
             return Mono.just(Collections.emptyList());
@@ -286,7 +291,7 @@ public class RailDataServiceImpl implements RailDataService {
         int realArrivalRollover = findRolloverIndex(response.getStations(), localStartTime, station -> station.getRealArrival());
 
         for (int i = 0; i < response.getStations().size(); i++) {
-            ShortTrainDetailsResponse.Station currentStation = response.getStations().get(i);
+            ElviraShortTrainDetailsResponse.Station currentStation = response.getStations().get(i);
             DelayInfo delayInfo = DelayInfo.builder()
                     .stationCode(currentStation.getCode())
                     .thirdPartyStationUrl(currentStation.getGetUrl().split("=")[1])
@@ -336,10 +341,10 @@ public class RailDataServiceImpl implements RailDataService {
         return Mono.just(delayInfos);
     }
 
-    private int findRolloverIndex(List<ShortTrainDetailsResponse.Station> stations, LocalTime startTime, Function<ShortTrainDetailsResponse.Station, String> propertyGetter) {
+    private int findRolloverIndex(List<ElviraShortTrainDetailsResponse.Station> stations, LocalTime startTime, Function<ElviraShortTrainDetailsResponse.Station, String> propertyGetter) {
         LocalTime previousTime = startTime;
         for (int i = 0; i < stations.size(); i++) {
-            ShortTrainDetailsResponse.Station currentStation = stations.get(i);
+            ElviraShortTrainDetailsResponse.Station currentStation = stations.get(i);
             String timeProperty = propertyGetter.apply(currentStation);
             if (timeProperty != null && !timeProperty.isBlank()) {
                 LocalTime currentTime = parseTimeSafe(timeProperty);

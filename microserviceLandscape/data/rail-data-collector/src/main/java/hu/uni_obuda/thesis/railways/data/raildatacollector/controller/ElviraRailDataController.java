@@ -2,19 +2,20 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.controller;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.service.RailDataService;
-import hu.uni_obuda.thesis.railways.route.dto.RouteResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.service.ElviraRailDataService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 
+@Profile("data-source-elvira")
 @RestController
 @RequiredArgsConstructor
-public class RailDataCollectorController implements RailDataCollector {
+public class ElviraRailDataController implements ElviraRailDataCollector {
 
-    private final RailDataService service;
+    private final ElviraRailDataService service;
 
     @Override
     public Flux<DelayInfo> getDelayInfo(String trainNumber, String from, String to, LocalDate date) {
