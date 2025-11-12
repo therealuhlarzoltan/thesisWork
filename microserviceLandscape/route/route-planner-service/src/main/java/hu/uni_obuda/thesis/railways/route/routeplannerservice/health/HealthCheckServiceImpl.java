@@ -66,7 +66,7 @@ public class HealthCheckServiceImpl implements HealthCheckService {
     }
 
     private Mono<Health> checkHealth(String url, boolean isNecessary) {
-        log.info("Will call the Health API on URL: {} with retries", url);
+        log.trace("Will call the Health API on URL: {} with retries", url);
         return webClient.get().uri(url).retrieve().toBodilessEntity()
                 .map(_ -> Health.up().build())
                 .timeout(Duration.ofSeconds(3))
@@ -76,6 +76,7 @@ public class HealthCheckServiceImpl implements HealthCheckService {
                     .filter(this::shouldRetry)
                 )
                 .onErrorResume(ex -> {
+                    log.error("An error occurred while calling the Health API on URL: {}", url, ex);
                     if (isNecessary) {
                         return Mono.just(Health.down(ex).build());
                     } else {

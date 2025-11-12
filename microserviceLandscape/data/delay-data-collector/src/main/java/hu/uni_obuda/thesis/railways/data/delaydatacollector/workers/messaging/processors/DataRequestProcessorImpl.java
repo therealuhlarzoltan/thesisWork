@@ -66,7 +66,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
                 dataTransferFlux
                         .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", event))
                         .onErrorContinue((throwable, badValue) -> {
-                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping: {}", throwable.getStackTrace());
+                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping it", throwable);
                         })
                         .subscribeOn(messageProcessingScheduler)
                         .subscribe();
@@ -91,7 +91,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
                 dataTransferFlux
                         .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", correlationId, event))
                         .doOnError(throwable -> {
-                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping: {}", throwable.getStackTrace());
+                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping it", throwable);
                             LOG.error("Was unable to send message to dataResponses-out-0 with correlationId {}", correlationId);
                         })
                         .onErrorResume(throwable -> Mono.empty())

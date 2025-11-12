@@ -1,6 +1,5 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.component.listener;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.scheduling.ScheduledJobEntity;
 import hu.uni_obuda.thesis.railways.util.scheduler.ReactiveCustomScheduler;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobEvent;
 import lombok.RequiredArgsConstructor;
@@ -13,13 +12,13 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class ScheduledJobEventLister {
+public class ScheduledJobEventListener {
 
     private final ReactiveCustomScheduler scheduler;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onScheduledJob(ScheduledJobEvent<ScheduledJobEntity> event) {
+    public void onScheduledJob(ScheduledJobEvent<?> event) {
         log.info("Detected a Scheduled Job Event!");
         scheduler.startSchedulingAfterEvent(event);
     }

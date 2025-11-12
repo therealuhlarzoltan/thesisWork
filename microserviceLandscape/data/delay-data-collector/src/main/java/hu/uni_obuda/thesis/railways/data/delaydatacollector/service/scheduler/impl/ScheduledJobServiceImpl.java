@@ -16,7 +16,6 @@ import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobAddedEvent;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobModifiedEvent;
 import hu.uni_obuda.thesis.railways.util.scheduler.event.ScheduledJobRemovedEvent;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalEventPublisher;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -53,7 +52,7 @@ public class ScheduledJobServiceImpl implements ScheduledJobService {
         return transactionalOperator.transactional(
                 jobRepository.save(buildScheduledJobEntity(job))
                         .delayUntil(saved ->
-                                transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobAddedEvent<>(this, saved)))
+                                transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobAddedEvent<>(ctx, saved))
                         )
         ).flatMap(this::buildScheduledJobResponse);
     }
@@ -66,7 +65,7 @@ public class ScheduledJobServiceImpl implements ScheduledJobService {
                 .map(existing -> updatedScheduledJobEntity(existing, job))
                 .flatMap(jobRepository::save)
                 .delayUntil(saved ->
-                        transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobModifiedEvent<>(this, saved))))
+                        transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobModifiedEvent<>(ctx, saved)))
         )
         .flatMap(this::buildScheduledJobResponse);
     }
@@ -79,7 +78,7 @@ public class ScheduledJobServiceImpl implements ScheduledJobService {
                         .flatMap(jobEntity ->
                             jobRepository.delete(jobEntity).thenReturn(jobEntity)
                         )
-                        .delayUntil(saved -> transactionalEventPublisher.publishEvent(ctx -> new PayloadApplicationEvent<>(ctx, new ScheduledJobRemovedEvent<>(this, saved))))
+                        .delayUntil(saved -> transactionalEventPublisher.publishEvent(ctx -> new ScheduledJobRemovedEvent<>(ctx, saved)))
         ).then();
     }
 
