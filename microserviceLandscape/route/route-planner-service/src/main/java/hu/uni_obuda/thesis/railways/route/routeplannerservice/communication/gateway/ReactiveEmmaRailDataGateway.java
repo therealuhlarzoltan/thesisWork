@@ -38,6 +38,7 @@ public class ReactiveEmmaRailDataGateway implements EmmaRailDataGateway {
         return webClient.makeRouteRequest(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
                 .transformDeferred(RetryOperator.of(retryRegistry.retry("getTimetable")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTimetable")))
+                .transformDeferred(RetryOperator.of(retryRegistry.retry("getTimetable")))
                 .onErrorResume(throwable -> {
                     if (throwable instanceof CallNotPermittedException callNotPermittedException) {
                         log.error("Circuit breaker is open", callNotPermittedException);

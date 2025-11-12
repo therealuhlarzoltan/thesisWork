@@ -15,7 +15,6 @@ import java.time.LocalDate;
 
 @Profile("data-source-elvira")
 @Primary
-@Slf4j
 @Service
 public class ReactiveHttpElviraTimetableService implements ElviraTimetableService {
 
