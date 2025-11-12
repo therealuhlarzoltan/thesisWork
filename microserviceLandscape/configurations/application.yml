@@ -15,7 +15,7 @@ app:
   delay-predictor-service-url: http://delay-predictor-service
   delay-predictor-service-arrival-uri: /prediction/delay/arrival
   delay-predictor-service-departure-uri: /prediction/delay/departure
-  health-check-path: /actuator/health
+  health-check-uri: /actuator/health
   eureka:
     username: ${EUREKA_USERNAME}
     password: ${EUREKA_PASSWORD}

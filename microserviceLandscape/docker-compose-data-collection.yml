@@ -113,116 +113,6 @@ services:
       timeout: 2s
       retries: 60
 
-  delay-predictor-service:
-    build: model/delay-predictor-service
-    mem_limit: 8192m
-    environment:
-      - CONFIG_SERVER_URL=http://config-server:8888
-      - CONFIG_PROFILE=docker
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      postgresql-2:
-        condition: service_healthy
-      delay-data-collector:
-        condition: service_started
-    healthcheck:
-      test: [ "CMD", "curl", "-fs", "http://localhost:8000/health" ]
-      interval: 10s
-      timeout: 2s
-      retries: 60
-
-  route-planner-service:
-    build: route/route-planner-service
-    mem_limit: 3048m
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
-      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - EUREKA_USERNAME=${EUREKA_USERNAME}
-      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      delay-data-collector:
-        condition: service_started
-      geocoding-service:
-        condition: service_healthy
-      rail-data-collector:
-        condition: service_healthy
-      weather-data-collector:
-        condition: service_started
-    healthcheck:
-      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
-      interval: 10s
-      timeout: 2s
-      retries: 60
-
-
-  api-gateway:
-    build: cloud/api-gateway
-    mem_limit: 1048m
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
-      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - EUREKA_USERNAME=${EUREKA_USERNAME}
-      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-      - SERVER_SSL_KEY_STORE=file:/keystore/certificate.p12
-      - SERVER_SSL_KEY_STORE_PASSWORD=${KEY_STORE_PASSWORD}
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY=DEBUG
-      - LOGGING_LEVEL_REACTOR_CORE_PUBLISHER=DEBUG
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=DEBUG
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=DEBUG
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY_WEB_SERVER=TRACE
-      - SWAGGER_USERNAME=${SWAGGER_USERNAME}
-      - SWAGGER_PASSWORD=${SWAGGER_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-    volumes:
-      - $PWD/keystore:/keystore
-    ports:
-      - "8443:8443"
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      security-server:
-        condition: service_healthy
-
-  security-server:
-    build: cloud/security-server
-    mem_limit: 1048m
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
-      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - EUREKA_USERNAME=${EUREKA_USERNAME}
-      - EUREKA_PASSWORD=${EUREKA_PASSWORD}
-      - POSTGRES_DB_NAME=${SECURITY_DB_NAME}
-      - POSTGRES_USERNAME=${SECURITY_DB_USER}
-      - POSTGRES_PASSWORD=${SECURITY_DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-    depends_on:
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      postgresql-3:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "curl", "-fs", "http://localhost:9999/actuator/health" ]
-      interval: 10s
-      timeout: 2s
-      retries: 60
-
   postgresql-1:
     image: postgres:17
     mem_limit: 4096m
@@ -233,38 +123,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 20s
-      timeout: 3s
-      retries: 10
-
-  postgresql-2:
-    image: postgres:latest
-    mem_limit: 2048m
-    container_name: postgresql-2
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_USER: ${DJANGO_DB_USER}
-      POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
-      POSTGRES_DB: ${DJANGO_DB_NAME}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 20s
-      timeout: 3s
-      retries: 10
-
-  postgresql-3:
-    image: postgres:17
-    mem_limit: 4096m
-    container_name: postgresql-3
-    ports:
-      - "5434:5432"
-    environment:
-      POSTGRES_USER: ${SECURITY_DB_USER}
-      POSTGRES_PASSWORD: ${SECURITY_DB_PASSWORD}
-      POSTGRES_DB: ${SECURITY_DB_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 20s
@@ -335,7 +193,7 @@ services:
     volumes:
       - $PWD/configurations:/configurations
     healthcheck:
-      test: [ "CMD", "curl", "-fs", "http://localhost:8888/actuator/health" ]
+      test: [ "CMD", "curl", "-fs", "http:/localhost:8888/actuator/health" ]
       interval: 15s
       timeout: 2s
       retries: 90
