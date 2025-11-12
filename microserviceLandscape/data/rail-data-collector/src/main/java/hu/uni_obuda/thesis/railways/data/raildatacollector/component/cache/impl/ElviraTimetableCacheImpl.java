@@ -1,6 +1,7 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.components;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.impl;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.ElviraTimetableCache;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;

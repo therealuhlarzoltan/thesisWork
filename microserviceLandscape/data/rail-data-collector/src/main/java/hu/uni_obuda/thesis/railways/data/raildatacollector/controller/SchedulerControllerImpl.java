@@ -1,14 +1,16 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.controller;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.controller;
 
 import hu.uni_obuda.thesis.railways.data.common.controller.SchedulerController;
 import hu.uni_obuda.thesis.railways.data.common.dto.*;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.scheduler.ScheduledDateService;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.scheduler.ScheduledIntervalService;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.scheduler.ScheduledJobService;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledDateService;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledIntervalService;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledJobService;
 import hu.uni_obuda.thesis.railways.util.validator.ScheduledDateRequestValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

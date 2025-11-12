@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.components;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
 import reactor.core.publisher.Mono;

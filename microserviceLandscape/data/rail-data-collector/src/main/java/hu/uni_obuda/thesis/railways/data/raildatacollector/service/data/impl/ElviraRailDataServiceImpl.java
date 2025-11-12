@@ -1,12 +1,13 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.service;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.impl;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.ElviraRailDataGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTimetableResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraShortTrainDetailsResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.ElviraTimetableResponse;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.components.ElviraTimetableCache;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.ElviraTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.ElviraRailDataService;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;

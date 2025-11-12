@@ -30,6 +30,7 @@ repositories {
 }
 
 dependencies {
+	implementation project(':api')
 	implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
