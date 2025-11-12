@@ -4,7 +4,7 @@ import hu.uni_obuda.thesis.railways.data.common.dto.ScheduledIntervalRequest;
 import hu.uni_obuda.thesis.railways.data.common.dto.ScheduledIntervalResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledIntervalEntity;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledJobEntity;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.ScheduledIntervalMapper;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.scheduler.ScheduledIntervalMapper;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledIntervalService;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveIntervalRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveJobRepositoryAdapter;

@@ -5,6 +5,8 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respons
 import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.EmmaTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.data.EmmaDelayMapper;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.data.EmmaRouteMapper;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.EmmaRailDataService;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import io.netty.channel.ConnectTimeoutException;
@@ -37,15 +39,12 @@ import java.util.*;
 @RequiredArgsConstructor
 public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
-    private static final Map<Character, Character> STATION_CODE_MAPPING = Map.of(
-            'ő', 'õ',
-            'ű', 'û'
-    );
-
     private static final LocalTime THREE_AM = LocalTime.MIDNIGHT.plusHours(3);
 
     private final EmmaRailDelayGateway gateway;
     private final EmmaTimetableCache timetableCache;
+    private final EmmaDelayMapper delayMapper;
+    private final EmmaRouteMapper routeMapper;
 
     @Override
     public Flux<DelayInfo> getDelayInfo(String trainNumber, String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
@@ -81,7 +80,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
                 .onErrorMap(WebClientResponseException.NotFound.class, this::mapNotFoundToExternalApiException)
                 .onErrorMap(WebClientResponseException.BadRequest.class, this::mapBadRequestToExternalApiException)
                 .onErrorMap(WebClientRequestException.class, this::mapWebClientRequestExceptionToApiException)
-                .flatMap(shortTrainDetailsResponse ->  mapToDelayInfo(shortTrainDetailsResponse, trainNumber, date))
+                .flatMap(shortTrainDetailsResponse ->  delayMapper.mapToDelayInfo(shortTrainDetailsResponse, trainNumber, date))
                 .flatMapMany(Flux::fromIterable);
     }
 
@@ -177,70 +176,6 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
         return Mono.just(trip.getGtfsId());
     }
 
-    private Mono<List<DelayInfo>> mapToDelayInfo(EmmaShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
-        LocalTime now = LocalTime.now();
-        boolean skipArrivalCheck = !now.isBefore(LocalTime.of(23, 55));
-        if (skipArrivalCheck) {
-            log.info("Not checking arrival for train {} to avoid date overflow", trainNumber);
-        } else {
-            if (!response.hasArrived()) {
-                log.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
-                return Mono.just(Collections.emptyList());
-            }
-        }
-
-        if (response.isCancelled()) {
-            log.warn("Train {} has been cancelled", trainNumber);
-            return Mono.error(new TrainNotInServiceException(trainNumber, date));
-        }
-        LocalDateTime operationDayMidnight = date.atStartOfDay();
-        List<DelayInfo> delayInfos = new ArrayList<>();
-
-        for (int i = 0; i < response.getTrip().getStoptimes().size(); i++) {
-            EmmaShortTrainDetailsResponse.StopTime currentStation = response.getTrip().getStoptimes().get(i);
-            DelayInfo delayInfo = DelayInfo.builder()
-                    .stationCode(adjustStationCodeFormat(currentStation.getStop().getName()))
-                    .thirdPartyStationUrl("")
-                    .officialStationUrl("")
-                    .trainNumber(trainNumber)
-                    .date(date)
-                    .build();
-
-
-            if (currentStation.getScheduledArrival() != null && i != 0) {
-                LocalDateTime scheduledArrival = operationDayMidnight.plusSeconds(currentStation.getScheduledArrival());
-                delayInfo.setScheduledArrival(scheduledArrival.toString());
-            }
-
-            if (currentStation.getScheduledDeparture() != null && i != response.getTrip().getStoptimes().size() - 1) {
-                LocalDateTime scheduledDeparture = operationDayMidnight.plusSeconds(currentStation.getScheduledDeparture());
-                delayInfo.setScheduledDeparture(scheduledDeparture.toString());
-            }
-
-            if (currentStation.getRealtimeArrival() != null && i != 0) {
-                LocalDateTime realtimeArrival = operationDayMidnight.plusSeconds(currentStation.getRealtimeArrival());
-                delayInfo.setActualArrival(realtimeArrival.toString());
-                delayInfo.setArrivalDelay(calculateDelay(currentStation.getArrivalDelay()));
-            }
-
-            if (currentStation.getRealtimeDeparture() != null && i != response.getTrip().getStoptimes().size() - 1) {
-                LocalDateTime realtimeDeparture = operationDayMidnight.plusSeconds(currentStation.getRealtimeDeparture());
-                delayInfo.setActualDeparture(realtimeDeparture.toString());
-                delayInfo.setDepartureDelay(calculateDelay(currentStation.getDepartureDelay()));
-            }
-
-            delayInfos.add(delayInfo);
-        }
-        return Mono.just(delayInfos);
-    }
-
-    private Integer calculateDelay(Integer delayInSeconds) {
-       if (delayInSeconds == null) {
-           return null;
-       }
-       return delayInSeconds / 60;
-    }
-
     private ExternalApiException mapNotFoundToExternalApiException(WebClientResponseException.NotFound notFound) {
         return new ExternalApiException(notFound.getStatusCode(), extractUrlFromRequest(notFound.getRequest()));
     }
@@ -269,14 +204,5 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
             return new ExternalApiException(HttpStatus.SERVICE_UNAVAILABLE, url, "Connection timed out");
         }
         return new InternalApiException(requestException.getMessage(), url);
-    }
-
-    private String adjustStationCodeFormat(@NonNull String stationCode) {
-        for (int i = 0; i < stationCode.length(); i++) {
-            if (STATION_CODE_MAPPING.containsKey(stationCode.charAt(i))) {
-                stationCode = stationCode.replace(stationCode.charAt(i), STATION_CODE_MAPPING.get(stationCode.charAt(i)));
-            }
-        }
-        return stationCode;
     }
 }
