@@ -1,7 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.DelayRecord;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
 import hu.uni_obuda.thesis.railways.data.event.*;
 import lombok.RequiredArgsConstructor;

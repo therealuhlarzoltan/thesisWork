@@ -1,11 +1,11 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.scheduled;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainRouteEntity;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainStationEntity;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainRouteRepository;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayFetcherService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayFetcherService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

@@ -177,10 +177,17 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
     }
 
     private Mono<List<DelayInfo>> mapToDelayInfo(EmmaShortTrainDetailsResponse response, String trainNumber, LocalDate date) {
-        if (!response.hasArrived()) {
-            log.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
-            return Mono.just(Collections.emptyList());
+        LocalTime now = LocalTime.now();
+        boolean skipArrivalCheck = !now.isBefore(LocalTime.of(23, 55));
+        if (skipArrivalCheck) {
+            log.info("Not checking arrival for train {} to avoid date overflow", trainNumber);
+        } else {
+            if (!response.hasArrived()) {
+                log.warn("Returning empty station list because train {} hasn't arrived yet", trainNumber);
+                return Mono.just(Collections.emptyList());
+            }
         }
+
         if (response.isCancelled()) {
             log.warn("Train {} has been cancelled", trainNumber);
             return Mono.error(new TrainNotInServiceException(trainNumber, date));

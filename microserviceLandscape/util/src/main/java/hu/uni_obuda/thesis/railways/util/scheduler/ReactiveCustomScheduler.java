@@ -12,9 +12,8 @@ import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJ
 import hu.uni_obuda.thesis.railways.util.scheduler.scanner.ReactiveScheduledJobScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEvent;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.ScheduledMethodRunnable;
@@ -41,7 +40,6 @@ public class ReactiveCustomScheduler {
     private static final Duration INITIAL_BACKOFF_DURATION = Duration.ofMillis(250);
     private static final Duration MAX_BACKOFF_DURATION = Duration.ofSeconds(2);
 
-    private final ApplicationContext applicationContext;
     private final ReactiveScheduledJobScanner jobScanner;
     private final ReactiveCompositeJobRepository jobRepository;
     private final Scheduler repositoryScheduler;
@@ -51,11 +49,10 @@ public class ReactiveCustomScheduler {
     private Flux<Tuple2<String, ScheduledMethodRunnable>> cachedMethods;
     private Mono<Map<String, ScheduledMethodRunnable>> cachedMethodMap;
 
-
     public void startSchedulingAfterEvent(ApplicationEvent event) {
-        if (event instanceof ContextRefreshedEvent) {
+        if (event instanceof ApplicationReadyEvent) {
             log.info("Scheduling jobs after startup...");
-            cachedMethods = jobScanner.scan(applicationContext).cache();
+            cachedMethods = jobScanner.scan().cache();
             cachedMethodMap = cachedMethods.collectMap(Tuple2::getT1, Tuple2::getT2).cache();
             Mono.fromRunnable(() -> scheduleJobs(getScheduledJobsSafely(jobRepository), cachedMethods))
                     .subscribeOn(repositoryScheduler)
@@ -90,7 +87,7 @@ public class ReactiveCustomScheduler {
     }
 
     private Flux<ScheduledJob> getScheduledJobsSafely(ReactiveCompositeJobRepository repository) {
-        return repository.getScheduledJobs()
+        return Flux.defer(repository::getScheduledJobs)
                 .retryWhen(
                         Retry.backoff(MAX_REPOSITORY_RETRIES, INITIAL_BACKOFF_DURATION)
                                 .maxBackoff(MAX_BACKOFF_DURATION)
@@ -109,6 +106,7 @@ public class ReactiveCustomScheduler {
     private void scheduleJobs(Flux<ScheduledJob> jobs, Flux<Tuple2<String, ScheduledMethodRunnable>> methods) {
         Mono<Map<String, ScheduledMethodRunnable>> methodMapMono = cachedMethodMap != null ? cachedMethodMap
                 : methods.collectMap(Tuple2::getT1, Tuple2::getT2);
+        log.info("Methods obtained from cache!");
         JobHistoryUtil.differenceAsList(jobs, futures)
                 .zipWith(methodMapMono, Tuples::of)
                 .doOnNext(tuple -> {

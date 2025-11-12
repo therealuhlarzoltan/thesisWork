@@ -26,11 +26,11 @@ public class ScheduledTaskEntry {
     }
 
     public Optional<Duration> getFixedRateInterval() {
-        return Optional.ofNullable(fixedRateTask.get().first());
+        return Optional.ofNullable(fixedRateTask.get()).map(Tuple2::first);
     }
 
     public Optional<ScheduledFuture<?>> getFixedRateTask() {
-        return Optional.ofNullable(fixedRateTask.get().second());
+        return Optional.ofNullable(fixedRateTask.get()).map(Tuple2::second);
     }
 
     public void addCronTask(String cronExpression, ScheduledFuture<?> cronTask) {

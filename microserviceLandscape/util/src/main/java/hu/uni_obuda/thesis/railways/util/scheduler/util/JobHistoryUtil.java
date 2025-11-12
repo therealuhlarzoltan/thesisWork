@@ -3,6 +3,7 @@ package hu.uni_obuda.thesis.railways.util.scheduler.util;
 import hu.uni_obuda.thesis.railways.util.scheduler.model.JobScheduleDelta;
 import hu.uni_obuda.thesis.railways.util.scheduler.model.ScheduledJob;
 import hu.uni_obuda.thesis.railways.util.scheduler.model.ScheduledTaskEntry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -12,6 +13,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 public final class JobHistoryUtil {
 
     private JobHistoryUtil() {}
@@ -33,6 +35,7 @@ public final class JobHistoryUtil {
             Flux<ScheduledJob> newJobs,
             Map<String, ScheduledTaskEntry> currentJobs
     ) {
+        log.info("Collecting scheduled job deltas...");
         return differencePerJob(newJobs, currentJobs).collectList();
     }
 
@@ -42,6 +45,7 @@ public final class JobHistoryUtil {
             @Nullable ScheduledTaskEntry scheduled
     ) {
 
+        log.info("Building delta for job {}", name);
         Optional<Duration> desiredFixed =
                 Optional.ofNullable(wanted)
                         .map(ScheduledJob::getInterval)
