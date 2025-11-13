@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.emma;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
+import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
@@ -30,17 +31,20 @@ import static hu.uni_obuda.thesis.railways.route.routeplannerservice.util.consta
 public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService {
 
     private final EmmaTimetableService timetableService;
+    private final GeocodingService geocodingService;
     private final StationService stationService;
     private final WeatherService weatherService;
     private final PredictionService predictionService;
     private final TimetableProcessingHelper helper;
 
     public ReactiveHttpEmmaRoutePlannerService(@Qualifier("reactiveHttpEmmaTimetableService") EmmaTimetableService timetableService,
+                                                 @Qualifier("reactiveHttpGeocodingService") GeocodingService geocodingService,
                                                  @Qualifier("reactiveHttpStationService") StationService stationService,
                                                  @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
                                                  @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
                                                  TimetableProcessingHelper helper) {
         this.timetableService = timetableService;
+        this.geocodingService = geocodingService;
         this.stationService = stationService;
         this.weatherService = weatherService;
         this.predictionService = predictionService;
@@ -74,6 +78,9 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
             return Flux.error(new InvalidInputDataException("changes.negative"));
         }
 
+        Mono<GeocodingResponse> fromCoordinatesMono = geocodingService.getCoordinates(from);
+        Mono<GeocodingResponse> toCoordinatesMono = geocodingService.getCoordinates(to);
+
         String adjustedFrom = adjustStationCodeFormat(from);
         String adjustedTo = adjustStationCodeFormat(to);
         log.debug("Adjusted from station to {}", adjustedFrom);
@@ -81,22 +88,28 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
 
 
         log.info("Getting possible routes from {} to {} with departure time {} and arrival time {} and max changes {}", from, to, departureTime, arrivalTime, maxChanges);
-        return timetableService.getTimetable(adjustedFrom, adjustedTo, departureTime != null ? departureTime.toLocalDate() : arrivalTime.toLocalDate())
-                .transform(flux -> {
-                    if (departureTime != null)
-                        return helper.filterByDeparture(departureTime, flux);
-                    return flux;
-                })
-                .transform(flux -> {
-                    if (arrivalTime != null)
-                        return helper.filterByArrival(arrivalTime, flux);
-                    return flux;
-                })
-                .transform(flux -> {
-                    if (maxChanges != null)
-                        return helper.filterByChanges(maxChanges, flux);
-                    return flux;
-                })
+        return Mono.zip(fromCoordinatesMono, toCoordinatesMono)
+                .flatMapMany(coordinatesTuple ->
+                    timetableService
+                            .getTimetable(from, coordinatesTuple.getT1().getLatitude(), coordinatesTuple.getT1().getLongitude(),
+                                    to, coordinatesTuple.getT2().getLatitude(), coordinatesTuple.getT2().getLongitude(),
+                                    departureTime != null ? departureTime.toLocalDate() : arrivalTime.toLocalDate())
+                        .transform(flux -> {
+                            if (departureTime != null)
+                                return helper.filterByDeparture(departureTime, flux);
+                            return flux;
+                        })
+                        .transform(flux -> {
+                            if (arrivalTime != null)
+                                return helper.filterByArrival(arrivalTime, flux);
+                            return flux;
+                        })
+                        .transform(flux -> {
+                            if (maxChanges != null)
+                                return helper.filterByChanges(maxChanges, flux);
+                            return flux;
+                        })
+                )
                 .flatMap(route -> Flux.fromIterable(route.getTrains())
                         .flatMap(train -> {
                             boolean hasActuals = train.getFromTimeActual() != null && !train.getFromTimeActual().isBlank() && train.getToTimeActual() != null && !train.getToTimeActual().isBlank();
