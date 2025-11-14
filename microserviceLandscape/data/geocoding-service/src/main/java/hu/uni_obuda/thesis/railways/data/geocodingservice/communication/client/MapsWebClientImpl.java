@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 @Component
 public class MapsWebClientImpl implements MapsWebClient {
+
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
@@ -35,7 +36,7 @@ public class MapsWebClientImpl implements MapsWebClient {
 
     @Override
     public Mono<CoordinatesResponse> getCoordinates(String address) {
-        address = address.replaceAll(",", " ") + " " + countryCode;
+        address = address.replaceAll(",", " ") + " vasútállomás " + countryCode;
         URI requestUri = URI.create(mapsBaseUrl + geocodingUri + "?address=" + URLEncoder.encode(address, StandardCharsets.UTF_8) + "&key=" + apiKey);
         return webClient.get().uri(requestUri).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
