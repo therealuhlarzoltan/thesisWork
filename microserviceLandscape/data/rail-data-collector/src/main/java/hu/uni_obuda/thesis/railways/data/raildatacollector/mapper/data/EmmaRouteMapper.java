@@ -28,10 +28,10 @@ public class EmmaRouteMapper {
                 train.setLineNumber(leg.getRoute().getLongName());
                 train.setFromStation(leg.getFrom().getName());
                 train.setFromTimeScheduled(extractScheduledFrom(leg));
-                train.setFromTimeActual(extractActualFrom(leg));
+                train.setFromTimeActual(extractActualFrom(leg, now.toLocalTime()));
                 train.setToStation(leg.getTo().getName());
                 train.setToTimeScheduled(extractScheduledTo(leg));
-                train.setToTimeActual(extractActualTo(leg));
+                train.setToTimeActual(extractActualTo(leg, now.toLocalTime()));
                 trains.add(train);
             }
             routes.add(new TrainRouteResponse(trains));
@@ -43,20 +43,24 @@ public class EmmaRouteMapper {
         return getTimeFromEpochMillis(leg.getStartTime()).toString();
     }
 
-    private String extractActualFrom(EmmaTimetableResponse.Leg leg) {
-        return getTimeFromEpochMillis(leg.getStartTime())
-                .plusMinutes(getMinutesFromSeconds(leg.getDepartureDelay()))
-                .toString();
+    private String extractActualFrom(EmmaTimetableResponse.Leg leg, LocalTime now) {
+        LocalTime scheduledFrom = getTimeFromEpochMillis(leg.getStartTime());
+        if (scheduledFrom.isBefore(now)) {
+            return null;
+        }
+        return scheduledFrom.plusMinutes(getMinutesFromSeconds(leg.getDepartureDelay())) .toString();
     }
 
     private String extractScheduledTo(EmmaTimetableResponse.Leg leg) {
         return getTimeFromEpochMillis(leg.getEndTime()).toString();
     }
 
-    private String extractActualTo(EmmaTimetableResponse.Leg leg) {
-        return getTimeFromEpochMillis(leg.getEndTime())
-                .plusMinutes(getMinutesFromSeconds(leg.getArrivalDelay()))
-                .toString();
+    private String extractActualTo(EmmaTimetableResponse.Leg leg, LocalTime now) {
+        LocalTime scheduledTo = getTimeFromEpochMillis(leg.getEndTime());
+        if (scheduledTo.isBefore(now)) {
+            return null;
+        }
+        return scheduledTo.plusMinutes(getMinutesFromSeconds(leg.getArrivalDelay())).toString();
     }
 
     private LocalTime getTimeFromEpochMillis(long epochMillis) {
