@@ -45,7 +45,7 @@ public class EmmaRouteMapper {
 
     private String extractActualFrom(EmmaTimetableResponse.Leg leg, LocalTime now) {
         LocalTime scheduledFrom = getTimeFromEpochMillis(leg.getStartTime());
-        if (scheduledFrom.isBefore(now)) {
+        if (scheduledFrom.isAfter(now)) {
             return null;
         }
         return scheduledFrom.plusMinutes(getMinutesFromSeconds(leg.getDepartureDelay())) .toString();
@@ -56,10 +56,10 @@ public class EmmaRouteMapper {
     }
 
     private String extractActualTo(EmmaTimetableResponse.Leg leg, LocalTime now) {
-        LocalTime scheduledTo = getTimeFromEpochMillis(leg.getEndTime());
-        if (scheduledTo.isBefore(now)) {
+        if (extractActualFrom(leg, now) == null) {
             return null;
         }
+        LocalTime scheduledTo = getTimeFromEpochMillis(leg.getEndTime());
         return scheduledTo.plusMinutes(getMinutesFromSeconds(leg.getArrivalDelay())).toString();
     }
 

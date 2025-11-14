@@ -3,7 +3,7 @@ banned: {}
 modes:
   - mode: "RAIL"
   - mode: "RAIL_REPLACEMENT_BUS"
-  - mode: "SUBURBAN_RAIL"
+  - mode: "SUBURBAN_RAILWAY"
   - mode: "TRAMTRAIN"
 numItineraries: 500
 time: "03:00"

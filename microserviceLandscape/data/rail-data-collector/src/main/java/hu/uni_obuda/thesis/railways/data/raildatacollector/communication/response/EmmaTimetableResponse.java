@@ -92,8 +92,8 @@ public class EmmaTimetableResponse {
     public void removeUnnecessaryData() {
         plan.getItineraries().forEach(itinerary -> {
             itinerary.getLegs()
-                    .removeIf(leg -> "RAIL".equalsIgnoreCase(leg.getMode()) || "RAIL_REPLACEMENT_BUS".equalsIgnoreCase(leg.getMode())
-                    || "SUBURBAN_RAIL".equalsIgnoreCase(leg.getMode()) || "TRAMTRAIN".equalsIgnoreCase(leg.getMode()));
+                    .removeIf(leg -> !"RAIL".equalsIgnoreCase(leg.getMode()) && !"RAIL_REPLACEMENT_BUS".equalsIgnoreCase(leg.getMode())
+                    && !"SUBURBAN_RAILWAY".equalsIgnoreCase(leg.getMode()) && !"TRAMTRAIN".equalsIgnoreCase(leg.getMode()));
         });
         plan.getItineraries().removeIf(itinerary -> itinerary.getLegs().isEmpty());
     }
