@@ -86,9 +86,11 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
     @Override
     public Flux<TrainRouteResponse> planRoute(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
-        return Flux.error(new UnsupportedOperationException("Not implemented yet"));
+        log.info("Getting routes with start station {} and end station {} on date {}", from, to, date);
+        return gateway.getTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
+                .flatMap(routesResponse -> routeMapper.mapToRouteResponse(routesResponse, LocalDateTime.now()))
+                .flatMapMany(Flux::fromIterable);
     }
-
 
     private Mono<EmmaShortTimetableResponse.Leg> checkSchedule(Tuple4<LocalTime, LocalTime, String, EmmaShortTimetableResponse.Leg> schedule) {
         LocalTime now = LocalTime.now();

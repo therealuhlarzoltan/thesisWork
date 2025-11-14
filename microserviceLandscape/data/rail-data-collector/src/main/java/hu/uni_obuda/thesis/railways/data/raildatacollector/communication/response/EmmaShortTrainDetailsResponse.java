@@ -3,6 +3,7 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respon
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
