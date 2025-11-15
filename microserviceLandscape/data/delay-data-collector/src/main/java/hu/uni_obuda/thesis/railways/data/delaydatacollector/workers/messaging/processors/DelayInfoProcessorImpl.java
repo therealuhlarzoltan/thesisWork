@@ -2,7 +2,7 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.p
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.TrainStatusCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.IncomingMessageSink;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;

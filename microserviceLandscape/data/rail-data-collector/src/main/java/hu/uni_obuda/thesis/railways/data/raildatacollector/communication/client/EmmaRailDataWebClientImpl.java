@@ -95,7 +95,24 @@ public class EmmaRailDataWebClientImpl implements EmmaRailDataWebClient {
 
     @Override
     public Mono<EmmaTimetableResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
-        return Mono.error(new UnsupportedOperationException("Not implemented yet"));
+        var variableMap =  Map.<String, Object>of("fromPlace", concatenatePlaceWithCoordinates(from, fromLatitude, fromLongitude), "toPlace", concatenatePlaceWithCoordinates(to, toLatitude, toLongitude), "date", date.toString());
+        return timetableClient.documentName(longTimeTableDocumentName)
+                .variables(mergeWithDefaultVariables(variableMap, longTimeTableDocumentName)
+                )
+                .execute()
+                .flatMap(clientGraphQlResponse -> {
+                    if (clientGraphQlResponse.isValid()) {
+                        try {
+                            EmmaTimetableResponse parsedResponse = clientGraphQlResponse.toEntity(EmmaTimetableResponse.class);
+                            parsedResponse.removeUnnecessaryData();
+                            return Mono.just(parsedResponse);
+                        } catch (RuntimeException e) {
+                            return Mono.error(new ExternalApiFormatMismatchException("Could not parse long timetable response", e, getUrlFromUriString(timetableGetterUri)));
+                        }
+                    } else {
+                        return Mono.error(new ExternalApiException(HttpStatusCode.valueOf(400), getUrlFromUriString(timetableGetterUri), clientGraphQlResponse.getErrors().isEmpty() ? "" : clientGraphQlResponse.getErrors().getFirst().getMessage()));
+                    }
+                });
     }
 
     private Map<String, Object> mergeWithDefaultVariables(Map<String, Object> dynamicVariables, String documentName) {

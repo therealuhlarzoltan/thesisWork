@@ -1,11 +1,11 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.CoordinatesCache;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.CoordinatesCache;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
+import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -18,9 +18,9 @@ public class CoordinatesCacheEvictor {
     private final CoordinatesCache coordinatesCache;
     private final TrainStationRepository trainStationRepository;
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @ScheduledJob("coordinatesCacheEviction")
     public void evictAndSave() {
-        LOG.info("Evicting coordinates cache and saving them to the repository at 3 AM...");
+        LOG.info("Evicting coordinates cache and saving them to the repository...");
         coordinatesCache.getAll()
                 .flatMap(coordinates ->
                         trainStationRepository.findById(coordinates.getAddress())
@@ -39,5 +39,4 @@ public class CoordinatesCacheEvictor {
                 .then()
                 .subscribe();
     }
-
 }

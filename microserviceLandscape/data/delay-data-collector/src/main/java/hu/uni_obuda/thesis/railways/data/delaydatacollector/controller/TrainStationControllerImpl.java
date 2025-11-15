@@ -2,8 +2,8 @@ package hu.uni_obuda.thesis.railways.data.delaydatacollector.controller;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationRequest;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.GeocodingService;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.TrainStationService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.GeocodingService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.domain.TrainStationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

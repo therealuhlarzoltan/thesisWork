@@ -20,12 +20,14 @@ import org.springframework.graphql.support.CachingDocumentSource;
 import org.springframework.graphql.support.DocumentSource;
 import org.springframework.graphql.support.ResourceDocumentSource;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@EnableAsync
 @Configuration
 public class ApplicationConfig {
 

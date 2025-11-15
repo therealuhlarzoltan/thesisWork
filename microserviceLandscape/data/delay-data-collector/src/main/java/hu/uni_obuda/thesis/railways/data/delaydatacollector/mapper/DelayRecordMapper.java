@@ -1,9 +1,8 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.DelayRecord;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.DelayEntity;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.TrainStationEntity;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.DelayEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

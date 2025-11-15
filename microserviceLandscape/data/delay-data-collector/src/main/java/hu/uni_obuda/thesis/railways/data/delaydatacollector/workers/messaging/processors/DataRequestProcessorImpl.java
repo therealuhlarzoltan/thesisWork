@@ -1,7 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.processors;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.DelayRecord;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.DelayService;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
 import hu.uni_obuda.thesis.railways.data.event.*;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +66,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
                 dataTransferFlux
                         .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", event))
                         .onErrorContinue((throwable, badValue) -> {
-                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping: {}", throwable.getStackTrace());
+                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping it", throwable);
                         })
                         .subscribeOn(messageProcessingScheduler)
                         .subscribe();
@@ -91,7 +91,7 @@ public class DataRequestProcessorImpl implements DataRequestProcessor {
                 dataTransferFlux
                         .doOnNext(event -> responseSender.sendMessage("dataRequestProcessor-out-0", correlationId, event))
                         .doOnError(throwable -> {
-                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping: {}", throwable.getStackTrace());
+                            LOG.error("Could not map one DelayEntity to DelayRecord, skipping it", throwable);
                             LOG.error("Was unable to send message to dataResponses-out-0 with correlationId {}", correlationId);
                         })
                         .onErrorResume(throwable -> Mono.empty())
