@@ -126,7 +126,7 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
                                         .toTimeActual(train.getToTimeActual())
                                         .build());
                             }
-                            return stationService.getRoute(train.getTrainNumber())
+                            return stationService.getRoute(extreactShortTrainNumber(train.getTrainNumber()))
                                     .filter(Objects::nonNull)
                                     .flatMapMany(routeInfo -> Flux.zip(
                                             stationService.getStation(routeInfo.getStartStation()),
@@ -149,7 +149,7 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
                                         Mono<DelayPredictionResponse> fromDelay = fromWeather.flatMap(weather -> predictionService.predictDepartureDelay(
                                                 DelayPredictionRequest.builder()
                                                         .stationCode(fromStation.getStationCode())
-                                                        .trainNumber(train.getTrainNumber())
+                                                        .trainNumber(extreactShortTrainNumber(train.getTrainNumber()))
                                                         .stationLatitude(fromStation.getLatitude())
                                                         .stationLongitude(fromStation.getLongitude())
                                                         .scheduledDeparture(parseTime(train.getFromTimeScheduled()))
@@ -161,7 +161,7 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
                                         Mono<DelayPredictionResponse> toDelay = toWeather.flatMap(weather -> predictionService.predictArrivalDelay(
                                                 DelayPredictionRequest.builder()
                                                         .stationCode(toStation.getStationCode())
-                                                        .trainNumber(train.getTrainNumber())
+                                                        .trainNumber(extreactShortTrainNumber(train.getTrainNumber()))
                                                         .stationLatitude(toStation.getLatitude())
                                                         .stationLongitude(toStation.getLongitude())
                                                         .scheduledArrival(parseTime(train.getToTimeScheduled()))
@@ -228,5 +228,18 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
 
     private String addDelay(String timeStr, Double delayMinutes) {
         return parseTime(timeStr).plusMinutes(delayMinutes.longValue()).toString();
+    }
+
+    private String extreactShortTrainNumber(String trainNumber) {
+        String[] parts = trainNumber.split("\\s+");
+        for (var part : parts) {
+            try {
+                Integer.parseInt(part);
+                return part;
+            } catch (NumberFormatException _) {
+
+            }
+        }
+        return "0";
     }
 }

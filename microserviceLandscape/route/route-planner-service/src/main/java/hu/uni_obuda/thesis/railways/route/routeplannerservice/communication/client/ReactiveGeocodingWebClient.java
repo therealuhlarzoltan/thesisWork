@@ -32,6 +32,6 @@ public class ReactiveGeocodingWebClient implements GeocodingWebClient {
                 .queryParam("address", stationName)
                 .build(false)
                 .toUri();
-        return webClient.get().uri(geocoderUri).retrieve().bodyToMono(GeocodingResponse.class);
+        return webClient.get().uri(geocoderUri.toString()).retrieve().bodyToMono(GeocodingResponse.class);
     }
 }
