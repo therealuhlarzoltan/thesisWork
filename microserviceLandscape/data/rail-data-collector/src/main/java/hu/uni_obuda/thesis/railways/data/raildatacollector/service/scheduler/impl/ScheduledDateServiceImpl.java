@@ -4,7 +4,7 @@ import hu.uni_obuda.thesis.railways.data.common.dto.ScheduledDateRequest;
 import hu.uni_obuda.thesis.railways.data.common.dto.ScheduledDateResponse;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledDateEntity;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.entity.ScheduledJobEntity;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.ScheduledDateMapper;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.scheduler.ScheduledDateMapper;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.service.scheduler.ScheduledDateService;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveDateRepositoryAdapter;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.util.adapter.ReactiveJobRepositoryAdapter;

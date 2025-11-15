@@ -3,11 +3,11 @@ package hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.cli
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
-import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -15,17 +15,17 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 
-@Slf4j
-@RequiredArgsConstructor
+@Profile("data-source-elvira")
 @Primary
 @Component
-public class ReactiveRailWebClient implements RailWebClient {
+@Slf4j
+@RequiredArgsConstructor
+public class ReactiveElviraRailWebClient implements ElviraRailWebClient {
 
     private final WebClient webClient;
 

@@ -5,6 +5,6 @@ import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 
-public interface RailDataGateway {
+public interface ElviraRailDataGateway {
     Flux<TrainRouteResponse> getTimetable(String from, String to, LocalDate date);
 }

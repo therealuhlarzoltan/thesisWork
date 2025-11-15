@@ -15,6 +15,7 @@ app:
   delay-predictor-service-url: http://delay-predictor-service
   delay-predictor-service-arrival-uri: /prediction/delay/arrival
   delay-predictor-service-departure-uri: /prediction/delay/departure
+  geocoding-service-geocoding-uri: /coordinates
   health-check-uri: /actuator/health
   eureka:
     username: ${EUREKA_USERNAME}

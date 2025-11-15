@@ -217,7 +217,7 @@ railway.api:
   timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
   train-details-getter-uri: //otp2-backend/otp/routers/default/index/graphql
   graphql.short-timetable-document: Plan
-  graphql.long-timetable-document: asd
+  graphql.long-timetable-document: RoutePlan
   graphql.short-train-details-document: Trip
   rate:
     limit:

@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.mapper;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.scheduler;
 
 import hu.uni_obuda.thesis.railways.data.common.dto.ScheduledDateRequest;
 import hu.uni_obuda.thesis.railways.data.common.dto.ScheduledDateResponse;

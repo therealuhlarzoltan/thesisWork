@@ -5,6 +5,6 @@ import reactor.core.publisher.Flux;
 
 import java.time.LocalDate;
 
-public interface RailWebClient {
+public interface ElviraRailWebClient {
     Flux<TrainRouteResponse> makeRouteRequest(String from, String to, LocalDate date);
 }
