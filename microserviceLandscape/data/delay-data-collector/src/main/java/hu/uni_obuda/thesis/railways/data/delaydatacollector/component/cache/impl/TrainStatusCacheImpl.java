@@ -33,7 +33,7 @@ public class TrainStatusCacheImpl implements TrainStatusCache {
     public Mono<Void> markComplete(String trainNumber, LocalDate date) {
         String key = toKey(trainNumber, date);
         return redisTemplate.opsForValue()
-                .set(key, "complete", Duration.ofDays(cacheDuration))
+                .set(key, "complete", Duration.ofHours(cacheDuration))
                 .then(redisTemplate.opsForSet().add(KEY_SET_PREFIX, key))
                 .then();
     }
