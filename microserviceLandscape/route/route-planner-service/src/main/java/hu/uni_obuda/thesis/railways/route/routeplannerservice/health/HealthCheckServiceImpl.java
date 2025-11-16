@@ -1,7 +1,8 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.health;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,6 @@ import java.util.logging.Level;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class HealthCheckServiceImpl implements HealthCheckService {
 
     private final WebClient webClient;
@@ -34,6 +34,11 @@ public class HealthCheckServiceImpl implements HealthCheckService {
     private String delayPredictorServiceUrl;
     @Value("${app.health-check-uri}")
     private String healthCheckUri;
+
+    @Autowired
+    public HealthCheckServiceImpl(@Qualifier("webClientWithRedirects") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     @Override
     public Mono<Health> getDelayDataCollectorHealth() {
