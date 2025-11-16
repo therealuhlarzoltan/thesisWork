@@ -225,6 +225,9 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
 
+caching:
+  geocoding:
+    cache-duration: 6
 
 springdoc:
   swagger-ui:
