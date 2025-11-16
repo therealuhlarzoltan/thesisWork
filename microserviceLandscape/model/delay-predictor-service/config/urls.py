@@ -22,5 +22,5 @@ urlpatterns = [
     path('messaging/', include('messaging.urls')),
     path('model/', include('model.urls')),
     path('prediction/', include('prediction.urls')),
-    path('health/', include('health_check.urls')),
+    path('actuator/health/', include('health_check.urls')),
 ]
