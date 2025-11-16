@@ -4,6 +4,7 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteRespons
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.client.ElviraRailWebClient;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.RetryRegistry;
