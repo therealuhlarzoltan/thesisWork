@@ -9,7 +9,10 @@ import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalance
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 @RequiredArgsConstructor
 @Configuration
@@ -17,9 +20,22 @@ public class ApplicationConfig {
 
     private final ReactorLoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction;
 
-    @Bean
+    @Primary
+    @Bean("webClientWithoutRedirects")
     public WebClient webClient(WebClient.Builder builder) {
         return builder
+                .defaultHeader("Content-Type", "application/json")
+                .filter(loadBalancerExchangeFilterFunction)
+                .build();
+    }
+
+    @Bean("webClientWithRedirects")
+    public WebClient webClientWithRedirects(WebClient.Builder builder) {
+        HttpClient httpClient = HttpClient.create()
+                .followRedirect(true);
+
+        return builder
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .defaultHeader("Content-Type", "application/json")
                 .filter(loadBalancerExchangeFilterFunction)
                 .build();
