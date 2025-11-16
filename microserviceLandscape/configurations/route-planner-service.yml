@@ -146,6 +146,26 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+      getCoordinates:
+        allowHealthIndicatorToFail: false
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
   retry:
     instances:
       getTimetableApi:
@@ -221,6 +241,20 @@ resilience4j:
           - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
+          - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+      getCoordinates:
+        maxAttempts: 3
+        waitDuration: 1000
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
