@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.emma;
+package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.common;
 
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
 import hu.uni_obuda.thesis.railways.route.routeplannerservice.communication.gateway.GeocodingGateway;
