@@ -168,7 +168,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
   retry:
     instances:
-      getTimetableApi:
+      getTimetable:
         maxAttempts: 3
         waitDuration: 1000
         retryExceptions:
@@ -258,7 +258,36 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
-
+  ratelimiter:
+    instances:
+      getTimetable:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
+      getTrainRoute:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
+      getTrainStation:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
+      getDepartureDelay:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
+      getArrivalDelay:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
+      getWeatherInfo:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
+      getCoordinates:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 8s
 
 springdoc:
   swagger-ui:
