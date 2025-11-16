@@ -227,7 +227,11 @@ resilience4j:
 
 caching:
   geocoding:
-    cache-duration: 6
+    cache-duration-in-minutes: 360
+    cache-size: 3000
+  weather:
+    cache-duration-in-minutes: 10
+    cache-size: 500
 
 springdoc:
   swagger-ui:

@@ -29,15 +29,15 @@ public class ReactiveHttpGeocodingService implements GeocodingService {
     public Mono<GeocodingResponse> getCoordinates(String stationName) {
         GeocodingResponse cached = geocodingCache.getIfPresent(stationName);
         if (cached != null) {
-            log.debug("Geocoding cache hit for '{}'", stationName);
+            log.debug("Geocoding cache hit for {}", stationName);
             return Mono.just(cached);
         }
 
-        log.debug("Geocoding cache miss for '{}'", stationName);
+        log.debug("Geocoding cache miss for {}", stationName);
         return geocodingGateway.getCoordinates(stationName)
                 .doOnNext(response -> {
                     geocodingCache.put(stationName, response);
-                    log.debug("Geocoding response cached for '{}'", stationName);
+                    log.debug("Geocoding response cached for {}", stationName);
                 });
     }
 }
