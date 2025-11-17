@@ -5,6 +5,7 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.respons
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,10 +23,9 @@ import java.time.LocalDate;
 
 @Profile("data-source-elvira")
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class ElviraRailDataWebClientImpl implements ElviraRailDataWebClient {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataWebClientImpl.class);
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -65,7 +65,7 @@ public class ElviraRailDataWebClientImpl implements ElviraRailDataWebClient {
 
     @Override
     public Mono<ElviraShortTrainDetailsResponse> getShortTrainDetails(String thirdPartyUrl) {
-        LOG.debug("Getting train details on url {}", thirdPartyUrl);
+        log.debug("Getting train details on url {}", thirdPartyUrl);
         URI trainDetailsUri = URI.create(railwayBaseUrl + trainDetailsGetterUri + "?url=" + URLEncoder.encode(thirdPartyUrl, StandardCharsets.UTF_8));
         return webClient.get().uri(trainDetailsUri).exchangeToMono(apiResponse -> {
             if (apiResponse.statusCode().is2xxSuccessful()) {
@@ -73,7 +73,7 @@ public class ElviraRailDataWebClientImpl implements ElviraRailDataWebClient {
                         .flatMap(response -> {
                             try {
                                 ElviraShortTrainDetailsResponse parsedResponse = objectMapper.readValue(response, ElviraShortTrainDetailsResponse.class);
-                                LOG.debug("Got train details response!");
+                                log.debug("Got train details response!");
                                 return Mono.just(parsedResponse);
                             } catch (IOException ioException) {
                                 return Mono.error(mapMappingExceptionToException(ioException, trainDetailsUri.toString()));

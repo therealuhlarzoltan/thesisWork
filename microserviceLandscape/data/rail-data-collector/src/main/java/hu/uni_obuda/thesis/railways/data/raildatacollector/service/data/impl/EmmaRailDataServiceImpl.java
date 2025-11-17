@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector.service.data.impl;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.EmmaRailDelayGateway;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.gateway.EmmaRailDataGateway;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.communication.response.*;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.EmmaTimetableCache;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -31,7 +30,6 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
 
 @Profile("data-source-emma")
 @Service
@@ -41,7 +39,7 @@ public class EmmaRailDataServiceImpl implements EmmaRailDataService {
 
     private static final LocalTime THREE_AM = LocalTime.MIDNIGHT.plusHours(3);
 
-    private final EmmaRailDelayGateway gateway;
+    private final EmmaRailDataGateway gateway;
     private final EmmaTimetableCache timetableCache;
     private final EmmaDelayMapper delayMapper;
     private final EmmaRouteMapper routeMapper;
