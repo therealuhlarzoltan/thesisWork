@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.geocodingservice.workers;
+package hu.uni_obuda.thesis.railways.data.geocodingservice.worker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,9 +9,6 @@ import hu.uni_obuda.thesis.railways.data.event.ResponsePayload;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.controller.GeocodingController;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingRequest;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller.WeatherDataCollector;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfoRequest;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

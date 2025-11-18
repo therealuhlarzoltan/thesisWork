@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.worker;
+package hu.uni_obuda.thesis.railways.data.geocodingservice.worker;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -17,6 +17,7 @@ import org.springframework.messaging.Message;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -58,7 +59,8 @@ public class ResponseMessageSenderTest {
 
         ILoggingEvent infoLog = listAppender.list.get(0);
         assertEquals(Level.INFO, infoLog.getLevel());
-        assertTrue(infoLog.getFormattedMessage().contains("Sending a response message to binding-out with correlationId corr-123"));
+        assertTrue(infoLog.getFormattedMessage()
+                .contains("Sending a response message to binding-out with correlationId corr-123"));
     }
 
     @Test
@@ -72,7 +74,8 @@ public class ResponseMessageSenderTest {
 
         ILoggingEvent warnLog = listAppender.list.get(0);
         assertEquals(Level.WARN, warnLog.getLevel());
-        assertTrue(warnLog.getFormattedMessage().contains("No correlationId found in the message headers"));
+        assertTrue(warnLog.getFormattedMessage()
+                .contains("No correlationId found in the message headers"));
     }
 
     @Test
@@ -89,9 +92,11 @@ public class ResponseMessageSenderTest {
         ILoggingEvent errorLog = listAppender.list.get(1);
 
         assertEquals(Level.INFO, infoLog.getLevel());
-        assertTrue(infoLog.getFormattedMessage().contains("Sending a response message to binding-out"));
+        assertTrue(infoLog.getFormattedMessage()
+                .contains("Sending a response message to binding-out"));
 
         assertEquals(Level.ERROR, errorLog.getLevel());
-        assertTrue(errorLog.getFormattedMessage().contains("Failed to send the response message to binding-out"));
+        assertTrue(errorLog.getFormattedMessage()
+                .contains("Failed to send the response message to binding-out"));
     }
 }
