@@ -33,7 +33,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ElviraRailDataServiceTest {
+class ElviraRailDataServiceTest {
 
     private ElviraRailDataGateway gateway;
     private ElviraTimetableCache cache;
@@ -43,7 +43,7 @@ public class ElviraRailDataServiceTest {
     private ElviraRailDataServiceImpl service;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         gateway = mock(ElviraRailDataGateway.class);
         cache = mock(ElviraTimetableCache.class);
         delayMapper = mock(ElviraDelayMapper.class);
@@ -53,7 +53,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_cacheHit_returnsDelayInfo() {
+    void getDelayInfo_cacheHit_returnsDelayInfo() {
         LocalDate date = LocalDate.now();
 
         ElviraShortTimetableResponse resp = new ElviraShortTimetableResponse(
@@ -81,7 +81,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_cacheMiss_getsAndCachesTimetable() {
+    void getDelayInfo_cacheMiss_getsAndCachesTimetable() {
         LocalDate date = LocalDate.now();
 
         ElviraShortTimetableResponse resp = new ElviraShortTimetableResponse(
@@ -110,7 +110,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_emptyTimetable_throwsFormatException() {
+    void getDelayInfo_emptyTimetable_throwsFormatException() {
         LocalDate date = LocalDate.now();
 
         when(cache.isCached("A", "B", date)).thenReturn(Mono.just(false));
@@ -123,7 +123,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_trainNotFound_throwsTrainNotInService() {
+    void getDelayInfo_trainNotFound_throwsTrainNotInService() {
         LocalDate date = LocalDate.now();
 
         ElviraShortTimetableResponse resp = new ElviraShortTimetableResponse(
@@ -145,7 +145,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_malformedTimes_usesFallbackSchedule() {
+    void getDelayInfo_malformedTimes_usesFallbackSchedule() {
         LocalDate date = LocalDate.now();
 
         ElviraShortTimetableResponse resp = new ElviraShortTimetableResponse(
@@ -173,7 +173,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_notFound_mapsToExternalApiException() throws Exception {
+    void getDelayInfo_notFound_mapsToExternalApiException() throws Exception {
         LocalDate date = LocalDate.now();
 
         HttpRequest req = mock(HttpRequest.class);
@@ -192,7 +192,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void getDelayInfo_requestTimeout_mapsToExternalApiException() throws Exception {
+    void getDelayInfo_requestTimeout_mapsToExternalApiException() throws Exception {
         LocalDate date = LocalDate.now();
 
         WebClientRequestException ex = new WebClientRequestException(
@@ -211,7 +211,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void planRoute_validResponse_returnsRoute() {
+    void planRoute_validResponse_returnsRoute() {
         LocalDate date = LocalDate.now();
         ElviraTimetableResponse tt = new ElviraTimetableResponse();
 
@@ -228,7 +228,7 @@ public class ElviraRailDataServiceTest {
     }
 
     @Test
-    public void planRoute_webClientError_mapsToExternalApiException() throws Exception {
+    void planRoute_webClientError_mapsToExternalApiException() throws Exception {
         LocalDate date = LocalDate.now();
 
         HttpRequest req = mock(HttpRequest.class);

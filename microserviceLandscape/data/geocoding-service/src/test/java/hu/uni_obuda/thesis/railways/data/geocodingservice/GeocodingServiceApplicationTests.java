@@ -18,7 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
     }
 )
 @ActiveProfiles("test")
-public class GeocodingServiceApplicationTests {
+class GeocodingServiceApplicationTests {
 
     @Autowired
     private WebTestClient testWebClient;
@@ -27,7 +27,7 @@ public class GeocodingServiceApplicationTests {
     private WebClient mockWebClient;
 
     @Test
-    public void contextLoads() {
+    void contextLoads() {
     }
 
 

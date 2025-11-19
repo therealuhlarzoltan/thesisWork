@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class MapsGatewayTest {
+class MapsGatewayTest {
 
     @Mock
     private MapsWebClient webClient;
@@ -55,7 +55,7 @@ public class MapsGatewayTest {
     private MapsGateway testedObject;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         CircuitBreaker cb = CircuitBreaker.ofDefaults("geocodingApi");
         Retry retry = Retry.ofDefaults("geocodingApi");
         RateLimiter rl = RateLimiter.ofDefaults("geocodingApi");
@@ -73,7 +73,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenUpstreamSucceeds_thenPassesThrough() {
+    void getCoordinates_whenUpstreamSucceeds_thenPassesThrough() {
         CoordinatesResponse response = new CoordinatesResponse();
 
         when(webClient.getCoordinates("ADDR"))
@@ -87,7 +87,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenWebClientResponseException_thenMapsToExternalApiException() {
+    void getCoordinates_whenWebClientResponseException_thenMapsToExternalApiException() {
         WebClientResponseException responseException = createWebClientResponseException(
                 HttpStatus.BAD_GATEWAY,
                 "https://external.example.com/geocode"
@@ -104,7 +104,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenWebClientRequestException_thenMapsToInternalApiException() {
+    void getCoordinates_whenWebClientRequestException_thenMapsToInternalApiException() {
         WebClientRequestException requestException = new WebClientRequestException(
                 new RuntimeException("IO error"),
                 HttpMethod.GET,
@@ -123,7 +123,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenExternalApiException_thenSameInstanceIsPropagated() throws Exception {
+    void getCoordinates_whenExternalApiException_thenSameInstanceIsPropagated() throws Exception {
         ExternalApiException external = new ExternalApiException(
                 HttpStatusCode.valueOf(502),
                 new URL("https://external.example.com/fail")
@@ -140,7 +140,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenInternalApiException_thenSameInstanceIsPropagated() throws Exception {
+    void getCoordinates_whenInternalApiException_thenSameInstanceIsPropagated() throws Exception {
         InternalApiException internal = new InternalApiException(
                 "internal error",
                 new URL("https://internal.example.com")
@@ -157,7 +157,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenRequestNotPermitted_thenMapsToInternalApiException() {
+    void getCoordinates_whenRequestNotPermitted_thenMapsToInternalApiException() {
         RequestNotPermitted requestNotPermitted = mock(RequestNotPermitted.class);
 
         when(webClient.getCoordinates("ADDR"))
@@ -171,7 +171,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenCallNotPermitted_thenMapsToInternalApiException() {
+    void getCoordinates_whenCallNotPermitted_thenMapsToInternalApiException() {
         CallNotPermittedException callNotPermitted = mock(CallNotPermittedException.class);
 
         when(webClient.getCoordinates("ADDR"))
@@ -185,7 +185,7 @@ public class MapsGatewayTest {
     }
 
     @Test
-    public void getCoordinates_whenRuntimeException_thenMapsToInternalApiException() {
+    void getCoordinates_whenRuntimeException_thenMapsToInternalApiException() {
         RuntimeException runtime = new RuntimeException("boom");
 
         when(webClient.getCoordinates("ADDR"))
@@ -205,22 +205,22 @@ public class MapsGatewayTest {
 
         HttpRequest request = new HttpRequest() {
             @Override
-            public HttpMethod getMethod() {
+             public HttpMethod getMethod() {
                 return HttpMethod.GET;
             }
 
             @Override
-            public URI getURI() {
+             public URI getURI() {
                 return URI.create(url);
             }
 
             @Override
-            public Map<String, Object> getAttributes() {
+             public Map<String, Object> getAttributes() {
                 return Map.of();
             }
 
             @Override
-            public HttpHeaders getHeaders() {
+             public HttpHeaders getHeaders() {
                 return headers;
             }
         };

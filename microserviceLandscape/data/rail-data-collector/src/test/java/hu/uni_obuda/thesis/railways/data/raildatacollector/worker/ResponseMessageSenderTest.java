@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ResponseMessageSenderTest {
+class ResponseMessageSenderTest {
 
     @Mock
     private StreamBridge streamBridge;
@@ -31,7 +31,7 @@ public class ResponseMessageSenderTest {
     private ListAppender<ILoggingEvent> listAppender;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         testedObject = new ResponseMessageSenderImpl(streamBridge);
 
         Logger logger = (Logger) LoggerFactory.getLogger(ResponseMessageSenderImpl.class);
@@ -41,13 +41,13 @@ public class ResponseMessageSenderTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         Logger logger = (Logger) LoggerFactory.getLogger(ResponseMessageSenderImpl.class);
         logger.detachAppender(listAppender);
     }
 
     @Test
-    public void sendResponseMessage_withCorrelationId_sendCalledAndInfoLogged() {
+    void sendResponseMessage_withCorrelationId_sendCalledAndInfoLogged() {
         HttpResponseEvent event = new HttpResponseEvent();
         when(streamBridge.send(eq("binding-out"), any(Message.class))).thenReturn(true);
 
@@ -62,7 +62,7 @@ public class ResponseMessageSenderTest {
     }
 
     @Test
-    public void sendResponseMessage_noCorrelationId_warnLoggedAndNoMessageSent() {
+    void sendResponseMessage_noCorrelationId_warnLoggedAndNoMessageSent() {
         HttpResponseEvent event = new HttpResponseEvent();
 
         testedObject.sendResponseMessage("binding-out", null, event);
@@ -76,7 +76,7 @@ public class ResponseMessageSenderTest {
     }
 
     @Test
-    public void sendResponseMessage_sendFails_errorLogged() {
+    void sendResponseMessage_sendFails_errorLogged() {
         HttpResponseEvent event = new HttpResponseEvent();
         when(streamBridge.send(eq("binding-out"), any(Message.class))).thenReturn(false);
 

@@ -9,7 +9,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class YamlGraphQlVariableLoaderTest {
+ class YamlGraphQlVariableLoaderTest {
 
     private static final String DIRECTORY = "graphql";
     private static final String EXISTING_DOCUMENT = "defaultVariables";
@@ -17,7 +17,7 @@ public class YamlGraphQlVariableLoaderTest {
     private static final String EMPTY_PATH = DIRECTORY + "/empty.yml";
 
     @Test
-    public void loadYamlFromClasspath_existingYaml_returnsPopulatedMap() throws IOException {
+    void loadYamlFromClasspath_existingYaml_returnsPopulatedMap() throws IOException {
         YamlGraphQlVariableLoader loader = new YamlGraphQlVariableLoader(DIRECTORY);
 
         Map<String, Object> yaml = loader.loadYamlFromClasspath(EXISTING_PATH);
@@ -63,7 +63,7 @@ public class YamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadYamlFromClasspath_emptyYaml_returnsEmptyMap() throws IOException {
+    void loadYamlFromClasspath_emptyYaml_returnsEmptyMap() throws IOException {
         YamlGraphQlVariableLoader loader = new YamlGraphQlVariableLoader(DIRECTORY);
 
         Map<String, Object> yaml = loader.loadYamlFromClasspath(EMPTY_PATH);
@@ -73,7 +73,7 @@ public class YamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadYamlFromClasspath_missingYaml_throwsFileNotFoundException() {
+    void loadYamlFromClasspath_missingYaml_throwsFileNotFoundException() {
         YamlGraphQlVariableLoader loader = new YamlGraphQlVariableLoader(DIRECTORY);
 
         assertThrows(FileNotFoundException.class,
@@ -81,7 +81,7 @@ public class YamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadForDocument_existingDocument_returnsDefaultGraphQlVariablesWithFrozenMap() {
+    void loadForDocument_existingDocument_returnsDefaultGraphQlVariablesWithFrozenMap() {
         YamlGraphQlVariableLoader loader = new YamlGraphQlVariableLoader(DIRECTORY);
 
         DefaultGraphQlVariables vars = loader.loadForDocument(EXISTING_DOCUMENT);
@@ -104,7 +104,7 @@ public class YamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadForDocument_missingDocument_throwsRuntimeExceptionWrappingIOException() {
+    void loadForDocument_missingDocument_throwsRuntimeExceptionWrappingIOException() {
         YamlGraphQlVariableLoader loader = new YamlGraphQlVariableLoader(DIRECTORY);
 
         RuntimeException ex = assertThrows(RuntimeException.class,

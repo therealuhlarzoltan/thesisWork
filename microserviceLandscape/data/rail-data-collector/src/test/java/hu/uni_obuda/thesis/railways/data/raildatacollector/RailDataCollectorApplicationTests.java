@@ -11,10 +11,10 @@ import org.springframework.test.context.ActiveProfiles;
         "eureka.client.enabled=false"
 })
 @ActiveProfiles("data-source-emma")
-public class RailDataCollectorApplicationTests {
+class RailDataCollectorApplicationTests {
 
     @Test
-    public void contextLoads() {
+    void contextLoads() {
     }
 
 }

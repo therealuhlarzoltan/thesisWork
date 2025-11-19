@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class EmmaRailDataWebClientTest {
+class EmmaRailDataWebClientTest {
 
     private static final String BASE_URL = "https://railway.example.com";
 
@@ -65,7 +65,7 @@ public class EmmaRailDataWebClientTest {
     private EmmaRailDataWebClient testedObject;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         testedObject = new EmmaRailDataWebClientImpl(
                 shortTimetableClient,
                 shortTrainDetailsClient,
@@ -89,7 +89,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTimetable_whenApiReturnsValidResponse_thenMapsAndTrimsDetails() {
+    void getShortTimetable_whenApiReturnsValidResponse_thenMapsAndTrimsDetails() {
         LocalDate date = LocalDate.of(2024, 10, 10);
         when(shortTimetableClient.documentName(SHORT_TIMETABLE_DOC))
                 .thenReturn(shortTimetableRequestSpec);
@@ -155,7 +155,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTimetable_whenResponseEntityParsingFails_thenEmitsExternalApiFormatMismatchException() {
+    void getShortTimetable_whenResponseEntityParsingFails_thenEmitsExternalApiFormatMismatchException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         when(shortTimetableClient.documentName(SHORT_TIMETABLE_DOC))
@@ -184,7 +184,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTimetable_whenGraphQlResponseIsInvalid_thenEmitsExternalApiException() {
+    void getShortTimetable_whenGraphQlResponseIsInvalid_thenEmitsExternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         when(shortTimetableClient.documentName(SHORT_TIMETABLE_DOC))
@@ -212,7 +212,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenApiReturnsValidResponse_thenMapsResponse() {
+    void getShortTrainDetails_whenApiReturnsValidResponse_thenMapsResponse() {
         String trainId = "TRAIN-123";
         LocalDate serviceDate = LocalDate.of(2024, 10, 10);
 
@@ -251,7 +251,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenResponseEntityParsingFails_thenEmitsExternalApiFormatMismatchException() {
+    void getShortTrainDetails_whenResponseEntityParsingFails_thenEmitsExternalApiFormatMismatchException() {
         String trainId = "TRAIN-123";
         LocalDate serviceDate = LocalDate.of(2024, 10, 10);
 
@@ -278,7 +278,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenGraphQlResponseIsInvalid_thenEmitsExternalApiException() {
+    void getShortTrainDetails_whenGraphQlResponseIsInvalid_thenEmitsExternalApiException() {
         String trainId = "TRAIN-123";
         LocalDate serviceDate = LocalDate.of(2024, 10, 10);
 
@@ -304,7 +304,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getTimetable_whenApiReturnsValidResponse_thenMapsAndTrimsLegs() {
+    void getTimetable_whenApiReturnsValidResponse_thenMapsAndTrimsLegs() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         when(timetableClient.documentName(LONG_TIMETABLE_DOC))
@@ -366,7 +366,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getTimetable_whenResponseEntityParsingFails_thenEmitsExternalApiFormatMismatchException() {
+    void getTimetable_whenResponseEntityParsingFails_thenEmitsExternalApiFormatMismatchException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         when(timetableClient.documentName(LONG_TIMETABLE_DOC))
@@ -392,7 +392,7 @@ public class EmmaRailDataWebClientTest {
     }
 
     @Test
-    public void getTimetable_whenGraphQlResponseIsInvalid_thenEmitsExternalApiException() {
+    void getTimetable_whenGraphQlResponseIsInvalid_thenEmitsExternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         when(timetableClient.documentName(LONG_TIMETABLE_DOC))

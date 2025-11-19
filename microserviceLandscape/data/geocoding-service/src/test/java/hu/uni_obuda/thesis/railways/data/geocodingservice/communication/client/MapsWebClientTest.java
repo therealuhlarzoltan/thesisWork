@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class MapsWebClientTest {
+class MapsWebClientTest {
 
     private static final String BASE_URL = "https://maps.example.com";
 
@@ -40,7 +40,7 @@ public class MapsWebClientTest {
     private MapsWebClient testedObject;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         WebClient webClient = WebClient.builder()
                 .baseUrl(BASE_URL)
                 .exchangeFunction(exchangeFunction)
@@ -57,7 +57,7 @@ public class MapsWebClientTest {
     }
 
     @Test
-    public void getCoordinates_whenApiReturnsValidResponse_thenMapsCoordinates() {
+    void getCoordinates_whenApiReturnsValidResponse_thenMapsCoordinates() {
         String jsonBody = """
                 {
                   "results": [
@@ -90,7 +90,7 @@ public class MapsWebClientTest {
     }
 
     @Test
-    public void getCoordinates_whenBodyIsInvalidJson_thenEmitsExternalApiFormatMismatchException() {
+    void getCoordinates_whenBodyIsInvalidJson_thenEmitsExternalApiFormatMismatchException() {
         String invalidJson = "this is not valid json";
 
         when(exchangeFunction.exchange(any(ClientRequest.class)))
@@ -105,7 +105,7 @@ public class MapsWebClientTest {
     }
 
     @Test
-    public void getCoordinates_whenApiReturnsNon2xxStatus_thenEmitsExternalApiException() {
+    void getCoordinates_whenApiReturnsNon2xxStatus_thenEmitsExternalApiException() {
         when(exchangeFunction.exchange(any(ClientRequest.class)))
                 .thenReturn(Mono.just(buildClientResponse(HttpStatus.INTERNAL_SERVER_ERROR, "error")));
 
@@ -120,22 +120,22 @@ public class MapsWebClientTest {
     private ClientResponse buildClientResponse(HttpStatusCode status, String body) {
         HttpRequest request = new HttpRequest() {
             @Override
-            public HttpMethod getMethod() {
+             public HttpMethod getMethod() {
                 return HttpMethod.GET;
             }
 
             @Override
-            public URI getURI() {
+             public URI getURI() {
                 return URI.create(BASE_URL + "/dummy");
             }
 
             @Override
-            public Map<String, Object> getAttributes() {
+             public Map<String, Object> getAttributes() {
                 return Map.of();
             }
 
             @Override
-            public HttpHeaders getHeaders() {
+             public HttpHeaders getHeaders() {
                 return new HttpHeaders();
             }
         };

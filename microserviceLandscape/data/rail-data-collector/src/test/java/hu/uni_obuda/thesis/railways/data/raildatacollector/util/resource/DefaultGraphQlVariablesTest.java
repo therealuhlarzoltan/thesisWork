@@ -6,10 +6,10 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DefaultGraphQlVariablesTest {
+class DefaultGraphQlVariablesTest {
 
     @Test
-    public void constructor_nullSource_returnsEmptyUnmodifiableMap() {
+    void constructor_nullSource_returnsEmptyUnmodifiableMap() {
         DefaultGraphQlVariables vars = new DefaultGraphQlVariables(null);
 
         Map<String, Object> map = vars.asMap();
@@ -20,7 +20,7 @@ public class DefaultGraphQlVariablesTest {
     }
 
     @Test
-    public void constructor_emptySource_returnsEmptyUnmodifiableMap() {
+    void constructor_emptySource_returnsEmptyUnmodifiableMap() {
         DefaultGraphQlVariables vars = new DefaultGraphQlVariables(Map.of());
 
         Map<String, Object> map = vars.asMap();
@@ -31,7 +31,7 @@ public class DefaultGraphQlVariablesTest {
     }
 
     @Test
-    public void constructor_simpleMap_keysConvertedToStringsAndValuesPreserved() {
+    void constructor_simpleMap_keysConvertedToStringsAndValuesPreserved() {
         Map<String, Object> source = new LinkedHashMap<>();
         source.put("one", 1);
         source.put("two", 2);
@@ -58,7 +58,7 @@ public class DefaultGraphQlVariablesTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void constructor_nestedMap_list_set_andArrays_deeplyUnmodifiable() {
+    void constructor_nestedMap_list_set_andArrays_deeplyUnmodifiable() {
         Map<String, Object> innerMap = new LinkedHashMap<>();
         innerMap.put("innerKey", "innerValue");
 
@@ -126,7 +126,7 @@ public class DefaultGraphQlVariablesTest {
     }
 
     @Test
-    public void asMap_returnsSameInstanceOnSubsequentCalls() {
+    void asMap_returnsSameInstanceOnSubsequentCalls() {
         Map<String, Object> source = Map.of("k", "v");
         DefaultGraphQlVariables vars = new DefaultGraphQlVariables(source);
 
