@@ -33,7 +33,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ElviraMessageProcessorImplTest {
+class ElviraMessageProcessorImplTest {
 
     @Mock
     private ElviraRailDataCollector elviraRailDataCollector;
@@ -49,7 +49,7 @@ public class ElviraMessageProcessorImplTest {
 
 
     @BeforeEach
-    public void setUp() throws MalformedURLException {
+    void setUp() throws MalformedURLException {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         exceptionSourceURL = URI.create("http://localhost:8080/Exception").toURL();
@@ -76,7 +76,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_validCrudEventAndNonEmptyFlux_successResponseSent() {
+    void accept_withoutCorrelationId_validCrudEventAndNonEmptyFlux_successResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN1");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN1", request);
@@ -106,7 +106,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_validCrudEventAndEmptyFlux_noResponseSent() {
+    void accept_withoutCorrelationId_validCrudEventAndEmptyFlux_noResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN2");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN2", request);
@@ -125,7 +125,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_validCrudEventAndInvalidInputError_errorResponseSentWithBadRequest() {
+    void accept_withoutCorrelationId_validCrudEventAndInvalidInputError_errorResponseSentWithBadRequest() {
         DelayInfoRequest request = createRequest("TRAIN3");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN3", request);
@@ -154,7 +154,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_validCrudEventWithMixedSuccessAndExternalError_successAndErrorResponsesSent() {
+    void accept_withoutCorrelationId_validCrudEventWithMixedSuccessAndExternalError_successAndErrorResponsesSent() {
         DelayInfoRequest request = createRequest("TRAIN4");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN4", request);
@@ -188,7 +188,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_validCrudEventAndNonEmptyFlux_successResponseSentWithCorrelationId() {
+    void accept_withCorrelationId_validCrudEventAndNonEmptyFlux_successResponseSentWithCorrelationId() {
         DelayInfoRequest request = createRequest("TRAIN5");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN5", request);
@@ -216,7 +216,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_validCrudEventAndEmptyFlux_noResponseSent() {
+    void accept_withCorrelationId_validCrudEventAndEmptyFlux_noResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN6");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN6", request);
@@ -235,7 +235,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_validCrudEventAndFormatError_errorResponseSentWithBadGateway() {
+    void accept_withCorrelationId_validCrudEventAndFormatError_errorResponseSentWithBadGateway() {
         DelayInfoRequest request = createRequest("TRAIN7");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN7", request);
@@ -261,7 +261,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_validCrudEventWithMixedSuccessAndInternalError_successAndErrorResponsesSentWithCorrelationId() {
+    void accept_withCorrelationId_validCrudEventWithMixedSuccessAndInternalError_successAndErrorResponsesSentWithCorrelationId() {
         DelayInfoRequest request = createRequest("TRAIN8");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN8", request);
@@ -294,11 +294,11 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_nonCrudEvent_incorrectParametersErrorResponseSent() {
+    void accept_withoutCorrelationId_nonCrudEvent_incorrectParametersErrorResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN9");
         Event<String, DelayInfoRequest> event = new Event<>(request.getTrainNumber(), request) {
             @Override
-            public Enum<?> getEventType() {
+             public Enum<?> getEventType() {
                 return null;
             }
         };
@@ -318,7 +318,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_crudEventWithNonStringKey_incorrectParametersErrorResponseSent() {
+    void accept_withoutCorrelationId_crudEventWithNonStringKey_incorrectParametersErrorResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN10");
         CrudEvent<Integer, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, 123, request);
@@ -338,7 +338,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSent() {
+     void accept_withoutCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSent() {
         ObjectMapper spyMapper = spy(new ObjectMapper());
         spyMapper.registerModule(new JavaTimeModule());
         ElviraMessageProcessorImpl localProcessor =
@@ -366,11 +366,11 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_nonCrudEvent_incorrectParametersErrorResponseSentWithCorrelationId() {
+    void accept_withCorrelationId_nonCrudEvent_incorrectParametersErrorResponseSentWithCorrelationId() {
         DelayInfoRequest request = createRequest("TRAIN12");
         Event<String, DelayInfoRequest> event = new Event<>(request.getTrainNumber(), request) {
             @Override
-            public Enum<?> getEventType() {
+             public Enum<?> getEventType() {
                 return null;
             }
         };
@@ -390,7 +390,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_crudEventWithNonStringKey_incorrectParametersErrorResponseSentWithCorrelationId() {
+    void accept_withCorrelationId_crudEventWithNonStringKey_incorrectParametersErrorResponseSentWithCorrelationId() {
         DelayInfoRequest request = createRequest("TRAIN13");
         CrudEvent<Integer, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, 456, request);
@@ -410,7 +410,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSentWithCorrelationId() {
+     void accept_withCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSentWithCorrelationId() {
         ObjectMapper spyMapper = spy(new ObjectMapper());
         spyMapper.registerModule(new JavaTimeModule());
         ElviraMessageProcessorImpl localProcessor =
@@ -437,7 +437,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withCorrelationId_validCrudEventAndApiException_errorResponseSentWithBadGateway() {
+    void accept_withCorrelationId_validCrudEventAndApiException_errorResponseSentWithBadGateway() {
         DelayInfoRequest request = createRequest("TRAIN15");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN15", request);
@@ -462,7 +462,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_validCrudEventAndTrainNotInServiceError_errorResponseSentWithTooEarly() {
+    void accept_withoutCorrelationId_validCrudEventAndTrainNotInServiceError_errorResponseSentWithTooEarly() {
         DelayInfoRequest request = createRequest("TRAIN16");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN16", request);
@@ -487,7 +487,7 @@ public class ElviraMessageProcessorImplTest {
     }
 
     @Test
-    public void accept_withoutCorrelationId_validCrudEventAndRuntimeError_errorResponseSentWithInternalServerError() {
+    void accept_withoutCorrelationId_validCrudEventAndRuntimeError_errorResponseSentWithInternalServerError() {
         DelayInfoRequest request = createRequest("TRAIN17");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN17", request);

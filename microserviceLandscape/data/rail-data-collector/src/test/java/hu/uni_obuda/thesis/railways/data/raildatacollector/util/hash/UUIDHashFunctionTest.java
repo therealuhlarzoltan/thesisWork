@@ -10,15 +10,15 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class UUIDHashFunctionTest {
+class UUIDHashFunctionTest {
 
     @Test
-    public void apply_nullUuid_throwsNullPointerException() {
+    void apply_nullUuid_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> UUIDHashFunction.apply(null));
     }
 
     @Test
-    public void apply_sameUuidTwice_sameResult() {
+     void apply_sameUuidTwice_sameResult() {
         UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
         Integer first = UUIDHashFunction.apply(uuid);
@@ -30,7 +30,7 @@ public class UUIDHashFunctionTest {
     }
 
     @Test
-    public void apply_differentUuids_differentResults() {
+     void apply_differentUuids_differentResults() {
         UUID uuid1 = new UUID(0L, 0L);
         UUID uuid2 = new UUID(1L, 0L);
 
@@ -43,7 +43,7 @@ public class UUIDHashFunctionTest {
     }
 
     @Test
-    public void apply_multipleUuids_resultsArePositiveAndNonZero() {
+     void apply_multipleUuids_resultsArePositiveAndNonZero() {
         Set<Integer> results = new HashSet<>();
 
         for (int i = 0; i < 100; i++) {
@@ -58,7 +58,7 @@ public class UUIDHashFunctionTest {
     }
 
     @Test
-    public void constructor_privateConstructorAccessibleViaReflection_instanceCreated() throws Exception {
+     void constructor_privateConstructorAccessibleViaReflection_instanceCreated() throws Exception {
         Constructor<UUIDHashFunction> constructor = UUIDHashFunction.class.getDeclaredConstructor();
         assertTrue(Modifier.isPrivate(constructor.getModifiers()));
 

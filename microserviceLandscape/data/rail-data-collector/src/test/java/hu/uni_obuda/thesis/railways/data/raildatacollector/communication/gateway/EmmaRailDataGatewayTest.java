@@ -44,7 +44,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class EmmaRailDataGatewayTest {
+class EmmaRailDataGatewayTest {
 
     @Mock
     private EmmaRailDataWebClient webClient;
@@ -58,7 +58,7 @@ public class EmmaRailDataGatewayTest {
     private EmmaRailDataGateway testedObject;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         CircuitBreaker circuitBreaker = CircuitBreaker.ofDefaults("cb");
         Retry retry = Retry.ofDefaults("retry");
         RateLimiter rateLimiter = RateLimiter.ofDefaults("rl");
@@ -76,7 +76,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenUpstreamSucceeds_thenPassesThrough() {
+    void getShortTimetable_whenUpstreamSucceeds_thenPassesThrough() {
         LocalDate date = LocalDate.of(2024, 10, 10);
         EmmaShortTimetableResponse response = new EmmaShortTimetableResponse();
 
@@ -94,7 +94,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenUpstreamSucceeds_thenPassesThrough() {
+    void getShortTrainDetails_whenUpstreamSucceeds_thenPassesThrough() {
         LocalDate serviceDate = LocalDate.of(2024, 10, 10);
         EmmaShortTrainDetailsResponse response = new EmmaShortTrainDetailsResponse();
 
@@ -107,7 +107,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getTimetable_whenUpstreamSucceeds_thenPassesThrough() {
+    void getTimetable_whenUpstreamSucceeds_thenPassesThrough() {
         LocalDate date = LocalDate.of(2024, 10, 10);
         EmmaTimetableResponse response = new EmmaTimetableResponse();
 
@@ -120,7 +120,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenWebClientResponseException_thenMapsToExternalApiException() {
+    void getShortTimetable_whenWebClientResponseException_thenMapsToExternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         WebClientResponseException responseException = createWebClientResponseException(
@@ -139,7 +139,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenWebClientRequestException_thenMapsToInternalApiException() {
+    void getShortTimetable_whenWebClientRequestException_thenMapsToInternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         WebClientRequestException requestException = new WebClientRequestException(
@@ -160,7 +160,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenExternalApiException_thenSameInstanceIsPropagated() throws Exception {
+    void getShortTimetable_whenExternalApiException_thenSameInstanceIsPropagated() throws Exception {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         ExternalApiException external = new ExternalApiException(
@@ -179,7 +179,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenInternalApiException_thenSameInstanceIsPropagated() throws Exception {
+    void getShortTimetable_whenInternalApiException_thenSameInstanceIsPropagated() throws Exception {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         InternalApiException internal = new InternalApiException(
@@ -198,7 +198,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenRequestNotPermitted_thenMapsToInternalApiException() {
+    void getShortTimetable_whenRequestNotPermitted_thenMapsToInternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         RequestNotPermitted requestNotPermitted = mock(RequestNotPermitted.class);
@@ -214,7 +214,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenCallNotPermitted_thenMapsToInternalApiException() {
+    void getShortTimetable_whenCallNotPermitted_thenMapsToInternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         CallNotPermittedException callNotPermitted = mock(CallNotPermittedException.class);
@@ -230,7 +230,7 @@ public class EmmaRailDataGatewayTest {
     }
 
     @Test
-    public void getShortTimetable_whenRuntimeException_thenMapsToInternalApiException() {
+    void getShortTimetable_whenRuntimeException_thenMapsToInternalApiException() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         RuntimeException runtime = new RuntimeException("boom");
@@ -252,23 +252,23 @@ public class EmmaRailDataGatewayTest {
 
         HttpRequest request = new HttpRequest() {
             @Override
-            public HttpMethod getMethod() {
+             public HttpMethod getMethod() {
                 return HttpMethod.GET;
             }
 
 
             @Override
-            public URI getURI() {
+             public URI getURI() {
                 return URI.create(url);
             }
 
             @Override
-            public Map<String, Object> getAttributes() {
+             public Map<String, Object> getAttributes() {
                 return Map.of();
             }
 
             @Override
-            public HttpHeaders getHeaders() {
+             public HttpHeaders getHeaders() {
                 return headers;
             }
         };

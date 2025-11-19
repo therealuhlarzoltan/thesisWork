@@ -8,10 +8,10 @@ import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class KeyAlreadyPresentValidatorTest {
+ class KeyAlreadyPresentValidatorTest {
 
     @Test
-    public void validate_existingKeysIsNull_completesWithoutError() {
+    void validate_existingKeysIsNull_completesWithoutError() {
         Mono<Void> result = KeyAlreadyPresentValidator.validate("key1", null);
 
         StepVerifier.create(result)
@@ -19,7 +19,7 @@ public class KeyAlreadyPresentValidatorTest {
     }
 
     @Test
-    public void validate_existingKeysDoesNotContainKey_completesWithoutError() {
+    void validate_existingKeysDoesNotContainKey_completesWithoutError() {
         Flux<String> existingKeys = Flux.just("key2", "key3");
         Mono<Void> result = KeyAlreadyPresentValidator.validate("key1", existingKeys);
 
@@ -28,7 +28,7 @@ public class KeyAlreadyPresentValidatorTest {
     }
 
     @Test
-    public void validate_existingKeysContainsKey_emitsInvalidInputDataException() {
+    void validate_existingKeysContainsKey_emitsInvalidInputDataException() {
         Flux<String> existingKeys = Flux.just("key1", "key2");
         Mono<Void> result = KeyAlreadyPresentValidator.validate("key1", existingKeys);
 

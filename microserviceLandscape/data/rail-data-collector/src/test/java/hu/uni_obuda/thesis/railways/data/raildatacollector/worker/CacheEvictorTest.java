@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CacheEvictorTest {
+class CacheEvictorTest {
 
     @Mock
     private TimetableCache timetableCache;
@@ -28,7 +28,7 @@ public class CacheEvictorTest {
     private ListAppender<ILoggingEvent> listAppender;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         cacheEvictor = new CacheEvictor(timetableCache);
         Logger logger = (Logger) LoggerFactory.getLogger(CacheEvictor.class);
         listAppender = new ListAppender<>();
@@ -37,13 +37,13 @@ public class CacheEvictorTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         Logger logger = (Logger) LoggerFactory.getLogger(CacheEvictor.class);
         logger.detachAppender(listAppender);
     }
 
     @Test
-    public void evictCache_evictionSucceeds_infoLogsWritten() {
+    void evictCache_evictionSucceeds_infoLogsWritten() {
         when(timetableCache.evictAll()).thenReturn(Mono.empty());
 
         cacheEvictor.evictCache();
@@ -62,7 +62,7 @@ public class CacheEvictorTest {
     }
 
     @Test
-    public void evictCache_evictionFails_errorLogWritten() {
+    void evictCache_evictionFails_errorLogWritten() {
         when(timetableCache.evictAll()).thenReturn(Mono.error(new RuntimeException("eviction failed")));
 
         cacheEvictor.evictCache();

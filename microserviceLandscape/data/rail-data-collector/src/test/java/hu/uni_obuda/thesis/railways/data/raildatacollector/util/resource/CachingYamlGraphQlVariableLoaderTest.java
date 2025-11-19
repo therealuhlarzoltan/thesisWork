@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CachingYamlGraphQlVariableLoaderTest {
+class CachingYamlGraphQlVariableLoaderTest {
 
     @Mock
     private YamlGraphQlVariableLoader delegate;
@@ -25,12 +25,12 @@ public class CachingYamlGraphQlVariableLoaderTest {
     private CachingYamlGraphQlVariableLoader cachingLoader;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         cachingLoader = new CachingYamlGraphQlVariableLoader(delegate);
     }
 
     @Test
-    public void loadForDocument_singleCall_delegatesAndCaches() {
+    void loadForDocument_singleCall_delegatesAndCaches() {
         DefaultGraphQlVariables vars = new DefaultGraphQlVariables(Map.of("k", "v"));
         when(delegate.loadForDocument("doc1")).thenReturn(vars);
 
@@ -43,7 +43,7 @@ public class CachingYamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadForDocument_concurrentCallsSameKey_singleDelegateInvocationAndSameInstance() throws InterruptedException {
+    void loadForDocument_concurrentCallsSameKey_singleDelegateInvocationAndSameInstance() throws InterruptedException {
         DefaultGraphQlVariables vars = new DefaultGraphQlVariables(Map.of("k", "v"));
         when(delegate.loadForDocument("concurrentDoc")).thenAnswer(invocation -> {
             Thread.sleep(50);
@@ -83,7 +83,7 @@ public class CachingYamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadForDocument_concurrentDifferentKeys_eachKeyCachedIndependently() throws InterruptedException {
+    void loadForDocument_concurrentDifferentKeys_eachKeyCachedIndependently() throws InterruptedException {
         when(delegate.loadForDocument(anyString())).thenAnswer(invocation -> {
             String key = invocation.getArgument(0);
             return new DefaultGraphQlVariables(Map.of("key", key));
@@ -141,7 +141,7 @@ public class CachingYamlGraphQlVariableLoaderTest {
     }
 
     @Test
-    public void loadForDocument_delegateReturnsNull_throwsIllegalStateException() {
+    void loadForDocument_delegateReturnsNull_throwsIllegalStateException() {
         when(delegate.loadForDocument("nullDoc")).thenReturn(null);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,

@@ -9,7 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TimetableResponseDeserializerTest {
+class TimetableResponseDeserializerTest {
 
     private ObjectMapper createObjectMapperWithDeserializer() {
         ObjectMapper mapper = new ObjectMapper();
@@ -20,7 +20,7 @@ public class TimetableResponseDeserializerTest {
     }
 
     @Test
-    public void deserialize_entryWithLocalTransport_filteredOut() throws Exception {
+    void deserialize_entryWithLocalTransport_filteredOut() throws Exception {
         String json = """
                 {
                   "timetable": [
@@ -49,7 +49,7 @@ public class TimetableResponseDeserializerTest {
     }
 
     @Test
-    public void deserialize_entryWithoutLocalTransport_kept() throws Exception {
+    void deserialize_entryWithoutLocalTransport_kept() throws Exception {
         String json = """
                 {
                   "timetable": [

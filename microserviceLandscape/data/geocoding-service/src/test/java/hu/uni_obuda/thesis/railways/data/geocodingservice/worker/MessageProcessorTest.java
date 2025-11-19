@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class MessageProcessorTest {
+class MessageProcessorTest {
 
     private static final String BINDING_NAME = "geocodingDataResponses-out-0";
 

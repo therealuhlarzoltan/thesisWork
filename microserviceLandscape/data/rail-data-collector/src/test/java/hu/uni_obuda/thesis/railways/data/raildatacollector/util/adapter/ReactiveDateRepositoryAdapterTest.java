@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ReactiveDateRepositoryAdapterTest {
+class ReactiveDateRepositoryAdapterTest {
 
     @Mock
     private ReactiveRedisTemplate<String, Integer> keyRedisTemplate;
@@ -31,66 +31,66 @@ public class ReactiveDateRepositoryAdapterTest {
     @Mock
     private ReactiveValueOperations<String, ScheduledDateEntity> valueOps;
 
-    private ReactiveDateRepositoryAdapter adapter;
+    private ReactiveDateRepositoryAdapter testedObject;
 
     @BeforeEach
-    public void setUp_initialiseAdapter_dependenciesInjected() {
-        adapter = new ReactiveDateRepositoryAdapter(keyRedisTemplate, entityRedisTemplate);
+     void setUp_initialiseAdapter_dependenciesInjected() {
+        testedObject = new ReactiveDateRepositoryAdapter(keyRedisTemplate, entityRedisTemplate);
     }
 
     @Test
-    public void save_entityWithValidId_entitySavedAndReturned() {
+     void save_entityWithValidId_entitySavedAndReturned() {
         ScheduledDateEntity entity = mock(ScheduledDateEntity.class);
         when(entity.getId()).thenReturn(1);
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.set(eq(adapter.getEntityPrefix() + ":1"), eq(entity))).thenReturn(Mono.just(true));
-        when(setOps.add(eq(adapter.getKeySet()), eq(1))).thenReturn(Mono.just(1L));
+        when(valueOps.set(eq(testedObject.getEntityPrefix() + ":1"), eq(entity))).thenReturn(Mono.just(true));
+        when(setOps.add(eq(testedObject.getKeySet()), eq(1))).thenReturn(Mono.just(1L));
 
-        Mono<ScheduledDateEntity> result = adapter.save(entity);
+        Mono<ScheduledDateEntity> result = testedObject.save(entity);
 
         StepVerifier.create(result)
                 .expectNext(entity)
                 .verifyComplete();
 
-        verify(valueOps).set(adapter.getEntityPrefix() + ":1", entity);
-        verify(setOps).add(adapter.getKeySet(), 1);
+        verify(valueOps).set(testedObject.getEntityPrefix() + ":1", entity);
+        verify(setOps).add(testedObject.getKeySet(), 1);
     }
 
     @Test
-    public void getKeys_whenKeysPresent_fluxOfIds() {
+     void getKeys_whenKeysPresent_fluxOfIds() {
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(1, 2, 3));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(1, 2, 3));
 
-        Flux<Integer> result = adapter.getKeys();
+        Flux<Integer> result = testedObject.getKeys();
 
         StepVerifier.create(result)
                 .expectNext(1, 2, 3)
                 .verifyComplete();
 
-        verify(setOps).members(adapter.getKeySet());
+        verify(setOps).members(testedObject.getKeySet());
     }
 
     @Test
-    public void deleteAll_whenKeysPresent_allEntitiesAndKeySetDeleted() {
+     void deleteAll_whenKeysPresent_allEntitiesAndKeySetDeleted() {
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(1, 2));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(1, 2));
         when(entityRedisTemplate.delete(any(String[].class))).thenReturn(Mono.just(2L));
-        when(keyRedisTemplate.delete(adapter.getKeySet())).thenReturn(Mono.just(1L));
+        when(keyRedisTemplate.delete(testedObject.getKeySet())).thenReturn(Mono.just(1L));
 
-        Mono<Void> result = adapter.deleteAll();
+        Mono<Void> result = testedObject.deleteAll();
 
         StepVerifier.create(result)
                 .verifyComplete();
 
         verify(entityRedisTemplate).delete(any(String[].class));
-        verify(keyRedisTemplate).delete(adapter.getKeySet());
+        verify(keyRedisTemplate).delete(testedObject.getKeySet());
     }
 
     @Test
-    public void existsByJobId_jobIdPresent_true() {
+     void existsByJobId_jobIdPresent_true() {
         Integer jobId = 99;
         Integer entityId = 1;
 
@@ -99,10 +99,10 @@ public class ReactiveDateRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(entityId));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(entityId));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
 
-        Mono<Boolean> result = adapter.existsByJobId(jobId);
+        Mono<Boolean> result = testedObject.existsByJobId(jobId);
 
         StepVerifier.create(result)
                 .expectNext(true)
@@ -110,7 +110,7 @@ public class ReactiveDateRepositoryAdapterTest {
     }
 
     @Test
-    public void existsByJobId_jobIdAbsent_false() {
+    void existsByJobId_jobIdAbsent_false() {
         Integer jobId = 99;
         Integer entityId = 1;
 
@@ -119,10 +119,10 @@ public class ReactiveDateRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(entityId));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(entityId));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
 
-        Mono<Boolean> result = adapter.existsByJobId(jobId);
+        Mono<Boolean> result = testedObject.existsByJobId(jobId);
 
         StepVerifier.create(result)
                 .expectNext(false)
@@ -130,7 +130,7 @@ public class ReactiveDateRepositoryAdapterTest {
     }
 
     @Test
-    public void existsByJobIdAndCronExpression_matchingEntity_true() {
+    void existsByJobIdAndCronExpression_matchingEntity_true() {
         Integer jobId = 99;
         String cron = "0 0 * * *";
         Integer entityId = 1;
@@ -141,10 +141,10 @@ public class ReactiveDateRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(entityId));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(entityId));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
 
-        Mono<Boolean> result = adapter.existsByJobIdAndCronExpression(jobId, cron);
+        Mono<Boolean> result = testedObject.existsByJobIdAndCronExpression(jobId, cron);
 
         StepVerifier.create(result)
                 .expectNext(true)
@@ -152,7 +152,7 @@ public class ReactiveDateRepositoryAdapterTest {
     }
 
     @Test
-    public void findByJobId_multipleEntitiesWithSameJobId_onlyMatchingReturned() {
+    void findByJobId_multipleEntitiesWithSameJobId_onlyMatchingReturned() {
         Integer jobId = 99;
         Integer id1 = 1;
         Integer id2 = 2;
@@ -165,11 +165,11 @@ public class ReactiveDateRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(id1, id2));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(id1, id2));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
 
-        Flux<ScheduledDateEntity> result = adapter.findByJobId(jobId);
+        Flux<ScheduledDateEntity> result = testedObject.findByJobId(jobId);
 
         StepVerifier.create(result)
                 .expectNext(entity1)
@@ -177,8 +177,8 @@ public class ReactiveDateRepositoryAdapterTest {
     }
 
     @Test
-    public void existsByJobIdAndIntervalInMillis_methodCalled_throwsUnsupportedOperationException() {
-        Mono<Boolean> result = adapter.existsByJobIdAndIntervalInMillis(1, 1000L);
+    void existsByJobIdAndIntervalInMillis_methodCalled_throwsUnsupportedOperationException() {
+        Mono<Boolean> result = testedObject.existsByJobIdAndIntervalInMillis(1, 1000L);
 
         StepVerifier.create(result)
                 .expectError(UnsupportedOperationException.class)
@@ -186,55 +186,55 @@ public class ReactiveDateRepositoryAdapterTest {
     }
 
     @Test
-    public void saveAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void saveAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Flux<ScheduledDateEntity> publisher = Flux.empty();
 
-        StepVerifier.create(adapter.saveAll(publisher))
+        StepVerifier.create(testedObject.saveAll(publisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void existsById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void existsById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Mono<Integer> idPublisher = Mono.just(1);
 
-        StepVerifier.create(adapter.existsById(idPublisher))
+        StepVerifier.create(testedObject.existsById(idPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void findById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void findById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Mono<Integer> idPublisher = Mono.just(1);
 
-        StepVerifier.create(adapter.findById(idPublisher))
+        StepVerifier.create(testedObject.findById(idPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void findAllById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void findAllById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Flux<Integer> idsPublisher = Flux.just(1, 2);
 
-        StepVerifier.create(adapter.findAllById(idsPublisher))
+        StepVerifier.create(testedObject.findAllById(idsPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void deleteById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void deleteById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Mono<Integer> idPublisher = Mono.just(1);
 
-        StepVerifier.create(adapter.deleteById(idPublisher))
+        StepVerifier.create(testedObject.deleteById(idPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void deleteAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void deleteAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Flux<ScheduledDateEntity> entitiesPublisher = Flux.empty();
 
-        StepVerifier.create(adapter.deleteAll(entitiesPublisher))
+        StepVerifier.create(testedObject.deleteAll(entitiesPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }

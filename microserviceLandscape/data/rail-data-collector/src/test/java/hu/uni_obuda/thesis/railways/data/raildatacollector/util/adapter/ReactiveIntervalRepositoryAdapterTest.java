@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ReactiveIntervalRepositoryAdapterTest {
+class ReactiveIntervalRepositoryAdapterTest {
 
     @Mock
     private ReactiveRedisTemplate<String, Integer> keyRedisTemplate;
@@ -31,15 +31,15 @@ public class ReactiveIntervalRepositoryAdapterTest {
     @Mock
     private ReactiveValueOperations<String, ScheduledIntervalEntity> valueOps;
 
-    private ReactiveIntervalRepositoryAdapter adapter;
+    private ReactiveIntervalRepositoryAdapter testedObject;
 
     @BeforeEach
-    public void setUp_initialiseAdapter_dependenciesInjected() {
-        adapter = new ReactiveIntervalRepositoryAdapter(keyRedisTemplate, entityRedisTemplate);
+    void setUp_initialiseAdapter_dependenciesInjected() {
+        testedObject = new ReactiveIntervalRepositoryAdapter(keyRedisTemplate, entityRedisTemplate);
     }
 
     @Test
-    public void findAll_whenMultipleIdsPresent_allEntitiesReturned() {
+    void findAll_whenMultipleIdsPresent_allEntitiesReturned() {
         Integer id1 = 1;
         Integer id2 = 2;
 
@@ -48,11 +48,11 @@ public class ReactiveIntervalRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(id1, id2));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(id1, id2));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
 
-        Flux<ScheduledIntervalEntity> result = adapter.findAll();
+        Flux<ScheduledIntervalEntity> result = testedObject.findAll();
 
         StepVerifier.create(result)
                 .expectNext(entity1, entity2)
@@ -60,24 +60,24 @@ public class ReactiveIntervalRepositoryAdapterTest {
     }
 
     @Test
-    public void deleteById_existingId_entityAndKeyRemoved() {
+    void deleteById_existingId_entityAndKeyRemoved() {
         Integer id = 1;
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
-        when(entityRedisTemplate.delete(adapter.getEntityPrefix() + ":" + id)).thenReturn(Mono.just(1L));
-        when(setOps.remove(eq(adapter.getKeySet()), any())).thenReturn(Mono.just(1L));
+        when(entityRedisTemplate.delete(testedObject.getEntityPrefix() + ":" + id)).thenReturn(Mono.just(1L));
+        when(setOps.remove(eq(testedObject.getKeySet()), any())).thenReturn(Mono.just(1L));
 
-        Mono<Void> result = adapter.deleteById(id);
+        Mono<Void> result = testedObject.deleteById(id);
 
         StepVerifier.create(result)
                 .verifyComplete();
 
-        verify(entityRedisTemplate).delete(adapter.getEntityPrefix() + ":" + id);
-        verify(setOps).remove(eq(adapter.getKeySet()), any());
+        verify(entityRedisTemplate).delete(testedObject.getEntityPrefix() + ":" + id);
+        verify(setOps).remove(eq(testedObject.getKeySet()), any());
     }
 
     @Test
-    public void existsByJobId_jobIdPresent_true() {
+    void existsByJobId_jobIdPresent_true() {
         Integer jobId = 10;
         Integer entityId = 1;
 
@@ -86,10 +86,10 @@ public class ReactiveIntervalRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(entityId));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(entityId));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
 
-        Mono<Boolean> result = adapter.existsByJobId(jobId);
+        Mono<Boolean> result = testedObject.existsByJobId(jobId);
 
         StepVerifier.create(result)
                 .expectNext(true)
@@ -97,7 +97,7 @@ public class ReactiveIntervalRepositoryAdapterTest {
     }
 
     @Test
-    public void existsByJobIdAndIntervalInMillis_matchingEntity_true() {
+    void existsByJobIdAndIntervalInMillis_matchingEntity_true() {
         Integer jobId = 10;
         Long interval = 5000L;
         Integer entityId = 1;
@@ -108,10 +108,10 @@ public class ReactiveIntervalRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(entityId));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(entityId));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + entityId)).thenReturn(Mono.just(entity));
 
-        Mono<Boolean> result = adapter.existsByJobIdAndIntervalInMillis(jobId, interval);
+        Mono<Boolean> result = testedObject.existsByJobIdAndIntervalInMillis(jobId, interval);
 
         StepVerifier.create(result)
                 .expectNext(true)
@@ -119,7 +119,7 @@ public class ReactiveIntervalRepositoryAdapterTest {
     }
 
     @Test
-    public void findByJobId_multipleIntervalsForSameJobId_allMatchingReturned() {
+    void findByJobId_multipleIntervalsForSameJobId_allMatchingReturned() {
         Integer jobId = 10;
         Integer id1 = 1;
         Integer id2 = 2;
@@ -132,11 +132,11 @@ public class ReactiveIntervalRepositoryAdapterTest {
 
         when(keyRedisTemplate.opsForSet()).thenReturn(setOps);
         when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(setOps.members(adapter.getKeySet())).thenReturn(Flux.just(id1, id2));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
-        when(valueOps.get(adapter.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
+        when(setOps.members(testedObject.getKeySet())).thenReturn(Flux.just(id1, id2));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
+        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
 
-        Flux<ScheduledIntervalEntity> result = adapter.findByJobId(jobId);
+        Flux<ScheduledIntervalEntity> result = testedObject.findByJobId(jobId);
 
         StepVerifier.create(result)
                 .expectNext(entity1, entity2)
@@ -144,8 +144,8 @@ public class ReactiveIntervalRepositoryAdapterTest {
     }
 
     @Test
-    public void existsByJobIdAndCronExpression_methodCalled_throwsUnsupportedOperationException() {
-        Mono<Boolean> result = adapter.existsByJobIdAndCronExpression(1, "0 0 * * *");
+    void existsByJobIdAndCronExpression_methodCalled_throwsUnsupportedOperationException() {
+        Mono<Boolean> result = testedObject.existsByJobIdAndCronExpression(1, "0 0 * * *");
 
         StepVerifier.create(result)
                 .expectError(UnsupportedOperationException.class)
@@ -153,55 +153,55 @@ public class ReactiveIntervalRepositoryAdapterTest {
     }
 
     @Test
-    public void saveAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void saveAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Flux<ScheduledIntervalEntity> publisher = Flux.empty();
 
-        StepVerifier.create(adapter.saveAll(publisher))
+        StepVerifier.create(testedObject.saveAll(publisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void existsById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void existsById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Mono<Integer> idPublisher = Mono.just(1);
 
-        StepVerifier.create(adapter.existsById(idPublisher))
+        StepVerifier.create(testedObject.existsById(idPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void findById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void findById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Mono<Integer> idPublisher = Mono.just(1);
 
-        StepVerifier.create(adapter.findById(idPublisher))
+        StepVerifier.create(testedObject.findById(idPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void findAllById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void findAllById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Flux<Integer> idsPublisher = Flux.just(1, 2);
 
-        StepVerifier.create(adapter.findAllById(idsPublisher))
+        StepVerifier.create(testedObject.findAllById(idsPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void deleteById_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void deleteById_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Mono<Integer> idPublisher = Mono.just(1);
 
-        StepVerifier.create(adapter.deleteById(idPublisher))
+        StepVerifier.create(testedObject.deleteById(idPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }
 
     @Test
-    public void deleteAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
+    void deleteAll_publisherOverloadCalled_throwsUnsupportedOperationException() {
         Flux<ScheduledIntervalEntity> entitiesPublisher = Flux.empty();
 
-        StepVerifier.create(adapter.deleteAll(entitiesPublisher))
+        StepVerifier.create(testedObject.deleteAll(entitiesPublisher))
                 .expectError(UnsupportedOperationException.class)
                 .verify();
     }

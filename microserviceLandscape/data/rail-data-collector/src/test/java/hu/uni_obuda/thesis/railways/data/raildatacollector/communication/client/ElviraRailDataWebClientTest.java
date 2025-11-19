@@ -35,7 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ElviraRailDataWebClientTest {
+class ElviraRailDataWebClientTest {
 
     private static final String BASE_URL = "https://railway.example.com";
 
@@ -45,7 +45,7 @@ public class ElviraRailDataWebClientTest {
     private ElviraRailDataWebClient testedObject;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         WebClient webClient = WebClient.builder()
                 .baseUrl(BASE_URL)
                 .exchangeFunction(exchangeFunction)
@@ -62,7 +62,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTimetable_whenApiReturnsValidResponse_thenMapsAndTrimsDetails() {
+    void getShortTimetable_whenApiReturnsValidResponse_thenMapsAndTrimsDetails() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         String jsonBody = """
@@ -135,7 +135,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTimetable_whenBodyIsInvalidJson_thenEmitsExternalApiFormatMismatchException() {
+    void getShortTimetable_whenBodyIsInvalidJson_thenEmitsExternalApiFormatMismatchException() {
         String invalidJson = "this is not valid json";
 
         when(exchangeFunction.exchange(any(ClientRequest.class)))
@@ -150,7 +150,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTimetable_whenApiReturnsNon2xxStatus_thenEmitsExternalApiException() {
+     void getShortTimetable_whenApiReturnsNon2xxStatus_thenEmitsExternalApiException() {
         when(exchangeFunction.exchange(any(ClientRequest.class)))
                 .thenReturn(Mono.just(buildClientResponse(HttpStatus.INTERNAL_SERVER_ERROR, "error")));
 
@@ -163,7 +163,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenApiReturnsValidResponse_thenMapsResponse() {
+    void getShortTrainDetails_whenApiReturnsValidResponse_thenMapsResponse() {
         String jsonBody = """
                 {
                   "stations": [
@@ -220,7 +220,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenBodyIsInvalidJson_thenEmitsExternalApiFormatMismatchException() {
+    void getShortTrainDetails_whenBodyIsInvalidJson_thenEmitsExternalApiFormatMismatchException() {
         String invalidJson = "{ not-json";
 
         when(exchangeFunction.exchange(any(ClientRequest.class)))
@@ -235,7 +235,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getShortTrainDetails_whenApiReturnsNon2xxStatus_thenEmitsExternalApiException() {
+    void getShortTrainDetails_whenApiReturnsNon2xxStatus_thenEmitsExternalApiException() {
         when(exchangeFunction.exchange(any(ClientRequest.class)))
                 .thenReturn(Mono.just(buildClientResponse(HttpStatus.BAD_GATEWAY, "bad gateway")));
 
@@ -248,7 +248,7 @@ public class ElviraRailDataWebClientTest {
     }
 
     @Test
-    public void getTimetable_whenApiReturnsValidResponse_thenMapsTrainSegmentsAndTransferStations() {
+    void getTimetable_whenApiReturnsValidResponse_thenMapsTrainSegmentsAndTransferStations() {
         LocalDate date = LocalDate.of(2024, 10, 10);
 
         String jsonBody = """
@@ -309,22 +309,22 @@ public class ElviraRailDataWebClientTest {
     private ClientResponse buildClientResponse(HttpStatusCode status, String body) {
         HttpRequest request = new HttpRequest() {
             @Override
-            public HttpMethod getMethod() {
+             public HttpMethod getMethod() {
                 return HttpMethod.GET;
             }
 
             @Override
-            public URI getURI() {
+             public URI getURI() {
                 return URI.create(BASE_URL + "/dummy");
             }
 
             @Override
-            public Map<String, Object> getAttributes() {
+             public Map<String, Object> getAttributes() {
                 return Map.of();
             }
 
             @Override
-            public HttpHeaders getHeaders() {
+             public HttpHeaders getHeaders() {
                 return new HttpHeaders();
             }
         };
