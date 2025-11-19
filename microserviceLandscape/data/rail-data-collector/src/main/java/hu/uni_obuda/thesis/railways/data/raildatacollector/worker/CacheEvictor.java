@@ -1,26 +1,26 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.workers;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.worker;
 
 import hu.uni_obuda.thesis.railways.data.raildatacollector.component.cache.TimetableCache;
 import hu.uni_obuda.thesis.railways.util.scheduler.annotation.ScheduledJob;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
+
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class CacheEvictor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CacheEvictor.class);
-
     private final TimetableCache timetableCache;
 
     @ScheduledJob("timetableCacheEviction")
     public void evictCache() {
-        LOG.info("Evicting timetable cache...");
+        log.info("Evicting timetable cache...");
         timetableCache.evictAll()
-                .doOnSuccess(_ -> LOG.info("Timetable cache eviction completed."))
-                .doOnError(e -> LOG.error("Failed to evict timetable cache", e))
+                .doOnSuccess(_ -> log.info("Timetable cache eviction completed."))
+                .doOnError(e -> log.error("Failed to evict timetable cache", e))
                 .subscribe();
     }
 }

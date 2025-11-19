@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.raildatacollector.workers;
+package hu.uni_obuda.thesis.railways.data.raildatacollector.worker;
 
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 

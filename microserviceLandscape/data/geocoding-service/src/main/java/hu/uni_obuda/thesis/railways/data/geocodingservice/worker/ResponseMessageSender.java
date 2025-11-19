@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.geocodingservice.workers;
+package hu.uni_obuda.thesis.railways.data.geocodingservice.worker;
 
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 
