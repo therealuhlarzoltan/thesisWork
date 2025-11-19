@@ -11,6 +11,7 @@ import hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller.Weather
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfoRequest;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-
+@Slf4j
 public class MessageProcessorImpl implements MessageProcessor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MessageProcessorImpl.class);
 
     private final ObjectMapper objectMapper;
     private final WeatherDataCollector weatherDataCollector;
@@ -41,7 +40,7 @@ public class MessageProcessorImpl implements MessageProcessor {
 
     @Override
     public void accept(Message<Event<?, ?>> eventMessage) {
-        LOG.debug("Received message wth id {}", eventMessage.getHeaders().getId());
+        log.debug("Received message wth id {}", eventMessage.getHeaders().getId());
         if (eventMessage.getHeaders().containsKey("correlationId")) {
             processMessageWithCorrelationId(eventMessage);
         } else {
@@ -52,11 +51,11 @@ public class MessageProcessorImpl implements MessageProcessor {
     @SuppressWarnings("unchecked")
     private CrudEvent<String, WeatherInfoRequest> retrieveCrudEvent(Event<?, ?> genericEvent) {
         if (!(genericEvent instanceof CrudEvent<?, ?> crudEvent)) {
-            LOG.error("Unexpected event parameters, expected a CrudEvent");
+            log.error("Unexpected event parameters, expected a CrudEvent");
             return null;
         }
         if (!(crudEvent.getKey() instanceof String)) {
-            LOG.error("Unexpected event parameters, expected a CrudEvent<String, WeatherInfoRequest>");
+            log.error("Unexpected event parameters, expected a CrudEvent<String, WeatherInfoRequest>");
             return null;
         }
 
@@ -64,7 +63,7 @@ public class MessageProcessorImpl implements MessageProcessor {
         try {
             weatherInfoRequest = objectMapper.convertValue(crudEvent.getData(), WeatherInfoRequest.class);
         } catch (IllegalArgumentException e) {
-            LOG.error("Unexpected event parameters, expected a CrudEvent<String, WeatherInfoRequest>");
+            log.error("Unexpected event parameters, expected a CrudEvent<String, WeatherInfoRequest>");
             return null;
         }
 
@@ -72,7 +71,7 @@ public class MessageProcessorImpl implements MessageProcessor {
     }
 
     private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {
-        LOG.info("Processing message created at {} with no correlationId...", message.getPayload().getEventCreatedAt());
+        log.info("Processing message created at {} with no correlationId...", message.getPayload().getEventCreatedAt());
         CrudEvent<String, WeatherInfoRequest> crudEvent = retrieveCrudEvent(message.getPayload());
         if (crudEvent == null) {
             handleIncorrectEventParametersError(message.getPayload(), null);
@@ -85,7 +84,7 @@ public class MessageProcessorImpl implements MessageProcessor {
                 Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getLatitude(), request.getLongitude(), request.getTime());
                 weatherInfoMono
                         .onErrorResume(throwable -> {
-                            LOG.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());
+                            log.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());
                             return Mono.just(WeatherInfo.builder().address(request.getStationName()).time(request.getTime()).build());
                         })
                         .switchIfEmpty(Mono.just(WeatherInfo.builder().address(request.getStationName()).time(request.getTime()).build()))
@@ -106,7 +105,7 @@ public class MessageProcessorImpl implements MessageProcessor {
 
     private void processMessageWithCorrelationId(Message<Event<?, ?>> message) {
         String correlationId = message.getHeaders().get("correlationId").toString();
-        LOG.info("Processing message created at {} with correlationId {}...", message.getPayload().getEventCreatedAt(), correlationId);
+        log.info("Processing message created at {} with correlationId {}...", message.getPayload().getEventCreatedAt(), correlationId);
         CrudEvent<String, WeatherInfoRequest> crudEvent = retrieveCrudEvent(message.getPayload());
         if (crudEvent == null) {
             handleIncorrectEventParametersError(message.getPayload(), correlationId);
@@ -119,7 +118,7 @@ public class MessageProcessorImpl implements MessageProcessor {
                 Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getLatitude(), request.getLongitude(), request.getTime());
                 weatherInfoMono
                         .onErrorResume(throwable -> {
-                            LOG.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());
+                            log.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());
                             return Mono.just(WeatherInfo.builder().address(request.getStationName()).time(request.getTime()).build());
                         })
                         .switchIfEmpty(Mono.just(WeatherInfo.builder().address(request.getStationName()).time(request.getTime()).build()))
@@ -141,7 +140,7 @@ public class MessageProcessorImpl implements MessageProcessor {
         try {
             return objectMapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            LOG.error("Failed to serialize object to JSON: {}", e.getMessage());
+            log.error("Failed to serialize object to JSON: {}", e.getMessage());
             return null;
         }
     }
