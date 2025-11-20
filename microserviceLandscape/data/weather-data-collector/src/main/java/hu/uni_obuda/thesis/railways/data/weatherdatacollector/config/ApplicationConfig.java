@@ -23,8 +23,6 @@ public class ApplicationConfig {
     private int connectionWriteTimeoutInMs;
     @Value("${weather.api.base-url}")
     private String weatherApiUrl;
-    @Value("${maps.api.base-url}")
-    private String mapsApiUrl;
 
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
