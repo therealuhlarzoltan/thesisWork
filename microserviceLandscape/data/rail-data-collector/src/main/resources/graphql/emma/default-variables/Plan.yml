@@ -10,7 +10,7 @@ transitPassFilter: []
 comfortLevels: []
 searchParameters:
   - "searchWindow=1440"
-  - "maxItineraries=200"
+  - "maxItineraries=400"
 distributionChannel: "ERTEKESITESI_CSATORNA#INTERNET"
 distributionSubChannel: "ERTEKESITESI_ALCSATORNA#EMMA"
 searchWindow: 86400
