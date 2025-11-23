@@ -48,13 +48,10 @@ class ElviraRailDataGatewayTest {
 
     @Mock
     private ElviraRailDataWebClient webClient;
-
     @Mock
     private CircuitBreakerRegistry circuitBreakerRegistry;
-
     @Mock
     private RetryRegistry retryRegistry;
-
     @Mock
     private RateLimiterRegistry rateLimiterRegistry;
 

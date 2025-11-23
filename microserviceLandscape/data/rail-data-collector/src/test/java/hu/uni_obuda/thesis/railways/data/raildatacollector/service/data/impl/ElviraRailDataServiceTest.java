@@ -201,9 +201,8 @@ class ElviraRailDataServiceTest {
                 .verify();
     }
 
-
     @Test
-    void getDelayInfo_requestTimeout_mapsToExternalApiException() throws Exception {
+    void getDelayInfo_requestTimeout_mapsToExternalApiException() {
         LocalDate date = LocalDate.now();
 
         WebClientRequestException ex = new WebClientRequestException(
