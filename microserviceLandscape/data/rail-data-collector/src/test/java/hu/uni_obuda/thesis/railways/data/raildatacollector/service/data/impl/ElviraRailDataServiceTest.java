@@ -12,14 +12,16 @@ import hu.uni_obuda.thesis.railways.data.raildatacollector.mapper.data.ElviraRou
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
 
 import io.netty.channel.ConnectTimeoutException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.*;
 
 import reactor.core.publisher.Mono;
@@ -35,22 +37,17 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ElviraRailDataServiceTest {
 
+    @Mock
     private ElviraRailDataGateway gateway;
+    @Mock
     private ElviraTimetableCache cache;
+    @Mock
     private ElviraDelayMapper delayMapper;
+    @Mock
     private ElviraRouteMapper routeMapper;
 
-    private ElviraRailDataServiceImpl service;
-
-    @BeforeEach
-    void setup() {
-        gateway = mock(ElviraRailDataGateway.class);
-        cache = mock(ElviraTimetableCache.class);
-        delayMapper = mock(ElviraDelayMapper.class);
-        routeMapper = mock(ElviraRouteMapper.class);
-
-        service = new ElviraRailDataServiceImpl(gateway, cache, delayMapper, routeMapper);
-    }
+    @InjectMocks
+    private ElviraRailDataServiceImpl testedObject;
 
     @Test
     void getDelayInfo_cacheHit_returnsDelayInfo() {
@@ -75,7 +72,7 @@ class ElviraRailDataServiceTest {
         DelayInfo info = DelayInfo.builder().trainNumber("123").build();
         when(delayMapper.mapToDelayInfo(details, "123", date)).thenReturn(Mono.just(List.of(info)));
 
-        StepVerifier.create(service.getDelayInfo("123", "A", "B", date))
+        StepVerifier.create(testedObject.getDelayInfo("123", "A", "B", date))
                 .expectNext(info)
                 .verifyComplete();
     }
@@ -104,7 +101,7 @@ class ElviraRailDataServiceTest {
         DelayInfo info = DelayInfo.builder().trainNumber("456").build();
         when(delayMapper.mapToDelayInfo(details, "456", date)).thenReturn(Mono.just(List.of(info)));
 
-        StepVerifier.create(service.getDelayInfo("456", "A", "B", date))
+        StepVerifier.create(testedObject.getDelayInfo("456", "A", "B", date))
                 .expectNext(info)
                 .verifyComplete();
     }
@@ -117,7 +114,7 @@ class ElviraRailDataServiceTest {
         when(gateway.getShortTimetable("A", "B", date))
                 .thenReturn(Mono.just(new ElviraShortTimetableResponse(List.of())));
 
-        StepVerifier.create(service.getDelayInfo("999", "A", "B", date))
+        StepVerifier.create(testedObject.getDelayInfo("999", "A", "B", date))
                 .expectError(ExternalApiFormatMismatchException.class)
                 .verify();
     }
@@ -139,7 +136,13 @@ class ElviraRailDataServiceTest {
         when(cache.isCached("A", "B", date)).thenReturn(Mono.just(false));
         when(gateway.getShortTimetable("A", "B", date)).thenReturn(Mono.just(resp));
 
-        StepVerifier.create(service.getDelayInfo("999", "A", "B", date))
+        when(cache.cache(anyString(),
+                anyString(),
+                any(LocalDate.class),
+                any(ElviraShortTimetableResponse.class)))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(testedObject.getDelayInfo("999", "A", "B", date))
                 .expectError(TrainNotInServiceException.class)
                 .verify();
     }
@@ -161,38 +164,45 @@ class ElviraRailDataServiceTest {
         when(cache.isCached("A", "B", date)).thenReturn(Mono.just(false));
         when(gateway.getShortTimetable("A", "B", date)).thenReturn(Mono.just(resp));
 
+        when(cache.cache(anyString(),
+                anyString(),
+                any(LocalDate.class),
+                any(ElviraShortTimetableResponse.class)))
+                .thenReturn(Mono.empty());
+
         ElviraShortTrainDetailsResponse details = new ElviraShortTrainDetailsResponse();
         when(gateway.getShortTrainDetails("http://url")).thenReturn(Mono.just(details));
 
         DelayInfo info = new DelayInfo();
-        when(delayMapper.mapToDelayInfo(details, "123", date)).thenReturn(Mono.just(List.of(info)));
+        when(delayMapper.mapToDelayInfo(details, "123", date))
+                .thenReturn(Mono.just(List.of(info)));
 
-        StepVerifier.create(service.getDelayInfo("123", "A", "B", date))
+        StepVerifier.create(testedObject.getDelayInfo("123", "A", "B", date))
                 .expectNext(info)
                 .verifyComplete();
     }
 
     @Test
-    void getDelayInfo_notFound_mapsToExternalApiException() throws Exception {
+    void getDelayInfo_notFound_mapsToExternalApiException() {
         LocalDate date = LocalDate.now();
 
         HttpRequest req = mock(HttpRequest.class);
-        when(req.getURI()).thenReturn(new URI("http://x"));
+        when(req.getURI()).thenReturn(URI.create("http://x"));
 
-        WebClientResponseException ex =
-                WebClientResponseException.create(404, "NF", null, null, null);
+        WebClientResponseException.NotFound ex = mock(WebClientResponseException.NotFound.class);
+        when(ex.getStatusCode()).thenReturn(HttpStatus.NOT_FOUND);
         when(ex.getRequest()).thenReturn(req);
 
         when(cache.isCached(any(), any(), any())).thenReturn(Mono.just(false));
         when(gateway.getShortTimetable(any(), any(), any())).thenReturn(Mono.error(ex));
 
-        StepVerifier.create(service.getDelayInfo("1", "A", "B", date))
+        StepVerifier.create(testedObject.getDelayInfo("1", "A", "B", date))
                 .expectError(ExternalApiException.class)
                 .verify();
     }
 
     @Test
-    void getDelayInfo_requestTimeout_mapsToExternalApiException() throws Exception {
+    void getDelayInfo_requestTimeout_mapsToExternalApiException() {
         LocalDate date = LocalDate.now();
 
         WebClientRequestException ex = new WebClientRequestException(
@@ -205,7 +215,7 @@ class ElviraRailDataServiceTest {
         when(cache.isCached(any(), any(), any())).thenReturn(Mono.just(false));
         when(gateway.getShortTimetable(any(), any(), any())).thenReturn(Mono.error(ex));
 
-        StepVerifier.create(service.getDelayInfo("1", "A", "B", date))
+        StepVerifier.create(testedObject.getDelayInfo("1", "A", "B", date))
                 .expectError(ExternalApiException.class)
                 .verify();
     }
@@ -222,26 +232,26 @@ class ElviraRailDataServiceTest {
         when(gateway.getTimetable("A", "B", date)).thenReturn(Mono.just(tt));
         when(routeMapper.mapToRouteResponse(tt, date)).thenReturn(Mono.just(mapped));
 
-        StepVerifier.create(service.planRoute("A", "B", date))
+        StepVerifier.create(testedObject.planRoute("A", "B", date))
                 .expectNextCount(1)
                 .verifyComplete();
     }
 
     @Test
-    void planRoute_webClientError_mapsToExternalApiException() throws Exception {
+    void planRoute_webClientError_mapsToExternalApiException() {
         LocalDate date = LocalDate.now();
 
         HttpRequest req = mock(HttpRequest.class);
-        when(req.getURI()).thenReturn(new URI("http://xy"));
+        when(req.getURI()).thenReturn(URI.create("http://xy"));
 
-        WebClientResponseException ex =
-                WebClientResponseException.create(400, "bad", null, null, null);
+        WebClientResponseException.BadRequest ex = mock(WebClientResponseException.BadRequest.class);
+        when(ex.getStatusCode()).thenReturn(HttpStatus.BAD_REQUEST);
         when(ex.getRequest()).thenReturn(req);
 
         when(gateway.getTimetable(anyString(), anyString(), any()))
                 .thenReturn(Mono.error(ex));
 
-        StepVerifier.create(service.planRoute("A", "B", date))
+        StepVerifier.create(testedObject.planRoute("A", "B", date))
                 .expectError(ExternalApiException.class)
                 .verify();
     }

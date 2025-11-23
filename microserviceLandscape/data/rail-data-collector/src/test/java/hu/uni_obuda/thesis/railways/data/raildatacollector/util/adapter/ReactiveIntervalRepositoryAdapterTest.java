@@ -21,13 +21,10 @@ class ReactiveIntervalRepositoryAdapterTest {
 
     @Mock
     private ReactiveRedisTemplate<String, Integer> keyRedisTemplate;
-
     @Mock
     private ReactiveRedisTemplate<String, ScheduledIntervalEntity> entityRedisTemplate;
-
     @Mock
     private ReactiveSetOperations<String, Integer> setOps;
-
     @Mock
     private ReactiveValueOperations<String, ScheduledIntervalEntity> valueOps;
 

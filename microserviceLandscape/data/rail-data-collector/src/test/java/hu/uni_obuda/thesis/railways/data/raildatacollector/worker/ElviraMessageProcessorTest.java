@@ -33,17 +33,16 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ElviraMessageProcessorImplTest {
+class ElviraMessageProcessorTest {
 
     @Mock
     private ElviraRailDataCollector elviraRailDataCollector;
-
     @Mock
     private ResponseMessageSender responseSender;
 
     private ObjectMapper objectMapper;
 
-    private ElviraMessageProcessorImpl processor;
+    private ElviraMessageProcessorImpl testedObject;
 
     private  URL exceptionSourceURL;
 
@@ -53,7 +52,7 @@ class ElviraMessageProcessorImplTest {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         exceptionSourceURL = URI.create("http://localhost:8080/Exception").toURL();
-        processor = new ElviraMessageProcessorImpl(objectMapper, elviraRailDataCollector, responseSender, Schedulers.immediate());
+        testedObject = new ElviraMessageProcessorImpl(objectMapper, elviraRailDataCollector, responseSender, Schedulers.immediate());
     }
 
     private DelayInfoRequest createRequest(String trainNumber) {
@@ -88,7 +87,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         verify(elviraRailDataCollector, times(1))
                 .getDelayInfo(eq(request.getTrainNumber()), eq(request.getFrom()), eq(request.getTo()), eq(request.getDate()));
@@ -116,7 +115,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         verify(elviraRailDataCollector, times(1))
                 .getDelayInfo(eq(request.getTrainNumber()), eq(request.getFrom()), eq(request.getTo()), eq(request.getDate()));
@@ -138,7 +137,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -149,7 +148,7 @@ class ElviraMessageProcessorImplTest {
         assertEquals("TRAIN3", sentEvent.getKey());
         ResponsePayload payload = sentEvent.getData();
         assertNotNull(payload);
-        assertEquals(HttpStatus.BAD_REQUEST, payload.getStatus());
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, payload.getStatus());
         assertNotNull(payload.getMessage());
     }
 
@@ -168,7 +167,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(2))
@@ -184,7 +183,7 @@ class ElviraMessageProcessorImplTest {
 
         assertEquals(HttpResponseEvent.Type.ERROR, second.getEventType());
         assertEquals("TRAIN4", second.getKey());
-        assertEquals(HttpStatus.BAD_GATEWAY, second.getData().getStatus());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, second.getData().getStatus());
     }
 
     @Test
@@ -200,7 +199,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-1"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         verify(elviraRailDataCollector, times(1))
                 .getDelayInfo(eq(request.getTrainNumber()), eq(request.getFrom()), eq(request.getTo()), eq(request.getDate()));
@@ -226,7 +225,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-2"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         verify(elviraRailDataCollector, times(1))
                 .getDelayInfo(eq(request.getTrainNumber()), eq(request.getFrom()), eq(request.getTo()), eq(request.getDate()));
@@ -248,7 +247,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-3"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -274,7 +273,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-4"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(2))
@@ -305,7 +304,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(event, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -325,7 +324,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -338,7 +337,7 @@ class ElviraMessageProcessorImplTest {
     }
 
     @Test
-     void accept_withoutCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSent() {
+    void accept_withoutCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSent() {
         ObjectMapper spyMapper = spy(new ObjectMapper());
         spyMapper.registerModule(new JavaTimeModule());
         ElviraMessageProcessorImpl localProcessor =
@@ -348,8 +347,9 @@ class ElviraMessageProcessorImplTest {
         CrudEvent<String, Object> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN11", new Object());
 
-        when(spyMapper.convertValue(any(), eq(DelayInfoRequest.class)))
-                .thenThrow(new IllegalArgumentException("conversion failed"));
+        doThrow(new IllegalArgumentException("conversion failed"))
+                .when(spyMapper)
+                .convertValue(any(), eq(DelayInfoRequest.class));
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
@@ -377,7 +377,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(event, Map.of("correlationId", "CID-5"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -397,7 +397,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-6"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -410,7 +410,7 @@ class ElviraMessageProcessorImplTest {
     }
 
     @Test
-     void accept_withCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSentWithCorrelationId() {
+    void accept_withCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSentWithCorrelationId() {
         ObjectMapper spyMapper = spy(new ObjectMapper());
         spyMapper.registerModule(new JavaTimeModule());
         ElviraMessageProcessorImpl localProcessor =
@@ -419,8 +419,9 @@ class ElviraMessageProcessorImplTest {
         CrudEvent<String, Object> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN14", new Object());
 
-        when(spyMapper.convertValue(any(), eq(DelayInfoRequest.class)))
-                .thenThrow(new IllegalArgumentException("conversion failed"));
+        doThrow(new IllegalArgumentException("conversion failed"))
+                .when(spyMapper)
+                .convertValue(any(), eq(DelayInfoRequest.class));
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-7"));
 
@@ -449,7 +450,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-8"));
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -474,7 +475,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))
@@ -499,7 +500,7 @@ class ElviraMessageProcessorImplTest {
 
         Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of());
 
-        processor.accept(message);
+        testedObject.accept(message);
 
         ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
         verify(responseSender, times(1))

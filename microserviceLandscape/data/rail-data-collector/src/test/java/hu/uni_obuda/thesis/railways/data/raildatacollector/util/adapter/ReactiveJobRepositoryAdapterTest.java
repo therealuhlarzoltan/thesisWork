@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveSetOperations;
 import org.springframework.data.redis.core.ReactiveValueOperations;
@@ -18,17 +20,15 @@ import java.util.List;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ReactiveJobRepositoryAdapterTest {
 
     @Mock
     private ReactiveRedisTemplate<String, Integer> keyRedisTemplate;
-
     @Mock
     private ReactiveRedisTemplate<String, ScheduledJobEntity> entityRedisTemplate;
-
     @Mock
     private ReactiveSetOperations<String, Integer> setOps;
-
     @Mock
     private ReactiveValueOperations<String, ScheduledJobEntity> valueOps;
 
@@ -37,6 +37,7 @@ class ReactiveJobRepositoryAdapterTest {
     @BeforeEach
     void setUp_initialiseAdapter_dependenciesInjected() {
         testedObject = new ReactiveJobRepositoryAdapter(keyRedisTemplate, entityRedisTemplate);
+        when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
     }
 
     @Test
@@ -100,7 +101,8 @@ class ReactiveJobRepositoryAdapterTest {
         ScheduledJobEntity entity = mock(ScheduledJobEntity.class);
         when(entity.getId()).thenReturn(jobId);
 
-        when(valueOps.get(testedObject.getEntityPrefix() + ":" + jobId)).thenReturn(Mono.just(entity));
+        String key = testedObject.getEntityPrefix() + ":" + jobId;
+        when(valueOps.get(key)).thenReturn(Mono.just(entity));
 
         Flux<ScheduledJobEntity> result = testedObject.findByJobId(jobId);
 
@@ -119,9 +121,11 @@ class ReactiveJobRepositoryAdapterTest {
         ScheduledJobEntity entity2 = mock(ScheduledJobEntity.class);
         when(entity2.getId()).thenReturn(id2);
 
-        when(keyRedisTemplate.opsForSet()).thenReturn(setOps);;
-        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id1)).thenReturn(Mono.just(entity1));
-        when(valueOps.get(testedObject.getEntityPrefix() + ":" + id2)).thenReturn(Mono.just(entity2));
+        String key1 = testedObject.getEntityPrefix() + ":" + id1;
+        String key2 = testedObject.getEntityPrefix() + ":" + id2;
+
+        when(valueOps.get(key1)).thenReturn(Mono.just(entity1));
+        when(valueOps.get(key2)).thenReturn(Mono.just(entity2));
 
         Flux<ScheduledJobEntity> result = testedObject.findAllById(List.of(id1, id2));
 

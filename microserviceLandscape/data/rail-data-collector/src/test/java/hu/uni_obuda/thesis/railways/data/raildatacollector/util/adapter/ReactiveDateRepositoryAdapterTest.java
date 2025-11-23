@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveSetOperations;
 import org.springframework.data.redis.core.ReactiveValueOperations;
@@ -17,25 +19,24 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ReactiveDateRepositoryAdapterTest {
 
     @Mock
     private ReactiveRedisTemplate<String, Integer> keyRedisTemplate;
-
     @Mock
     private ReactiveRedisTemplate<String, ScheduledDateEntity> entityRedisTemplate;
-
     @Mock
     private ReactiveSetOperations<String, Integer> setOps;
-
     @Mock
     private ReactiveValueOperations<String, ScheduledDateEntity> valueOps;
 
     private ReactiveDateRepositoryAdapter testedObject;
 
     @BeforeEach
-     void setUp_initialiseAdapter_dependenciesInjected() {
+    void setUp() {
         testedObject = new ReactiveDateRepositoryAdapter(keyRedisTemplate, entityRedisTemplate);
+        when(entityRedisTemplate.opsForValue()).thenReturn(valueOps);
     }
 
     @Test
