@@ -5,11 +5,13 @@ import hu.uni_obuda.thesis.railways.util.scheduler.ReactiveCustomScheduler;
 import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+@ConditionalOnBean({ReactiveCustomScheduler.class, ReactiveCompositeJobRepository.class})
 @Component
 @Slf4j
 @RequiredArgsConstructor

@@ -44,7 +44,10 @@ public class CoordinatesCacheImpl implements CoordinatesCache {
 
     @Override
     public Mono<Void> evict(String stationName) {
-        return coordinatesRedisTemplate.delete(stationName).then(keysRedisTemplate.delete(stationName).then());
+        String key = toKey(stationName);
+        return coordinatesRedisTemplate.delete(key)
+                .then(keysRedisTemplate.opsForSet().remove(KEY_SET_PREFIX, key))
+                .then();
     }
 
     @Override
