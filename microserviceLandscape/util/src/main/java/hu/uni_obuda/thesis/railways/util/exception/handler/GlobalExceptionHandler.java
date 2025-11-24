@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -53,7 +52,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        String msg = ex.getAllErrors().get(0).getDefaultMessage();
+        String msg = ex.getAllErrors().getFirst().getDefaultMessage();
         return createApiError(msg, HttpStatus.BAD_REQUEST);
     }
 
@@ -73,6 +72,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleExternalApiFormatMismatchException(ExternalApiFormatMismatchException e) {
         var error = createApiError(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(TrainNotInServiceException.class)
+    public ResponseEntity<ApiError> handleTrainNotInServiceException(TrainNotInServiceException e) {
+        var error = createApiError(e.getMessage(), HttpStatus.TOO_EARLY);
+        return new ResponseEntity<>(error, HttpStatus.TOO_EARLY);
     }
 
     /*@ExceptionHandler(Exception.class)

@@ -1,0 +1,19 @@
+arriveBy: false
+banned: {}
+modes:
+  - mode: "RAIL"
+  - mode: "RAIL_REPLACEMENT_BUS"
+  - mode: "SUBURBAN_RAILWAY"
+  - mode: "TRAMTRAIN"
+numItineraries: 500
+time: "03:00"
+walkSpeed: 1.3888888888888888
+minTransferTime: 0
+transitPassFilter: []
+comfortLevels: []
+searchParameters:
+  - "searchWindow=1440"
+  - "maxItineraries=200"
+distributionChannel: "ERTEKESITESI_CSATORNA#INTERNET"
+distributionSubChannel: "ERTEKESITESI_ALCSATORNA#EMMA"
+searchWindow: 86400

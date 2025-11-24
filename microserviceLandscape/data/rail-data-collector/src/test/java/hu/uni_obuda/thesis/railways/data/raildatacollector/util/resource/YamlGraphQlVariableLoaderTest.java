@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
  class YamlGraphQlVariableLoaderTest {
 
-    private static final String DIRECTORY = "graphql";
+    private static final String DIRECTORY = "graphql/emma/default-variables";
     private static final String EXISTING_DOCUMENT = "defaultVariables";
     private static final String EXISTING_PATH = DIRECTORY + "/" + EXISTING_DOCUMENT + ".yml";
     private static final String EMPTY_PATH = DIRECTORY + "/empty.yml";
@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
         assertInstanceOf(List.class, modesObj);
         List<?> modes = (List<?>) modesObj;
         assertFalse(modes.isEmpty());
-        Object firstMode = modes.get(0);
+        Object firstMode = modes.getFirst();
         assertInstanceOf(Map.class, firstMode);
         Map<?, ?> firstModeMap = (Map<?, ?>) firstMode;
         assertEquals("RAIL", firstModeMap.get("mode"));

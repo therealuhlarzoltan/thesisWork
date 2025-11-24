@@ -5,9 +5,9 @@ spring:
 ---
 spring.activate.on-profile: data-source-emma
 railway.api:
-  base-url: https://emma.mav.hu
-  timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
-  train-details-getter-uri: //otp2-backend/otp/routers/default/index/graphql
+  base-url: https://rail-data-provider.com
+  timetable-getter-uri: //api/graphql
+  train-details-getter-uri: //api/graphql
   graphql.short-timetable-document: Plan
   graphql.long-timetable-document: RoutePlan
   graphql.short-train-details-document: Trip
