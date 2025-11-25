@@ -35,7 +35,7 @@ public class ScheduledIntervalServiceImpl implements ScheduledIntervalService {
 
     @Override
     public Mono<ScheduledIntervalResponse> find(int id) {
-        return intervalRepository.findByJobId(id)
+        return intervalRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException(id, ScheduledIntervalEntity.class)))
                 .map(mapper::entityToApi);
     }

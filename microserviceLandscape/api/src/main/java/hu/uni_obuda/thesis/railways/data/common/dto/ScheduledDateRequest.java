@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ScheduledDateRequest {
     @NotNull(message = "jobId cannot be null")
-    @NotBlank(message = "jobId cannot be blank")
     @Min(value = 1, message = "jobId must be grater than or equal to 1")
     private Integer jobId;
 

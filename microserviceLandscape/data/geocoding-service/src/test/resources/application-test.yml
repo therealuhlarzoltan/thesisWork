@@ -1,0 +1,11 @@
+spring:
+  config:
+    import: "optional:classpath:/"
+
+maps:
+  api:
+    base-url: "http://localhost"
+    geocoding-url: "/geocode"
+    country-code: "Hungary"
+    api-key:  "secretApiKey"
+

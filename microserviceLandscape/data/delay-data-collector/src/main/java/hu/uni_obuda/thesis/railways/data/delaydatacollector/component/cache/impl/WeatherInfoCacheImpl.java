@@ -12,8 +12,8 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class WeatherInfoCacheImpl implements WeatherInfoCache {
 
     private final ReactiveRedisTemplate<String, WeatherInfo> weatherInfosRedisTemplate;

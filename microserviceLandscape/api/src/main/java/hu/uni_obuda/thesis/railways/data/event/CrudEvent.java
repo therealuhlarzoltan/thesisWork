@@ -1,6 +1,6 @@
 package hu.uni_obuda.thesis.railways.data.event;
 
-public class CrudEvent<K, T> extends  Event<K, T> {
+public class CrudEvent<K, T> extends Event<K, T> {
 
     public enum Type {
         GET,

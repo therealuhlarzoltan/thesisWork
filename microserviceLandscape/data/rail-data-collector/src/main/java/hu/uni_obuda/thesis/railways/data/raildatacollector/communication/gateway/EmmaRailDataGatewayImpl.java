@@ -28,7 +28,7 @@ import java.time.LocalDate;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class EmmaRailDataGatewayImpl implements EmmaRailDelayGateway {
+public class EmmaRailDataGatewayImpl implements EmmaRailDataGateway {
 
     private final EmmaRailDataWebClient webClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
