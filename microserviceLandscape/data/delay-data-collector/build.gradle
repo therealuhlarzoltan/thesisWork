@@ -13,6 +13,15 @@ java {
     }
 }
 
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+    }
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
