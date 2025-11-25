@@ -20,12 +20,12 @@ public class TrainStationControllerImpl implements TrainStationController {
 
     @Override
     public Mono<TrainStationResponse> createTrainStation(TrainStationRequest trainStationRequest) {
-        return null;
+        return Mono.error(new UnsupportedOperationException("Not implemented"));
     }
 
     @Override
     public Mono<TrainStationResponse> updateTrainStation(TrainStationRequest trainStationRequest) {
-        return null;
+        return Mono.error(new UnsupportedOperationException("Not implemented"));
     }
 
     @Override
@@ -39,16 +39,12 @@ public class TrainStationControllerImpl implements TrainStationController {
 
     @Override
     public Mono<Void> fetchGeolocationForTrainStation(String trainStationCode) {
-        return service.getTrainStationById(trainStationCode).flatMap(entity -> {
-           return geocodingService.fetchCoordinatesForStation(entity.getStationCode(), false);
-        });
+        return service.getTrainStationById(trainStationCode).flatMap(entity -> geocodingService.fetchCoordinatesForStation(entity.getStationCode(), false));
     }
 
     @Override
     public Mono<Void> fetchGeolocationForAllTrainStations() {
-        return service.getTrainStations().flatMap(entity -> {
-            return geocodingService.fetchCoordinatesForStation(entity.getStationCode(), false);
-        }).then();
+        return service.getTrainStations().flatMap(entity -> geocodingService.fetchCoordinatesForStation(entity.getStationCode(), false)).then();
     }
 
     @Override

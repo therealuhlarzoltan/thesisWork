@@ -1,6 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.raildatacollector;
 
 import org.junit.jupiter.api.Test;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -10,11 +11,11 @@ import org.springframework.test.context.ActiveProfiles;
         "spring.cloud.discovery.enabled=false",
         "eureka.client.enabled=false"
 })
-@ActiveProfiles("data-source-emma")
+@ActiveProfiles({"test", "data-source-elvira"})
 class RailDataCollectorApplicationTests {
 
     @Test
     void contextLoads() {
-    }
 
+    }
 }

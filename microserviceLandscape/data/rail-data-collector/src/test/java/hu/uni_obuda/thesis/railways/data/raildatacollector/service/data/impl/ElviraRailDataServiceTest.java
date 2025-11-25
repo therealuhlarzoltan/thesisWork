@@ -29,6 +29,7 @@ import reactor.test.StepVerifier;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -53,10 +54,14 @@ class ElviraRailDataServiceTest {
     void getDelayInfo_cacheHit_returnsDelayInfo() {
         LocalDate date = LocalDate.now();
 
+        LocalTime now = LocalTime.now();
+        LocalTime departureTime = now.minusHours(2);
+        LocalTime arrivalTime = now.minusHours(1);
+
         ElviraShortTimetableResponse resp = new ElviraShortTimetableResponse(
                 List.of(new ElviraShortTimetableResponse.TimetableEntry(
-                        "10:00",
-                        "11:00",
+                        departureTime.toString(),
+                        arrivalTime.toString(),
                         List.of(new ElviraShortTimetableResponse.TrainDetail(
                                 new ElviraShortTimetableResponse.TrainInfo("http://train", "", "123", "")
                         ))
@@ -81,10 +86,14 @@ class ElviraRailDataServiceTest {
     void getDelayInfo_cacheMiss_getsAndCachesTimetable() {
         LocalDate date = LocalDate.now();
 
+        LocalTime now = LocalTime.now();
+        LocalTime departureTime = now.minusHours(3);
+        LocalTime arrivalTime = now.minusHours(2);
+
         ElviraShortTimetableResponse resp = new ElviraShortTimetableResponse(
                 List.of(new ElviraShortTimetableResponse.TimetableEntry(
-                        "09:00",
-                        "09:30",
+                        departureTime.toString(),
+                        arrivalTime.toString(),
                         List.of(new ElviraShortTimetableResponse.TrainDetail(
                                 new ElviraShortTimetableResponse.TrainInfo("http://train", "", "456", "")
                         ))

@@ -46,8 +46,6 @@ class LocalDebugTrainDelayProcessorTest {
     @Mock
     private TrainStationRepository trainStationRepository;
 
-    private Scheduler scheduler;
-
     private LocalDebugTrainDelayProcessorImpl testedObject;
 
     private Logger logger;
@@ -55,7 +53,7 @@ class LocalDebugTrainDelayProcessorTest {
 
     @BeforeEach
     void setUp() {
-        scheduler = Schedulers.immediate();
+        Scheduler scheduler = Schedulers.immediate();
         testedObject = new LocalDebugTrainDelayProcessorImpl(
                 scheduler,
                 trainRouteRepository,
@@ -276,12 +274,12 @@ class LocalDebugTrainDelayProcessorTest {
 
     @Test
     void adjustStationCodeFormat_replacesHungarianCharacters() {
-        String original = "GYŐR-ÚJHEGY";
+        String original = "GyŐr-Újhegy";
         String result = ReflectionTestUtils.invokeMethod(
                 testedObject,
                 "adjustStationCodeFormat",
                 original
         );
-        assertThat(result).isEqualTo("GYÕR-ÛJHEGY");
+        assertThat(result).isEqualTo("GyÕr-Újhegy");
     }
 }

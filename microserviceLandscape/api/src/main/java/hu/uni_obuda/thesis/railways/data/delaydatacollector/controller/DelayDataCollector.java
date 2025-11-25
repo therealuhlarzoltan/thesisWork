@@ -1,11 +1,14 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.controller;
 
-import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfo;
-import reactor.core.publisher.Flux;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import reactor.core.publisher.Mono;
 
 public interface DelayDataCollector {
-    Flux<DelayInfo> getTrainDelays();
+
+    @GetMapping("fetch")
     Mono<Void> fetchDelays();
-    Mono<Void> fetchDelay(String trainNumber);
+
+    @GetMapping("fetch/{trainNumber}")
+    Mono<Void> fetchDelay(@PathVariable String trainNumber);
 }
