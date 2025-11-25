@@ -11,8 +11,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class DelayInfoCacheImpl implements DelayInfoCache {
 
     private final ReactiveRedisTemplate<String, String> delaysRedisTemplate;

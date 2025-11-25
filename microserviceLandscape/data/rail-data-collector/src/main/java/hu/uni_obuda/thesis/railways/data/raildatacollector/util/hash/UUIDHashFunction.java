@@ -2,7 +2,7 @@ package hu.uni_obuda.thesis.railways.data.raildatacollector.util.hash;
 
 import java.util.UUID;
 
-public class UUIDHashFunction  {
+public final class UUIDHashFunction  {
 
     private UUIDHashFunction() {
 

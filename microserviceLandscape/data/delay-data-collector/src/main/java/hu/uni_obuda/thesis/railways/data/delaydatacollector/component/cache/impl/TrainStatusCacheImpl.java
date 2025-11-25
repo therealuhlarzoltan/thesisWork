@@ -11,8 +11,8 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.LocalDate;
 
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class TrainStatusCacheImpl implements TrainStatusCache {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;

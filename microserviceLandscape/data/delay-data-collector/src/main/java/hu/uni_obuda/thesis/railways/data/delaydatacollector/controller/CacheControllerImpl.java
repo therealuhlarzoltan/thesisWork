@@ -1,9 +1,9 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.controller;
 
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache.CoordinatesCacheEvictor;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache.DelayCacheEvictor;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache.TrainStatusCacheEvictor;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.cache.WeatherCacheEvictor;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.worker.cache.eviction.CoordinatesCacheEvictor;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.worker.cache.eviction.DelayCacheEvictor;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.worker.cache.eviction.TrainStatusCacheEvictor;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.worker.cache.eviction.WeatherCacheEvictor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
