@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
+import java.util.List;
 
 @Configuration
 public class CacheConfig {
@@ -47,7 +48,7 @@ public class CacheConfig {
 
 
     @Bean
-    public Cache<String, TrainRouteResponse> trainRouteCache() {
+    public Cache<String, List<TrainRouteResponse>> trainRouteCache() {
         return Caffeine.newBuilder()
                 .maximumSize(routeCacheSize)
                 .expireAfterWrite(Duration.ofSeconds(routeCacheDuration))

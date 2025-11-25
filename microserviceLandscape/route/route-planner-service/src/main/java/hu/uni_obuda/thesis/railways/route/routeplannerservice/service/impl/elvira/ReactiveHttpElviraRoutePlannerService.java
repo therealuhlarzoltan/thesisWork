@@ -1,6 +1,8 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.elvira;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
@@ -18,7 +20,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import static hu.uni_obuda.thesis.railways.route.routeplannerservice.util.constant.Constants.STATION_CODE_MAPPING;
@@ -34,17 +38,19 @@ public class ReactiveHttpElviraRoutePlannerService implements RoutePlannerServic
     private final WeatherService weatherService;
     private final PredictionService predictionService;
     private final TimetableProcessingHelper helper;
+    private final Cache<String, List<TrainRouteResponse>> routeCache;
 
     public ReactiveHttpElviraRoutePlannerService(@Qualifier("reactiveHttpElviraTimetableService") ElviraTimetableService timetableService,
                                                  @Qualifier("reactiveHttpStationService") StationService stationService,
                                                  @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
                                                  @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
-                                                 TimetableProcessingHelper helper) {
+                                                 TimetableProcessingHelper helper, Cache<String, List<TrainRouteResponse>> routeCache) {
         this.timetableService = timetableService;
         this.stationService = stationService;
         this.weatherService = weatherService;
         this.predictionService = predictionService;
         this.helper = helper;
+        this.routeCache = routeCache;
     }
 
     @Override
@@ -80,7 +86,7 @@ public class ReactiveHttpElviraRoutePlannerService implements RoutePlannerServic
         log.debug("Adjusted to station to {}", adjustedTo);
 
         log.info("Getting possible routes from {} to {} with departure time {} and arrival time {} and max changes {}", from, to, departureTime, arrivalTime, maxChanges);
-        return timetableService.getTimetable(adjustedFrom, adjustedTo, departureTime != null ? departureTime.toLocalDate() : arrivalTime.toLocalDate())
+        return getTimetable(adjustedFrom, adjustedTo, departureTime != null ? departureTime.toLocalDate() : arrivalTime.toLocalDate())
                 .transform(flux -> {
                     if (departureTime != null)
                         return helper.filterByDeparture(departureTime, flux);
@@ -198,6 +204,28 @@ public class ReactiveHttpElviraRoutePlannerService implements RoutePlannerServic
                 );
     }
 
+
+    public Flux<TrainRouteResponse> getTimetable(String from, String to, LocalDate date) {
+        String key = getTimetableKey(from, to, date);
+        List<TrainRouteResponse> cached = routeCache.getIfPresent(key);
+        if (cached != null) {
+            log.debug("Timetable cache hit for {}", key);
+            return Flux.fromIterable(cached);
+        }
+
+        log.debug("Timetable cache miss for {}", key);
+        return timetableService.getTimetable(from, to, date)
+                .collectList()
+                .doOnNext(list -> {
+                    routeCache.put(key, List.copyOf(list));
+                    log.debug("Cached {} routes for {}", list.size(), key);
+                })
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    private String getTimetableKey(String from, String to, LocalDate localDate) {
+      return from + ":" + to + ":" + localDate;
+    }
 
     private String adjustStationCodeFormat(@NonNull String stationCode) {
         for (int i = 0; i < stationCode.length(); i++) {

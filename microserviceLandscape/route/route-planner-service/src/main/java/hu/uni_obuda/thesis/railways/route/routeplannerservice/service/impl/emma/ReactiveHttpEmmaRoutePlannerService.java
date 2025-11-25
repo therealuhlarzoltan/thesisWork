@@ -1,7 +1,9 @@
 package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.emma;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
@@ -19,7 +21,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 import static hu.uni_obuda.thesis.railways.route.routeplannerservice.util.constant.Constants.STATION_CODE_MAPPING;
@@ -36,19 +40,21 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
     private final WeatherService weatherService;
     private final PredictionService predictionService;
     private final TimetableProcessingHelper helper;
+    private final Cache<String, List<TrainRouteResponse>> routeCache;
 
     public ReactiveHttpEmmaRoutePlannerService(@Qualifier("reactiveHttpEmmaTimetableService") EmmaTimetableService timetableService,
-                                                 @Qualifier("reactiveHttpGeocodingService") GeocodingService geocodingService,
-                                                 @Qualifier("reactiveHttpStationService") StationService stationService,
-                                                 @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
-                                                 @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
-                                                 TimetableProcessingHelper helper) {
+                                               @Qualifier("reactiveHttpGeocodingService") GeocodingService geocodingService,
+                                               @Qualifier("reactiveHttpStationService") StationService stationService,
+                                               @Qualifier("reactiveHttpWeatherService") WeatherService weatherService,
+                                               @Qualifier("reactiveHttpPredictionService") PredictionService predictionService,
+                                               TimetableProcessingHelper helper, Cache<String, List<TrainRouteResponse>> routeCache) {
         this.timetableService = timetableService;
         this.geocodingService = geocodingService;
         this.stationService = stationService;
         this.weatherService = weatherService;
         this.predictionService = predictionService;
         this.helper = helper;
+        this.routeCache = routeCache;
     }
 
     @Override
@@ -90,8 +96,7 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
         log.info("Getting possible routes from {} to {} with departure time {} and arrival time {} and max changes {}", from, to, departureTime, arrivalTime, maxChanges);
         return Mono.zip(fromCoordinatesMono, toCoordinatesMono)
                 .flatMapMany(coordinatesTuple ->
-                    timetableService
-                            .getTimetable(from, coordinatesTuple.getT1().getLatitude(), coordinatesTuple.getT1().getLongitude(),
+                    getTimetable(from, coordinatesTuple.getT1().getLatitude(), coordinatesTuple.getT1().getLongitude(),
                                     to, coordinatesTuple.getT2().getLatitude(), coordinatesTuple.getT2().getLongitude(),
                                     departureTime != null ? departureTime.toLocalDate() : arrivalTime.toLocalDate())
                         .transform(flux -> {
@@ -212,6 +217,27 @@ public class ReactiveHttpEmmaRoutePlannerService implements RoutePlannerService 
                 );
     }
 
+    public Flux<TrainRouteResponse> getTimetable(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
+        String key = getTimetableKey(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date);
+        List<TrainRouteResponse> cached = routeCache.getIfPresent(key);
+        if (cached != null) {
+            log.debug("Timetable cache hit for {}", key);
+            return Flux.fromIterable(cached);
+        }
+
+        log.debug("Timetable cache miss for {}", key);
+        return timetableService.getTimetable(from, fromLatitude, fromLongitude, to, toLatitude, toLongitude, date)
+                .collectList()
+                .doOnNext(list -> {
+                    routeCache.put(key, List.copyOf(list));
+                    log.debug("Cached {} routes for {}", list.size(), key);
+                })
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    private String getTimetableKey(String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate localDate) {
+        return from + "#" + fromLatitude + "/" + fromLongitude  + ":" + to + "#" + toLatitude + "/" + toLongitude + ":" + localDate;
+    }
 
     private String adjustStationCodeFormat(@NonNull String stationCode) {
         for (int i = 0; i < stationCode.length(); i++) {
