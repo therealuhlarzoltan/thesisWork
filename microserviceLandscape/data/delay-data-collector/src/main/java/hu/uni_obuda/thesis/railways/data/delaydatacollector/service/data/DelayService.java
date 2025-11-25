@@ -9,6 +9,5 @@ import java.util.List;
 
 public interface DelayService {
     void processDelays(Flux<DelayInfo> delayInfos);
-    Flux<DelayInfo> getTrainDelays();
     Flux<DataTransferEvent<List<DelayRecord>>> getBatches(int batchSize, String routingKey);
 }

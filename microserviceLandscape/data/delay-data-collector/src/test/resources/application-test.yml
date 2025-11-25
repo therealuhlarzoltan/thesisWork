@@ -1,6 +1,9 @@
 spring:
   config:
     import: "optional:classpath:/"
+  flyway:
+    locations:
+      - classpath:db/migration
 
 app:
   rail-data-collector-url: http://rail-data-collector

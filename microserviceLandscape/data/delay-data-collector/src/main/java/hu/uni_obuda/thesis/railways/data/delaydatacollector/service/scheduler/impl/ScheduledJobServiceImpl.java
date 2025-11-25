@@ -44,7 +44,7 @@ public class ScheduledJobServiceImpl implements ScheduledJobService {
 
     @Override
     public Mono<ScheduledJobResponse> find(int id) {
-        return jobRepository.findById(id).flatMap(this::buildScheduledJobResponse);
+        return jobRepository.findById(id).flatMap(this::buildScheduledJobResponse).switchIfEmpty(Mono.error(new EntityNotFoundException(id, ScheduledJobEntity.class)));
     }
 
     @Override

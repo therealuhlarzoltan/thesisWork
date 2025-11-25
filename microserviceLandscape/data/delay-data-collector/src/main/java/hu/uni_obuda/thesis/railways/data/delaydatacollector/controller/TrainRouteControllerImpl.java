@@ -17,17 +17,17 @@ public class TrainRouteControllerImpl implements TrainRouteController {
     private final TrainRouteService service;
 
     @Override
-    public Mono<TrainRouteResponse> createTrainRoute(@Valid TrainRouteRequest trainRouteRequest) {
+    public Mono<TrainRouteResponse> createTrainRoute(@Valid @RequestBody TrainRouteRequest trainRouteRequest) {
         return service.createTrainRoute(trainRouteRequest);
     }
 
     @Override
-    public Mono<TrainRouteResponse> updateTrainRoute(@Valid TrainRouteRequest trainRouteRequest) {
+    public Mono<TrainRouteResponse> updateTrainRoute(@Valid @RequestBody TrainRouteRequest trainRouteRequest) {
         return service.updateTrainRoute(trainRouteRequest);
     }
 
     @Override
-    public Flux<TrainRouteResponse> getTrainRoute(String trainNumber) {
+    public Flux<TrainRouteResponse> getTrainRoute(@RequestParam(required = false) String trainNumber) {
         if (trainNumber == null) {
             return service.getAllTrainRoutes();
         } else {
@@ -36,7 +36,7 @@ public class TrainRouteControllerImpl implements TrainRouteController {
     }
 
     @Override
-    public Mono<Void> deleteTrainRoute(String trainNumber) {
+    public Mono<Void> deleteTrainRoute(@RequestParam(required = true) String trainNumber) {
         return service.deleteTrainRoute(trainNumber);
     }
 }

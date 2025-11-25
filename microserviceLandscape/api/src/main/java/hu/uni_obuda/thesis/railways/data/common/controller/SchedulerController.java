@@ -14,10 +14,10 @@ public interface SchedulerController {
     Mono<ScheduledJobResponse> getJob(@PathVariable("jobId") int id);
 
     @PostMapping("jobs")
-    Mono<ScheduledJobResponse> createJob(@Valid ScheduledJobRequest request);
+    Mono<ScheduledJobResponse> createJob(@Valid @RequestBody ScheduledJobRequest request);
 
     @PutMapping("jobs/{jobId}")
-    Mono<ScheduledJobResponse> updateJob(@PathVariable("jobId") int id, @Valid ScheduledJobRequest request);
+    Mono<ScheduledJobResponse> updateJob(@PathVariable("jobId") int id, @Valid @RequestBody ScheduledJobRequest request);
 
     @DeleteMapping("jobs/{jobId}")
     Mono<Void> deleteJob(@PathVariable("jobId") int id);
@@ -29,10 +29,10 @@ public interface SchedulerController {
     Mono<ScheduledDateResponse> getDate(@PathVariable("dateId") int id);
 
     @PostMapping("dates")
-    Mono<ScheduledDateResponse> createDate(@Valid ScheduledDateRequest request);
+    Mono<ScheduledDateResponse> createDate(@Valid @RequestBody ScheduledDateRequest request);
 
     @PutMapping("dates/{dateId}")
-    Mono<ScheduledDateResponse> updateDate(@PathVariable("dateId") int id, @Valid ScheduledDateRequest request);
+    Mono<ScheduledDateResponse> updateDate(@PathVariable("dateId") int id, @Valid @RequestBody ScheduledDateRequest request);
 
     @DeleteMapping("dates/{dateId}")
     Mono<Void> deleteDate(@PathVariable("dateId") int id);
@@ -44,10 +44,10 @@ public interface SchedulerController {
     Mono<ScheduledIntervalResponse> getInterval(@PathVariable("intervalId") int id);
 
     @PostMapping("intervals")
-    Mono<ScheduledIntervalResponse> createInterval(@Valid ScheduledIntervalRequest request);
+    Mono<ScheduledIntervalResponse> createInterval(@Valid @RequestBody ScheduledIntervalRequest request);
 
     @PutMapping("intervals/{intervalId}")
-    Mono<ScheduledIntervalResponse> updateInterval(@PathVariable("intervalId") int id, @Valid ScheduledIntervalRequest request);
+    Mono<ScheduledIntervalResponse> updateInterval(@PathVariable("intervalId") int id, @Valid @RequestBody ScheduledIntervalRequest request);
 
     @DeleteMapping("intervals/{intervalId}")
     Mono<Void> deleteInterval(@PathVariable("intervalId") int id);
