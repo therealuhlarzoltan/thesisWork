@@ -18,8 +18,8 @@ app:
   geocoding-service-geocoding-uri: /coordinates
   health-check-uri: /actuator/health
   eureka:
-    username: ${EUREKA_USERNAME}
-    password: ${EUREKA_PASSWORD}
+    username: '{cipher}26b8501e1e4453ddef760a5c0b0c208e53e2a3e1a560c638e87b5fd2cbabfa73'
+    password: '{cipher}40a63f84add14a8be2d18b85ea96fadc07f193e6d519cb98c2f83f9d422b31e9a84d60497d0b6acc8e1567d0a4cf0d63'
     server: localhost
 
 
