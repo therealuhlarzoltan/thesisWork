@@ -63,6 +63,8 @@ resilience4j:
         limitRefreshPeriod: 1s
         timeoutDuration: 5s
 
+spring:
+
   cloud:
     function:
       definition: messageProcessor
