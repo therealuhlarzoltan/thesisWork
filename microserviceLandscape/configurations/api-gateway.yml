@@ -199,9 +199,8 @@ spring:
           secret: ${app.jwt.secret}
 
 swagger:
-  username: ${SWAGGER_USERNAME}
-  password: ${SWAGGER_PASSWORD}
-
+  username: '{cipher}2946a104bb07d4f386659b2c8a4f0de6d18ca0de8139393272d70e2e5d7d8f26'
+  password: '{cipher}26c480a59e8c370806e9fc3c5f7000483a24e3de8d0e76242309964304de525d'
 
 management.endpoint.gateway.enabled: true
 
