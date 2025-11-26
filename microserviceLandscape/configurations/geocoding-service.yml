@@ -1,6 +1,6 @@
 app:
-  threadPoolSize: 24
-  taskQueueSize: 750
+  threadPoolSize: 4
+  taskQueueSize: 250
 
 server:
   port: 8003
@@ -35,12 +35,12 @@ resilience4j:
         waitDurationInOpenState: 10000
         recordExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
           - org.springframework.web.reactive.function.client.WebClientRequestException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
 
   retry:
     instances:
@@ -49,19 +49,19 @@ resilience4j:
         waitDuration: 1000
         retryExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
-          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
           - org.springframework.web.reactive.function.client.WebClientRequestException
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
 
   ratelimiter:
     instances:
       geocodingApi:
         limitForPeriod: 10
         limitRefreshPeriod: 1s
-        timeoutDuration: 15s
+        timeoutDuration: 5s
 
 spring:
   rabbitmq:

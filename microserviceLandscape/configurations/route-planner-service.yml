@@ -280,9 +280,12 @@ resilience4j:
 caching:
   geocoding:
     cache-duration-in-minutes: 360
-    cache-size: 3000
+    cache-size: 2000
   weather:
     cache-duration-in-minutes: 10
+    cache-size: 1000
+  route:
+    cache-duration-in-seconds: 60
     cache-size: 500
 
 springdoc:
