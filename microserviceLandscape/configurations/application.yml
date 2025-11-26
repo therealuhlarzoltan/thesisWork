@@ -34,10 +34,17 @@ eureka:
     leaseExpirationDurationInSeconds: 5
     preferIpAddress: true
 
+spring.rabbitmq:
+  host: 127.0.0.1
+  port: 5672
+  username: '{cipher}9c1f77865023461b5b0c337a09ef7eb0ebc752aac3bc935c05801b0207306ecf'
+  password: '{cipher}ae14a8a44a76b816aff66bfb5be8d7bd7db9876a9b70a08a77d88ff89fa2ac87'
+
 ---
 spring.config.activate.on-profile: docker
 
 app:
   eureka.server: eureka-server
 
-spring.rabbitmq.host: rabbitmq
+spring.rabbitmq:
+  host: rabbitmq
