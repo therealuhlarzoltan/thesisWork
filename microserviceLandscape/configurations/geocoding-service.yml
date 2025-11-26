@@ -11,7 +11,7 @@ maps.api:
   base-url: https://maps.googleapis.com/maps/api
   geocoding-url: /geocode/json
   country-code : Hungary
-  api-key: ${MAPS_API_KEY}
+  api-key: '{cipher}c0c007c88f39d04e53d2d9266e6eae4be464c5cc88ee3ff9d2fe164099df17f0f838e82e0bdf2ef1145df81d0c7e46e45ef9b1f537f6d03fc920a8f71d172002'
 
 tcp:
   connection:
