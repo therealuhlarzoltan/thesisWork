@@ -1,6 +1,6 @@
 app:
-  threadPoolSize: 24
-  taskQueueSize: 750
+  threadPoolSize: 8
+  taskQueueSize: 500
 
 server:
   port: 8001
@@ -53,7 +53,7 @@ resilience4j:
       getWeatherDataApi:
         limitForPeriod: 10
         limitRefreshPeriod: 1s
-        timeoutDuration: 15s
+        timeoutDuration: 3s
 
 spring:
   rabbitmq:

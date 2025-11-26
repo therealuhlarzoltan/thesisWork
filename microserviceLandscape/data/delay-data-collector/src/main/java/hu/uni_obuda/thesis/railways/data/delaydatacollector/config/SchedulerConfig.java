@@ -11,9 +11,9 @@ import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJ
 import hu.uni_obuda.thesis.railways.util.scheduler.repository.ReactiveCompositeJobRepositoryImpl;
 import hu.uni_obuda.thesis.railways.util.scheduler.repository.util.JobModifiedEventHandler;
 import hu.uni_obuda.thesis.railways.util.scheduler.scanner.ReactiveScheduledJobScanner;
+import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,7 +43,7 @@ public class SchedulerConfig {
         return new JobModifiedEventHandler<>(intervalRepository, dateRepository);
     }
 
-    @ConditionalOnBean(FlywayAutoConfiguration.class)
+    @ConditionalOnBean(Flyway.class)
     @DependsOn("flyway")
     @Bean
     public ReactiveCompositeJobRepository<ScheduledJobEntity> compositeJobRepository(
