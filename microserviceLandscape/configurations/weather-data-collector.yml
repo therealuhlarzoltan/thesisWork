@@ -55,14 +55,6 @@ resilience4j:
         limitRefreshPeriod: 1s
         timeoutDuration: 3s
 
-spring:
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: ${RABBIT_MQ_USERNAME}
-    password: ${RABBIT_MQ_PASSWORD}
-
-
   cloud:
     function:
       definition: messageProcessor
