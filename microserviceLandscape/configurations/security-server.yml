@@ -5,7 +5,7 @@ server:
 
 jwt:
   access:
-    secret: ${JWT_SECRET}
+    secret: ${app.jwt.secret}
     expiration-ms: 120000
   refresh:
     secret: ${JWT_REFRESH_SECRET}

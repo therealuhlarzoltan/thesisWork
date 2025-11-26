@@ -21,6 +21,8 @@ app:
     username: '{cipher}26b8501e1e4453ddef760a5c0b0c208e53e2a3e1a560c638e87b5fd2cbabfa73'
     password: '{cipher}40a63f84add14a8be2d18b85ea96fadc07f193e6d519cb98c2f83f9d422b31e9a84d60497d0b6acc8e1567d0a4cf0d63'
     server: localhost
+  jwt:
+    secret: '{cipher}ec0e48f689aec2a53a829f17342174ddb5c20739dec8740a4ff81a3146dd2d1424fe0136ca891ba8d8a86a1483cf55b083c474808aebd23b8f60a3296f09152b'
 
 
 eureka:

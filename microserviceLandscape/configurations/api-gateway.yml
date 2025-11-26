@@ -3,7 +3,7 @@ server.port: 8443
 server.ssl:
   key-store-type: PKCS12
   key-store: classpath:keystore/certificate.p12
-  key-store-password: ${KEY_STORE_PASSWORD}
+  key-store-password: '{cipher}f2b56ea0b1b0f080cc4f9d51bc1d06fa5534c0f9caa9b282e321c29e1b360f5c7725bbe0ea2219bea36ca85df3f40ab5'
   key-alias: localhost
 
 frontend.url: http://localhost:3000
@@ -196,7 +196,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          secret: ${JWT_SECRET}
+          secret: ${app.jwt.secret}
 
 swagger:
   username: ${SWAGGER_USERNAME}
