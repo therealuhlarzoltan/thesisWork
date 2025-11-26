@@ -8,18 +8,21 @@ jwt:
     secret: ${app.jwt.secret}
     expiration-ms: 120000
   refresh:
-    secret: ${JWT_REFRESH_SECRET}
+    secret: '{cipher}afe169f253cd6e4099581b5a1169585409b97b8c64130e7ce582daed71a877e53254308994d40c2fc8eb458f6166498c0317ecbe880b8191d362e2a173960fa6058dac05175b2718b1c91d7290c9e38367da196b6e0f32bdf84a3b154f6e3bef'
     expiration-ms: 86400000
 
 role:
   default.name: ROLE_USER
   admin.name: ROLE_ADMIN
 
+postgres:
+  db-name: '{cipher}05dd68c9790086ee7674ba2104c0590f03efa7b5b4bcff96b6b06476549be71b'
+
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
-    username: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/${postgres.db-name}
+    username: '{cipher}0bb4a18d16ec78b6cbb2e6bbc77c7147633a54ce5d7f7c06401fc3a86a1c630a'
+    password: '{cipher}035c0a44b57dc80f112dd97037e560dc9a497bd599626fa5eacc0bd80268885b'
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -31,9 +34,9 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
-    user: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/${postgres.db-name}
+    user: '{cipher}0bb4a18d16ec78b6cbb2e6bbc77c7147633a54ce5d7f7c06401fc3a86a1c630a'
+    password: '{cipher}035c0a44b57dc80f112dd97037e560dc9a497bd599626fa5eacc0bd80268885b'
 
 springdoc:
   swagger-ui:
@@ -57,8 +60,8 @@ spring.activate.on-profile: docker
 
 spring:
   datasource:
-    url: jdbc:postgresql://postgresql-3:5432/${POSTGRES_DB_NAME}
+    url: jdbc:postgresql://postgresql-3:5432/${postgres.db-name}
   flyway:
-    url: jdbc:postgresql://postgresql-3:5432/${POSTGRES_DB_NAME}
+    url: jdbc:postgresql://postgresql-3:5432/${postgres.db-name}
 
 
