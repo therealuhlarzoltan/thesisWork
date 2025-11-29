@@ -36,6 +36,7 @@ resilience4j:
         recordExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - org.springframework.web.reactive.function.client.WebClientRequestException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
         ignoreExceptions:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
@@ -55,6 +56,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
 
   ratelimiter:
     instances:

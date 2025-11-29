@@ -31,6 +31,7 @@ resilience4j:
           - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getTrainRoute:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -51,6 +52,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getTrainStation:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -71,6 +73,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getWeatherInfo:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -92,6 +95,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getArrivalDelay:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -113,6 +117,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getDepartureDelay:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -134,6 +139,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getCoordinates:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -154,6 +160,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
   retry:
     instances:
       getTimetable:
@@ -167,6 +174,7 @@ resilience4j:
           - java.util.concurrent.TimeoutException
         ignoreExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getTrainRoute:
         maxAttempts: 3
         waitDuration: 1000
@@ -177,6 +185,7 @@ resilience4j:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
         ignoreExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getTrainStation:
         maxAttempts: 3
         waitDuration: 1000
@@ -187,10 +196,11 @@ resilience4j:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
         ignoreExceptions:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.EntityNotFoundException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getWeatherInfo:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
           - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
@@ -202,10 +212,11 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getArrivalDelay:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
           - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
@@ -217,10 +228,11 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getDepartureDelay:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
           - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
@@ -232,10 +244,11 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getCoordinates:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
           - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
@@ -246,6 +259,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException$Unauthorized
           - org.springframework.web.reactive.function.client.WebClientResponseException$Forbidden
           - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
   ratelimiter:
     instances:
       getTimetable:

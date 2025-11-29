@@ -32,6 +32,8 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10000
+        ignoreExceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
         recordExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
@@ -47,6 +49,8 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+        ignoreExceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
 
   ratelimiter:
     instances:
