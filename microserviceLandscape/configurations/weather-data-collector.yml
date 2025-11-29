@@ -12,12 +12,6 @@ weather.api:
   forecast-url: /v1/forecast
   time-zone: Europe/Berlin
 
-maps.api:
-  base-url: https://maps.googleapis.com/maps/api
-  geocoding-url: /geocode/json
-  country-code : HU
-  api-key: ${MAPS_API_KEY}
-
 tcp:
   connection:
     timeout-in-ms: 15000

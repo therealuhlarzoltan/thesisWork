@@ -1,0 +1,18 @@
+spring:
+  config:
+    import: "optional:classpath:/"
+
+app:
+  rail-data-collector-url: http://rail-data-collector
+  rail-data-collector-route-planner-uri: /plan-route
+  weather-data-collector-url: http://weather-data-collector
+  weather-data-collector-collect-weather-uri: /collect-weather-info
+  geocoding-service-url: http://geocoding-service
+  delay-data-collector-url: http://delay-data-collector
+  delay-data-collector-train-route-uri: /train-routes
+  delay-data-collector-train-station-uri: /train-stations
+  delay-predictor-service-url: http://delay-predictor-service
+  delay-predictor-service-arrival-uri: /prediction/delay/arrival
+  delay-predictor-service-departure-uri: /prediction/delay/departure
+  geocoding-service-geocoding-uri: /coordinates
+  health-check-uri: /actuator/health

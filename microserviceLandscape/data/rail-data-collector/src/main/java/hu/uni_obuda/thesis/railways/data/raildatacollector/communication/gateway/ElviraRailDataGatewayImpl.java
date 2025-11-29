@@ -16,6 +16,7 @@ import io.github.resilience4j.reactor.ratelimiter.operator.RateLimiterOperator;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.RetryRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -29,10 +30,9 @@ import java.time.LocalDate;
 
 @Profile("data-source-elvira")
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class ElviraRailDataGatewayImpl implements ElviraRailDataGateway {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ElviraRailDataGatewayImpl.class);
 
     private final ElviraRailDataWebClient webClient;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
@@ -41,7 +41,7 @@ public class ElviraRailDataGatewayImpl implements ElviraRailDataGateway {
 
     @Override
     public Mono<ElviraShortTimetableResponse> getShortTimetable(String from, String to, LocalDate date) {
-        LOG.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
+        log.debug("Called short timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getShortTimetable(from, to, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTimetableApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTimetableApi")))
@@ -51,7 +51,7 @@ public class ElviraRailDataGatewayImpl implements ElviraRailDataGateway {
 
     @Override
     public Mono<ElviraShortTrainDetailsResponse> getShortTrainDetails(String trainUri) {
-        LOG.debug("Called train details gateway with uri {}", trainUri);
+        log.debug("Called train details gateway with uri {}", trainUri);
         return webClient.getShortTrainDetails(trainUri)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getTrainDetailsApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getTrainDetailsApi")))
@@ -61,7 +61,7 @@ public class ElviraRailDataGatewayImpl implements ElviraRailDataGateway {
 
     @Override
     public Mono<ElviraTimetableResponse> getTimetable(String from, String to, LocalDate date) {
-        LOG.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
+        log.debug("Called full timetable gateway with parameters {}, {}, {}", from, to, date);
         return webClient.getTimetable(from, to, date)
                 .transformDeferred(RateLimiterOperator.of(rateLimiterRegistry.rateLimiter("getFullTimetableApi")))
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreakerRegistry.circuitBreaker("getFullTimetableApi")))
@@ -71,15 +71,15 @@ public class ElviraRailDataGatewayImpl implements ElviraRailDataGateway {
 
     private <T> Mono<T> handleFallback(Throwable throwable) {
         if (throwable instanceof CallNotPermittedException callNotPermittedException) {
-            LOG.error("Circuit breaker is open", callNotPermittedException);
+            log.error("Circuit breaker is open", callNotPermittedException);
         } else if (throwable instanceof RequestNotPermitted requestNotPermittedException) {
-            LOG.error("Rate limit is exceeded", requestNotPermittedException);
+            log.error("Rate limit is exceeded", requestNotPermittedException);
         }
         ApiException apiException;
         try {
             apiException = resolveApiException(throwable);
         } catch (MalformedURLException e) {
-            LOG.error("Encountered a Malformed URL while trying to resolve API Exception", e);
+            log.error("Encountered a Malformed URL while trying to resolve API Exception", e);
             apiException = new InternalApiException("Encountered a Malformed URL while trying to resolve API Exception", null);
         }
         return Mono.error(apiException);

@@ -106,10 +106,22 @@ public class ApplicationConfig {
         return new YamlGraphQlVariableLoader("graphql/emma/default-variables");
     }
 
+    @Profile("data-source-elvira")
     @Bean
-    public ObjectMapper objectMapper() {
+    public ObjectMapper elviraObjectMapper() {
         SimpleModule timetableModule = new SimpleModule();
         timetableModule.addDeserializer(ElviraTimetableResponse.class, new TimetableResponseDeserializer());
+        return new ObjectMapper()
+                .registerModule(timetableModule)
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) // makes it ISO8601
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    @Profile("data-source-emma")
+    @Bean
+    public ObjectMapper emmaObjectMapper() {
+        SimpleModule timetableModule = new SimpleModule();
         return new ObjectMapper()
                 .registerModule(timetableModule)
                 .registerModule(new JavaTimeModule())

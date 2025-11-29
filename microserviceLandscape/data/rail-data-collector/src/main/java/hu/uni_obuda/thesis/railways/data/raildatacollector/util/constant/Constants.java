@@ -8,8 +8,10 @@ public class Constants {
 
     }
 
-    public static final Map<Character, Character> STATION_CODE_MAPPING = Map.of(
+    private static final Map<Character, Character> stationCodeMapping = Map.of(
             'ő', 'õ',
-            'ű', 'û'
+            'ű', 'û',
+            'Ő', 'Õ',
+            'Ű', 'Û'
     );
 }

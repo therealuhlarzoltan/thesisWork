@@ -32,12 +32,12 @@ public class SchedulerControllerImpl implements SchedulerController {
     }
 
     @Override
-    public Mono<ScheduledJobResponse> createJob(@Valid ScheduledJobRequest request) {
+    public Mono<ScheduledJobResponse> createJob(@Valid @RequestBody ScheduledJobRequest request) {
         return jobService.create(request);
     }
 
     @Override
-    public Mono<ScheduledJobResponse> updateJob(@PathVariable("jobId") int id, @Valid ScheduledJobRequest request) {
+    public Mono<ScheduledJobResponse> updateJob(@PathVariable("jobId") int id, @Valid @RequestBody ScheduledJobRequest request) {
         return jobService.update(id, request);
     }
 
@@ -57,12 +57,12 @@ public class SchedulerControllerImpl implements SchedulerController {
     }
 
     @Override
-    public Mono<ScheduledDateResponse> createDate(@Valid ScheduledDateRequest request) {
+    public Mono<ScheduledDateResponse> createDate(@Valid @RequestBody ScheduledDateRequest request) {
         return ScheduledDateRequestValidator.validate(request).flatMap(dateService::create);
     }
 
     @Override
-    public Mono<ScheduledDateResponse> updateDate(@PathVariable("dateId") int id, @Valid ScheduledDateRequest request) {
+    public Mono<ScheduledDateResponse> updateDate(@PathVariable("dateId") int id, @Valid @RequestBody ScheduledDateRequest request) {
         return ScheduledDateRequestValidator.validate(request).flatMap(date -> dateService.update(id, date));
     }
 
@@ -87,7 +87,7 @@ public class SchedulerControllerImpl implements SchedulerController {
     }
 
     @Override
-    public Mono<ScheduledIntervalResponse> updateInterval(@PathVariable("intervalId") int id, @Valid ScheduledIntervalRequest request) {
+    public Mono<ScheduledIntervalResponse> updateInterval(@PathVariable("intervalId") int id, @Valid @RequestBody ScheduledIntervalRequest request) {
         return intervalService.update(id, request);
     }
 

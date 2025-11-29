@@ -1,0 +1,15 @@
+spring:
+  config:
+    import: "optional:classpath:/"
+  flyway:
+    locations:
+      - classpath:db/migration
+
+app:
+  rail-data-collector-url: http://rail-data-collector
+  rail-data-collector-route-planner-uri: /plan-route
+  weather-data-collector-url: http://weather-data-collector
+  weather-data-collector-collect-weather-uri: /collect-weather-info
+  geocoding-service-url: http://geocoding-service
+  geocoding-service-geocoding-uri: /coordinates
+  health-check-uri: /actuator/health

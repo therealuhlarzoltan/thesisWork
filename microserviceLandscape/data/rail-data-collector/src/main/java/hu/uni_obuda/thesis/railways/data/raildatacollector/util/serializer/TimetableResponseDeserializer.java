@@ -14,7 +14,7 @@ import java.util.List;
 public class TimetableResponseDeserializer extends JsonDeserializer<ElviraTimetableResponse> {
 
     @Override
-    public ElviraTimetableResponse deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public ElviraTimetableResponse deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
         ObjectMapper mapper = (ObjectMapper) p.getCodec();
         JsonNode root = mapper.readTree(p);
 

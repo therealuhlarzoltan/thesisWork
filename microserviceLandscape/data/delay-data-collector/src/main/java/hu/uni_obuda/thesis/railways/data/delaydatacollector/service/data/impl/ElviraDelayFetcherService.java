@@ -1,7 +1,7 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.impl;
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayFetcherService;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.workers.messaging.senders.MessageSender;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.worker.messaging.sender.MessageSender;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
 import org.slf4j.Logger;

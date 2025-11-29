@@ -1,0 +1,105 @@
+query Plan(
+  $arriveBy: Boolean
+  $banned: InputBanned
+  $bikeReluctance: Float
+  $carReluctance: Float
+  $date: String
+  $fromPlace: String!
+  $modes: [TransportMode]
+  $numItineraries: Int
+  $preferred: InputPreferred
+  $time: String
+  $toPlace: String!
+  $unpreferred: InputUnpreferred
+  $walkReluctance: Float
+  $walkSpeed: Float
+  $wheelchair: Boolean
+  $minTransferTime: Int
+  $transitPassFilter: [String]
+  $comfortLevels: [String]
+  $searchParameters: [String]
+  $distributionChannel: String!
+  $distributionSubChannel: String!
+  $passengers: [PassengerInput]
+  $searchWindow: Long
+) {
+  plan(
+    arriveBy: $arriveBy
+    banned: $banned
+    bikeReluctance: $bikeReluctance
+    carReluctance: $carReluctance
+    date: $date
+    fromPlace: $fromPlace
+    locale: "en"
+    numItineraries: $numItineraries
+    preferred: $preferred
+    time: $time
+    toPlace: $toPlace
+    transportModes: $modes
+    unpreferred: $unpreferred
+    walkReluctance: $walkReluctance
+    walkSpeed: $walkSpeed
+    wheelchair: $wheelchair
+    minTransferTime: $minTransferTime
+    transitPassFilter: $transitPassFilter
+    comfortLevels: $comfortLevels
+    searchParameters: $searchParameters
+    distributionChannel: $distributionChannel
+    distributionSubChannel: $distributionSubChannel
+    passengers: $passengers
+    searchWindow: $searchWindow
+  ) {
+    itineraries {
+      duration
+      numberOfTransfers
+      endTime
+      legs {
+        agency {
+            name
+            timezone
+        }
+        arrivalDelay
+        departureDelay
+        distance
+        duration
+        endTime
+        from {
+            lat
+            lon
+            name
+            stop {
+                id
+                timezone
+            }
+            vertexType
+        }
+        to {
+            lat
+            lon
+            name
+            stop {
+                id
+                timezone
+            }
+            vertexType
+        }
+        headsign
+        mode
+        route {
+          longName
+        }
+        startTime
+        transitLeg
+        serviceDate
+        trip {
+            tripShortName
+            tripHeadsign
+            isThroughCoach
+            }
+        }
+      startTime
+      waitingTime
+      walkTime
+    }
+  }
+}

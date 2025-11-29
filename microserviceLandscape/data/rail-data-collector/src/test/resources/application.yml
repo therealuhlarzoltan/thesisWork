@@ -1,0 +1,17 @@
+spring:
+  config:
+    import: "optional:classpath:/"
+
+---
+spring.activate.on-profile: data-source-emma
+railway.api:
+  base-url: https://rail-data-provider.com
+  timetable-getter-uri: //api/graphql
+  train-details-getter-uri: //api/graphql
+  graphql.short-timetable-document: Plan
+  graphql.long-timetable-document: RoutePlan
+  graphql.short-train-details-document: Trip
+  rate:
+    limit:
+      delay-between-requests: 2000
+      number-of-concurrent-calls: 4

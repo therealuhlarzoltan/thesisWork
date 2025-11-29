@@ -62,11 +62,6 @@ public class DelayServiceImpl implements DelayService {
         this.scheduler = scheduler;
     }
 
-    @Override
-    public Flux<DelayInfo> getTrainDelays() {
-        return delayRepository.findAll().map(delayMapper::entityToApi);
-    }
-
     public void processDelays(Flux<DelayInfo> delayInfos) {
         delayInfos
             .flatMap(delayInfo -> {

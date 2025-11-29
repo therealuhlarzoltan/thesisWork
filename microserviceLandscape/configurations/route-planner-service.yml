@@ -3,18 +3,6 @@ server:
   error.include-message: always
   forward-headers-strategy: framework
 
-railway.api:
-  base-url: http://rail-data-collector
-  timetable-getter-uri: /route
-
-weather.api:
-  base-url: http://weather-data-collector
-  forecast-uri: /forecast
-
-station.api:
-  base-url: http://delay-data-collector
-  coordinates-uri: /station/coordinates
-
 tcp:
   connection:
     timeout-in-ms: 30000
