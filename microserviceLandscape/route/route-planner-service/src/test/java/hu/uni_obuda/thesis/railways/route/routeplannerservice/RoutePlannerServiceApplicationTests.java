@@ -273,7 +273,7 @@ class RoutePlannerServiceApplicationTests {
     void planRoute_trainNotEnRoute_predictionsUsed() {
         String from = "Budapest-Nyugati";
         String to = "Szolnok";
-        String departureStr = "2025-01-01T08:00:00";
+        String departureStr = "2025-01-02T08:00:00";
 
         GEOCODING_SERVER.enqueue(jsonResponse(200, geocodingJson(from, 47.4979, 19.0402)));
         GEOCODING_SERVER.enqueue(jsonResponse(200, geocodingJson(to, 47.1730, 20.1950)));
@@ -407,7 +407,7 @@ class RoutePlannerServiceApplicationTests {
     void planRoute_stationCoordinatesMissing_fallsBackToScheduledTimes() {
         String from = "Budapest-Nyugati";
         String to = "Szolnok";
-        String departureStr = "2025-01-01T08:00:00";
+        String departureStr = "2025-01-03T08:00:00";
 
         GEOCODING_SERVER.enqueue(jsonResponse(200, geocodingJson(from, 47.4979, 19.0402)));
         GEOCODING_SERVER.enqueue(jsonResponse(200, geocodingJson(to, 47.1730, 20.1950)));

@@ -38,13 +38,13 @@ public class TrainStationControllerImpl implements TrainStationController {
     }
 
     @Override
-    public Mono<Void> fetchGeolocationForTrainStation(String trainStationCode) {
-        return service.getTrainStationById(trainStationCode).flatMap(entity -> geocodingService.fetchCoordinatesForStation(entity.getStationCode(), false));
+    public Mono<Void> fetchGeolocationForTrainStation(String trainStationCode, boolean force) {
+        return service.getTrainStationById(trainStationCode).flatMap(entity -> geocodingService.fetchCoordinatesForStation(entity.getStationCode(), force));
     }
 
     @Override
-    public Mono<Void> fetchGeolocationForAllTrainStations() {
-        return service.getTrainStations().flatMap(entity -> geocodingService.fetchCoordinatesForStation(entity.getStationCode(), false)).then();
+    public Mono<Void> fetchGeolocationForAllTrainStations(boolean force) {
+        return service.getTrainStations().flatMap(entity -> geocodingService.fetchCoordinatesForStation(entity.getStationCode(), force)).then();
     }
 
     @Override

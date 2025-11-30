@@ -37,6 +37,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getTrainDetailsApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -55,6 +56,7 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getFullTimetableApi:
         allowHealthIndicatorToFail: false
         registerHealthIndicator: true
@@ -73,12 +75,13 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
   retry:
     instances:
       getTimetableApi:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
@@ -87,10 +90,11 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getTrainDetailsApi:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
@@ -99,10 +103,11 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
       getFullTimetableApi:
         maxAttempts: 3
         waitDuration: 1000
-        recordExceptions:
+        retryExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
@@ -111,28 +116,24 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
           - org.springframework.web.reactive.function.client.WebClientResponseException.NotFound
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.InternalApiException
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
 
   ratelimiter:
     instances:
       getTimetableApi:
-        limitForPeriod: 5
+        limitForPeriod: 3
         limitRefreshPeriod: 1s
-        timeoutDuration: 15s
+        timeoutDuration: 5s
       getTrainDetailsApi:
         limitForPeriod: 5
         limitRefreshPeriod: 1s
-        timeoutDuration: 15s
+        timeoutDuration: 5s
       getFullTimetableApi:
-        limitForPeriod: 5
+        limitForPeriod: 3
         limitRefreshPeriod: 1s
-        timeoutDuration: 15s
+        timeoutDuration: 5s
 
 spring:
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: ${RABBIT_MQ_USERNAME}
-    password: ${RABBIT_MQ_PASSWORD}
 
   data:
     redis:

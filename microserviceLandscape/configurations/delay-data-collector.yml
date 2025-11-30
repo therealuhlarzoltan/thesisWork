@@ -1,20 +1,23 @@
 app:
   messaging:
     sending:
-      threadPoolSize: 24
-      taskQueueSize: 750
+      threadPoolSize: 4
+      taskQueueSize: 400
     processing:
-      threadPoolSize: 24
-      taskQueueSize: 750
+      threadPoolSize: 8
+      taskQueueSize: 800
   data:
     processing:
-      threadPoolSize: 24
+      threadPoolSize: 8
       taskQueueSize: 750
 
 server:
   port: 8002
   error.include-message: always
   forward-headers-strategy: framework
+
+postgres:
+  db-name: '{cipher}021b8af16a1939ccb7dabd394e818ca497a6f1f5f170af0daade871c54c31c3d'
 
 caching:
   delay:
@@ -35,30 +38,23 @@ messaging:
 spring:
 
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
-    username: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    url: r2dbc:postgresql://localhost:5432/${postgres.db-name}
+    username: '{cipher}ed0566f145e6a997dcd582014855b0570d5fe08883c4f5d46b0594e3ebf01792'
+    password: '{cipher}06cf7a454787cbf8fe2f3f1e913a8cfba038cb6cc4f62e2274ac23105d60c8e8'
 
   flyway:
     database-type: postgresql
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB_NAME}
-    user: ${POSTGRES_USERNAME}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/${postgres.db-name}
+    user: '{cipher}ed0566f145e6a997dcd582014855b0570d5fe08883c4f5d46b0594e3ebf01792'
+    password: '{cipher}06cf7a454787cbf8fe2f3f1e913a8cfba038cb6cc4f62e2274ac23105d60c8e8'
 
   data:
     redis:
       host: localhost
       port: 6379
-
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: ${RABBIT_MQ_USERNAME}
-    password: ${RABBIT_MQ_PASSWORD}
-
 
   cloud:
     function:
@@ -162,9 +158,9 @@ server.port: 8080
 
 spring:
   r2dbc:
-    url: r2dbc:postgresql://postgresql-1:5432/${POSTGRES_DB_NAME}
+    url: r2dbc:postgresql://postgresql-1:5432/${postgres.db-name}
   flyway:
-    url: jdbc:postgresql://postgresql-1:5432/${POSTGRES_DB_NAME}
+    url: jdbc:postgresql://postgresql-1:5432/${postgres.db-name}
   data:
     redis:
       host: redis-1
