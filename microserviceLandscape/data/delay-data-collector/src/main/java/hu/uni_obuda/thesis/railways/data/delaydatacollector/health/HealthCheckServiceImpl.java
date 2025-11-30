@@ -60,7 +60,7 @@ public class HealthCheckServiceImpl implements HealthCheckService {
                         .filter(this::shouldRetry)
                 )
                 .onErrorResume(ex -> {
-                    log.error("An error occurred while calling the Health API on URL: {}", url, ex);
+                    log.debug("An error occurred while calling the Health API on URL: {}", url, ex);
                     if (isNecessary) {
                         return Mono.just(Health.down(ex).build());
                     } else {

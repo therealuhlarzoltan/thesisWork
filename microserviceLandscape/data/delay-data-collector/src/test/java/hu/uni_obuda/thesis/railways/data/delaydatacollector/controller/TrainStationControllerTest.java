@@ -67,7 +67,7 @@ class TrainStationControllerTest {
         when(geocodingService.fetchCoordinatesForStation(code, false))
                 .thenReturn(Mono.empty());
 
-        Mono<Void> result = testedObject.fetchGeolocationForTrainStation(code);
+        Mono<Void> result = testedObject.fetchGeolocationForTrainStation(code, false);
 
         StepVerifier.create(result)
                 .verifyComplete();
@@ -90,7 +90,7 @@ class TrainStationControllerTest {
         when(geocodingService.fetchCoordinatesForStation(anyString(), eq(false)))
                 .thenReturn(Mono.empty());
 
-        Mono<Void> result = testedObject.fetchGeolocationForAllTrainStations();
+        Mono<Void> result = testedObject.fetchGeolocationForAllTrainStations(false);
 
         StepVerifier.create(result)
                 .verifyComplete();

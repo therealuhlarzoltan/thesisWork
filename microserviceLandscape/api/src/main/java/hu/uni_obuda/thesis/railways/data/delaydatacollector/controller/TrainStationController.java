@@ -15,9 +15,9 @@ public interface TrainStationController {
     @GetMapping
     Flux<TrainStationResponse> getTrainStations(@RequestParam(required = false) String stationCode);
     @PatchMapping("fetch/{trainStationCode}")
-    Mono<Void> fetchGeolocationForTrainStation(@PathVariable String trainStationCode);
+    Mono<Void> fetchGeolocationForTrainStation(@PathVariable String trainStationCode, @RequestParam boolean force);
     @PatchMapping("fetch/all")
-    Mono<Void> fetchGeolocationForAllTrainStations();
+    Mono<Void> fetchGeolocationForAllTrainStations(@RequestParam boolean force);
     @DeleteMapping
     Mono<Void> deleteTrainStation(@RequestParam String stationName);
 }

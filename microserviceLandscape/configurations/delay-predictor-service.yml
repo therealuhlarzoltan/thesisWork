@@ -1,11 +1,11 @@
 db:
-  name: ${DJANGO_DB_NAME}
-  user: ${DJANGO_DB_USER}
-  password: ${DJANGO_DB_PASSWORD}
+  name: '{cipher}b53dd019d2def5db31d7d5d76b62014f5b4c8fdfb440208e5692f3cc963d98cdf5191c7b93d04c280d312a7378c4f4fb'
+  user: '{cipher}abba65c491c4ad0a020d90c1b63e6d5599db8834a03f1b796291a20c207bf62e'
+  password: '{cipher}b64ba400eb93359b07d2033015eceb4c65e2ce930a3d941ffa51a59bab9c78db9320f0ff50f04198e9f4c1d2bd1aaa17'
   host: localhost
   port: 5433
 
-secret.key: ${DJANGO_SECRET_KEY}
+secret.key: '{cipher}b028a051b668a3a5e1eb328ce8d2d6afd87339980331559396a8b5f6d357443b731a4da9e9809d89772adad37ea5bafc5a0a869b03f29f2971315b32366397bfb01e3cd668e261958f5260a3b12a8c5a'
 
 rabbitmq:
   host: localhost

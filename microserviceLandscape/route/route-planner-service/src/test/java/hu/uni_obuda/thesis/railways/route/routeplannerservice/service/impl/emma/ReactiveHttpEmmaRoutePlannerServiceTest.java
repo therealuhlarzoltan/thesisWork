@@ -2,6 +2,7 @@ package hu.uni_obuda.thesis.railways.route.routeplannerservice.service.impl.emma
 
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.TrainStationResponse;
 import hu.uni_obuda.thesis.railways.data.geocodingservice.dto.GeocodingResponse;
+import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.TrainRouteResponse;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionRequest;
 import hu.uni_obuda.thesis.railways.model.dto.DelayPredictionResponse;
@@ -15,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.github.benmanes.caffeine.cache.Cache;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -32,19 +34,16 @@ class ReactiveHttpEmmaRoutePlannerServiceTest {
 
     @Mock
     private EmmaTimetableService timetableService;
-
+    @Mock
+    private Cache<String, List<TrainRouteResponse>> routeCache;
     @Mock
     private GeocodingService geocodingService;
-
     @Mock
     private StationService stationService;
-
     @Mock
     private WeatherService weatherService;
-
     @Mock
     private PredictionService predictionService;
-
     @Mock
     private TimetableProcessingHelper helper;
 

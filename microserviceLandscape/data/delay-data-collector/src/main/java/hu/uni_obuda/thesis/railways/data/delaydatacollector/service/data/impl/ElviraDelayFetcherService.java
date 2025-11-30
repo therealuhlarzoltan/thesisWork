@@ -4,8 +4,7 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayFe
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.worker.messaging.sender.MessageSender;
 import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -17,9 +16,8 @@ import java.time.LocalDate;
 
 @Profile("data-source-elvira")
 @Service
+@Slf4j
 public class ElviraDelayFetcherService implements DelayFetcherService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ElviraDelayFetcherService.class);
 
     private final Scheduler scheduler;
     private final MessageSender messageSender;
@@ -32,7 +30,7 @@ public class ElviraDelayFetcherService implements DelayFetcherService {
 
     @Override
     public void fetchDelay(String trainNumber, String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
-        LOG.info("Fetching delay for train number {}", trainNumber);
+        log.info("Fetching delay for train number {}", trainNumber);
         Mono.fromRunnable(() -> {
             DelayInfoRequest delayInfoRequest = new DelayInfoRequest(trainNumber, from, -1, -1, to, -1, -1, date);
             CrudEvent<String, DelayInfoRequest> crudEvent = new CrudEvent<>(CrudEvent.Type.GET, trainNumber, delayInfoRequest);
@@ -42,7 +40,7 @@ public class ElviraDelayFetcherService implements DelayFetcherService {
 
     @Override
     public void fetchDelay(String correlationId, String trainNumber, String from, double fromLatitude, double fromLongitude, String to, double toLatitude, double toLongitude, LocalDate date) {
-        LOG.info("Fetching delay for train number {}", trainNumber);
+        log.info("Fetching delay for train number {}", trainNumber);
         Mono.fromRunnable(() -> {
             DelayInfoRequest delayInfoRequest = new DelayInfoRequest(trainNumber, from, -1, -1, to, -1, -1, date);
             CrudEvent<String, DelayInfoRequest> crudEvent = new CrudEvent<>(CrudEvent.Type.GET, trainNumber, delayInfoRequest);

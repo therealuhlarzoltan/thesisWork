@@ -1,6 +1,6 @@
 app:
-  threadPoolSize: 24
-  taskQueueSize: 750
+  threadPoolSize: 8
+  taskQueueSize: 500
 
 server:
   port: 8001
@@ -32,6 +32,8 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 10000
+        ignoreExceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
         recordExceptions:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
@@ -47,21 +49,17 @@ resilience4j:
           - org.springframework.web.reactive.function.client.WebClientRequestException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
+        ignoreExceptions:
+          - io.github.resilience4j.ratelimiter.RequestNotPermitted
 
   ratelimiter:
     instances:
       getWeatherDataApi:
         limitForPeriod: 10
         limitRefreshPeriod: 1s
-        timeoutDuration: 15s
+        timeoutDuration: 3s
 
 spring:
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: ${RABBIT_MQ_USERNAME}
-    password: ${RABBIT_MQ_PASSWORD}
-
 
   cloud:
     function:

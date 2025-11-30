@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import com.github.benmanes.caffeine.cache.Cache;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,16 +37,14 @@ class ReactiveHttpElviraRoutePlannerServiceTest {
 
     @Mock
     private ElviraTimetableService timetableService;
-
+    @Mock
+    private Cache<String, List<TrainRouteResponse>> routeCache;
     @Mock
     private StationService stationService;
-
     @Mock
     private WeatherService weatherService;
-
     @Mock
     private PredictionService predictionService;
-
     @Mock
     private TimetableProcessingHelper helper;
 
