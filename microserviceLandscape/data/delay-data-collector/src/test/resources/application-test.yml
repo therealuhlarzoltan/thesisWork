@@ -4,6 +4,28 @@ spring:
   flyway:
     locations:
       - classpath:db/migration
+  cloud:
+    function:
+        definition: delayInfoProcessor;weatherInfoProcessor
+    stream:
+      bindings:
+        railDataRequests-out-0:
+          destination: railDataRequests
+          producer:
+            required-groups: auditGroup
+        weatherDataRequests-out-0:
+          destination: weatherDataRequests
+          producer:
+            required-groups: auditGroup
+          content-type: application/json
+        delayInfoProcessor-in-0:
+          destination: railDataResponses
+          group: railDataResponsesGroup
+          contentType: application/json
+        weatherInfoProcessor-in-0:
+          destination: weatherDataResponses
+          group: weatherDataResponsesGroup
+          contentType: application/json
 
 app:
   rail-data-collector-url: http://rail-data-collector
