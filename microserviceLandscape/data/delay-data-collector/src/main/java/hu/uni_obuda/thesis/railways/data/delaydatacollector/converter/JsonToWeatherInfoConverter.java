@@ -1,4 +1,4 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.converters;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;

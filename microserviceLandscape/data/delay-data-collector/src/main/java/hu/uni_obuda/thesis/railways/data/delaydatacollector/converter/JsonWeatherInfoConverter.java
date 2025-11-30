@@ -1,10 +1,8 @@
-package hu.uni_obuda.thesis.railways.data.delaydatacollector.converters;
+package hu.uni_obuda.thesis.railways.data.delaydatacollector.converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import io.r2dbc.postgresql.codec.Json;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.lang.NonNull;

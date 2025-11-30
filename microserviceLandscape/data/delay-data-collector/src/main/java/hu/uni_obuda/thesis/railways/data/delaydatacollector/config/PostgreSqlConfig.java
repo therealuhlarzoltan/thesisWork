@@ -1,9 +1,9 @@
 package hu.uni_obuda.thesis.railways.data.delaydatacollector.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.JsonToWeatherInfoConverter;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.JsonWeatherInfoConverter;
-import hu.uni_obuda.thesis.railways.data.delaydatacollector.converters.WeatherInfoToJsonConverter;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.converter.JsonToWeatherInfoConverter;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.converter.JsonWeatherInfoConverter;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.converter.WeatherInfoToJsonConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
