@@ -214,7 +214,7 @@ railway.api:
 ---
 spring.activate.on-profile: data-source-emma
 railway.api:
-  base-url: https://emma.mav.hu
+  base-url: https://mavplusz.hu
   timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
   train-details-getter-uri: //otp2-backend/otp/routers/default/index/graphql
   graphql.short-timetable-document: Plan
