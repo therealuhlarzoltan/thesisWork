@@ -1,33 +1,50 @@
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OrdinalEncoder
+
+from ..common.commons import (
+    WEATHER_NUM_COLS,
+    WEATHER_BOOL_COLS,
+    ALLOWED_DT_PARTS,
+)
 
 dt_feats = [
-    f'{col}_{part}'
-    for col in ['date','scheduled_departure','scheduled_arrival']
-    for part in ('year','month','day','hour','minute')
+    f"{col}_{part}"
+    for col in ["scheduled_departure", "scheduled_arrival"]
+    for part in ALLOWED_DT_PARTS
 ]
 
-weather_num = [
-    'rain','showers','snow_fall','snow_depth','temperature',
-    'precipitation','wind_speed_at_10m','wind_speed_at_80m',
-    'relative_humidity','visibility_in_meters','cloud_cover_percentage'
+numeric_cols = WEATHER_NUM_COLS + dt_feats + [
+    "max_daily_trains",
+    "mean_stops_per_run",
+    "stop_index",
 ]
 
-numeric_features = weather_num + dt_feats + ["longitude", "latitude"]
-
-categorical_features = [
-    'station_code','train_number',
-    'is_origin','is_terminus','is_weekend','is_holiday'
+categorical_cols = + WEATHER_BOOL_COLS + [
+    "station_cluster",
+    "line_service_cluster",
+    "line_number",
+    "is_origin",
+    "is_terminus",
+    "is_weekend",
+    "is_holiday",
 ]
 
-arrival_preprocessor = ColumnTransformer([
-    ('num', StandardScaler(), numeric_features),
-    ('cat', OneHotEncoder(handle_unknown='ignore'),
-           categorical_features),
+numeric_pipe = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler()),
 ])
 
-departure_preprocessor = ColumnTransformer([
-    ('num', StandardScaler(), numeric_features),
-    ('cat', OneHotEncoder(handle_unknown='ignore'),
-           categorical_features),
+categorical_pipe = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
 ])
+
+arrival_preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", numeric_pipe, numeric_cols),
+        ("cat", categorical_pipe, categorical_cols),
+    ],
+    remainder="drop",
+)
