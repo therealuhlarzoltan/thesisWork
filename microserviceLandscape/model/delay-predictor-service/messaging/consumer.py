@@ -94,7 +94,7 @@ def start_consuming():
                 start_training_for_routing_key(df)
 
             else:
-                print(f"ℹ️ Unknown eventType: {event_type}")
+                print(f"Unknown eventType: {event_type}")
 
         channel.basic_consume(
             queue=queue_name,
