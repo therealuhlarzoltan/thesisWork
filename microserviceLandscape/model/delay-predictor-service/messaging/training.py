@@ -1,5 +1,6 @@
 import threading
 import re
+from cluster_making import apply_cluster_quantile_mask
 
 def convert_keys_to_snake_case(obj):
     def camel_to_snake(name):
@@ -27,11 +28,20 @@ def _train_arrival_model(df):
         import numpy as np
         import pandas as pd
 
-        cleaned = arrival_delay_pipeline.named_steps["cleaning"].fit_transform(df_raw)
+        cleaned = arrival_delay_pipeline.named_steps["cleaning"].fit_transform(df)
+        if "arrival_delay" not in cleaned.columns:
+            raise ValueError("arrival_delay column missing after cleaning")
 
-        y = cleaned["arrival_delay"].copy()
-        X = cleaned.drop(columns=["arrival_delay"])
+        cleaned_masked = apply_cluster_quantile_mask(
+            cleaned,
+            target_col="arrival_delay",
+            cluster_col="line_service_cluster",
+            upper_q=0.98,
+            min_delay=-5.0,
+        )
 
+        y = cleaned_masked["arrival_delay"].copy()
+        X = cleaned_masked.drop(columns=["arrival_delay"])
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42
@@ -63,7 +73,7 @@ def _train_arrival_model(df):
         }])
 
         from model.utils import save_prediction_model
-        save_prediction_model("arrival", arrival_delay_pipeline_v2, metrics_df)
+        save_prediction_model("arrival", arrival_delay_pipeline, metrics_df)
 
         print("Arrival delay pipeline created and saved")
     except Exception as e:
@@ -81,25 +91,52 @@ def _train_departure_model(df):
         import numpy as np
         import pandas as pd
 
-        df_cleaned = departure_delay_pipeline.named_steps['cleaning'].fit_transform(df)
-        y = df_cleaned.pop('departure_delay')
-        X = departure_delay_pipeline.named_steps['preprocessing'].fit_transform(df_cleaned)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        cleaned = departure_delay_pipeline.named_steps["cleaning"].fit_transform(df)
+        if "departure_delay" not in cleaned.columns:
+            raise ValueError("departure_delay column missing after cleaning")
 
-        departure_delay_pipeline.named_steps['predicting'].named_steps['xgb'].fit(
-            X_train, y_train, eval_set=[(X_test, y_test)]
+        cleaned_masked = apply_cluster_quantile_mask(
+            cleaned,
+            target_col="departure_delay",
+            cluster_col="line_service_cluster",
+            upper_q=0.98,
+            min_delay=-5.0,
         )
 
-        y_pred = departure_delay_pipeline.named_steps['predicting'].named_steps['xgb'].predict(X_test)
-        metrics_df = pd.DataFrame({
-            'MAE': [mean_absolute_error(y_test, y_pred)],
-            'MSE': [mean_squared_error(y_test, y_pred)],
-            'RMSE': [np.sqrt(mean_squared_error(y_test, y_pred))],
-            'R2': [r2_score(y_test, y_pred)],
-        })
+        y = cleaned_masked["departure_delay"].copy()
+        X = cleaned_masked.drop(columns=["departure_delay"])
 
-        save_prediction_model('departure', departure_delay_pipeline, metrics_df)
-        print("Departure model trained and saved.")
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+
+        preproc = departure_delay_pipeline.named_steps["preprocessing"]
+        X_train_proc = preproc.fit_transform(X_train)
+        X_test_proc = preproc.transform(X_test)
+
+        xgb = departure_delay_pipeline.named_steps["predicting"].named_steps["xgb"]
+        xgb.fit(
+            X_train_proc,
+            y_train,
+            eval_set=[(X_train_proc, y_train), (X_test_proc, y_test)],
+            verbose=True,
+        )
+
+        y_pred = xgb.predict(X_test_proc)
+        mae = mean_absolute_error(y_test, y_pred)
+        mse = mean_squared_error(y_test, y_pred)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_test, y_pred)
+
+        metrics_df = pd.DataFrame([{
+            "MAE": mae,
+            "MSE": mse,
+            "RMSE": rmse,
+            "R2": r2,
+        }])
+
+        save_prediction_model("departure", departure_delay_pipeline, metrics_df)
+        print("Departure delay pipeline created and saved.")
     except Exception as e:
         import traceback
         print("Departure training error:", e)

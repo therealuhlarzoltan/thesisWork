@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 
-from ..common.commons import (
+from model.common.commons import (
     camel_to_snake,
     ALLOWED_DT_PARTS,
     WEATHER_NUM_COLS,
