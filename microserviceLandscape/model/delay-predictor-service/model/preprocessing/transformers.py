@@ -1,4 +1,4 @@
-from functions import make_delay_preprocessor
+from .functions import make_delay_preprocessor
 
 arrival_delay_preprocessor_pipeline = make_delay_preprocessor()
 departure_delay_preprocessor_pipeline = make_delay_preprocessor()

@@ -1,6 +1,6 @@
 import threading
 import re
-from cluster_making import apply_cluster_quantile_mask
+from .cluster_making import apply_cluster_quantile_mask
 
 def convert_keys_to_snake_case(obj):
     def camel_to_snake(name):

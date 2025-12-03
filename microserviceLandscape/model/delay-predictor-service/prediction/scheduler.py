@@ -1,11 +1,8 @@
 import pickle
 from datetime import timedelta
-
 from django.utils import timezone
-
 from model.models import DelayPredictionModel
 from prediction import model_cache
-
 
 def reload_models():
     print("APScheduler: Reloading ML models from DB...")
@@ -16,7 +13,6 @@ def reload_models():
             DelayPredictionModel.objects
             .filter(delay_type=category, created_at__gte=one_month_ago)
             .order_by('rmse', '-r2')
-            .first()
         )
         db_model = recent_qs.first()
 

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from typing import Iterable, Sequence, Optional, Dict
 
 import holidays
@@ -15,7 +14,6 @@ from model.common.commons import (
     WEATHER_NUM_COLS,
     WEATHER_BOOL_COLS,
 )
-
 
 class DropIdAndUrls(BaseEstimator, TransformerMixin):
     """

@@ -8,8 +8,6 @@ import py_eureka_client.eureka_client as eureka_client
 from spring_config import ClientConfigurationBuilder
 from spring_config.client import SpringConfigClient
 
-
-
 CONFIG_USERNAME = os.getenv("CONFIG_USERNAME", "admin")
 CONFIG_PASSWORD = os.getenv("CONFIG_PASSWORD", "admin")
 
