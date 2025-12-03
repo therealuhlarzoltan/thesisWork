@@ -1,6 +1,6 @@
 from xgboost import XGBRegressor
 
-arrival_xgb_regressor = XGBRegressor(
+arrival_delay_xgb_regressor = XGBRegressor(
     objective="reg:squarederror",
     n_estimators=10000,
     learning_rate=0.095,
@@ -17,7 +17,7 @@ arrival_xgb_regressor = XGBRegressor(
     n_jobs=-1,
 )
 
-departure_xgb_regressor = XGBRegressor(
+departure_delay_xgb_regressor = XGBRegressor(
     objective="reg:squarederror",
     n_estimators=10000,
     learning_rate=0.095,
