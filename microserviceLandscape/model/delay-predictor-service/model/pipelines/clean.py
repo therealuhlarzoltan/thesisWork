@@ -1,4 +1,3 @@
-# model/pipelines/clean_v2.py
 from sklearn.pipeline import Pipeline
 
 from ..cleaning.transformers import (

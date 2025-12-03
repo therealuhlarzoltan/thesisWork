@@ -27,25 +27,45 @@ def _train_arrival_model(df):
         import numpy as np
         import pandas as pd
 
-        df_cleaned = arrival_delay_pipeline.named_steps['cleaning'].fit_transform(df)
-        y = df_cleaned.pop('arrival_delay')
-        X = arrival_delay_pipeline.named_steps['preprocessing'].fit_transform(df_cleaned)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        cleaned = arrival_delay_pipeline.named_steps["cleaning"].fit_transform(df_raw)
 
-        arrival_delay_pipeline.named_steps['predicting'].named_steps['xgb'].fit(
-            X_train, y_train, eval_set=[(X_test, y_test)]
+        y = cleaned["arrival_delay"].copy()
+        X = cleaned.drop(columns=["arrival_delay"])
+
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
         )
 
-        y_pred = arrival_delay_pipeline.named_steps['predicting'].named_steps['xgb'].predict(X_test)
-        metrics_df = pd.DataFrame({
-            'MAE': [mean_absolute_error(y_test, y_pred)],
-            'MSE': [mean_squared_error(y_test, y_pred)],
-            'RMSE': [np.sqrt(mean_squared_error(y_test, y_pred))],
-            'R2': [r2_score(y_test, y_pred)],
-        })
+        preproc = arrival_delay_pipeline.named_steps["preprocessing"]
+        X_train_proc = preproc.fit_transform(X_train)
+        X_test_proc = preproc.transform(X_test)
 
-        save_prediction_model('arrival', arrival_delay_pipeline, metrics_df)
-        print("Arrival model trained and saved.")
+        xgb = arrival_delay_pipeline.named_steps["predicting"].named_steps["xgb"]
+        xgb.fit(
+            X_train_proc,
+            y_train,
+            eval_set=[(X_train_proc, y_train), (X_test_proc, y_test)],
+            verbose=True,
+        )
+
+        y_pred = xgb.predict(X_test_proc)
+        mae = mean_absolute_error(y_test, y_pred)
+        mse = mean_squared_error(y_test, y_pred)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_test, y_pred)
+
+        metrics_df = pd.DataFrame([{
+            "MAE": mae,
+            "MSE": mse,
+            "RMSE": rmse,
+            "R2": r2,
+        }])
+
+        from model.utils import save_prediction_model
+        save_prediction_model("arrival", arrival_delay_pipeline_v2, metrics_df)
+
+        print("Arrival delay pipeline created and saved")
     except Exception as e:
         import traceback
         print("Arrival training error:", e)
