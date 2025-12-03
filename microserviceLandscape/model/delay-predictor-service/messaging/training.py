@@ -27,6 +27,7 @@ def _train_arrival_model(df):
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
         import numpy as np
         import pandas as pd
+        from prediction.scheduler import reload_models
 
         cleaned = arrival_delay_pipeline.named_steps["cleaning"].fit_transform(df)
         if "arrival_delay" not in cleaned.columns:
@@ -75,7 +76,8 @@ def _train_arrival_model(df):
         from model.utils import save_prediction_model
         save_prediction_model("arrival", arrival_delay_pipeline, metrics_df)
 
-        print("Arrival delay pipeline created and saved")
+        print("Arrival delay pipeline created and saved.")
+        reload_models()
     except Exception as e:
         import traceback
         print("Arrival training error:", e)
@@ -90,6 +92,7 @@ def _train_departure_model(df):
         from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
         import numpy as np
         import pandas as pd
+        from prediction.scheduler import reload_models
 
         cleaned = departure_delay_pipeline.named_steps["cleaning"].fit_transform(df)
         if "departure_delay" not in cleaned.columns:
@@ -137,6 +140,7 @@ def _train_departure_model(df):
 
         save_prediction_model("departure", departure_delay_pipeline, metrics_df)
         print("Departure delay pipeline created and saved.")
+        reload_models()
     except Exception as e:
         import traceback
         print("Departure training error:", e)
