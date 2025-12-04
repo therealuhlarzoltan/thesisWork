@@ -39,6 +39,12 @@ def lower_keys(d):
     else:
         return d
 
+
+def show_mem(df, label):
+    mem_gb = df.memory_usage(deep=True).sum() / 1024**3
+    print(f"{label}: {mem_gb:.2f} GB")
+
+
 def start_consuming():
     try:
         print("Getting configurations from Spring Cloud config...")
@@ -90,11 +96,13 @@ def start_consuming():
                 if not records:
                     print("No records collected.")
                     return
-                df = pd.DataFrame(convert_keys_to_snake_case(records))
+                df = pd.DataFrame(records)
+                show_mem(df, label="Received DataFrame's size")
+                print("Received number of records: ", len(df))
                 start_training_for_routing_key(df)
 
             else:
-                print(f"ℹ️ Unknown eventType: {event_type}")
+                print(f"Unknown eventType: {event_type}")
 
         channel.basic_consume(
             queue=queue_name,

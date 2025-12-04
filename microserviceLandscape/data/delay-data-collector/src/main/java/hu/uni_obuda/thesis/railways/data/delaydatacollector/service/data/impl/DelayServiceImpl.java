@@ -4,10 +4,12 @@ import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.Dela
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.component.cache.TrainStatusCache;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.dto.DelayRecord;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.DelayEntity;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainRouteEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.entity.domain.TrainStationEntity;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.mapper.DelayRecordMapper;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.DelayRepository;
+import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainRouteRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.repository.domain.TrainStationRepository;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.DelayService;
 import hu.uni_obuda.thesis.railways.data.delaydatacollector.service.data.GeocodingService;
@@ -39,6 +41,7 @@ public class DelayServiceImpl implements DelayService {
 
     private final DelayRepository delayRepository;
     private final TrainStationRepository stationRepository;
+    private final TrainRouteRepository routeRepository;
     private final WeatherService weatherService;
     private final DelayInfoCache delayInfoCache;
     private final TrainStatusCache trainStatusCache;
@@ -48,11 +51,12 @@ public class DelayServiceImpl implements DelayService {
     private final Scheduler scheduler;
 
     @Autowired
-    public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
+    public DelayServiceImpl(DelayRepository delayRepository, TrainStationRepository stationRepository, TrainRouteRepository routeRepository, WeatherService weatherService, DelayInfoCache delayInfoCache,
                             DelayMapper delayMapper, DelayRecordMapper recordMapper, TrainStatusCache trainStatusCache, GeocodingService geocodingService,
-                           @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
+                            @Qualifier("messageProcessingScheduler") Scheduler scheduler) {
         this.delayRepository = delayRepository;
         this.stationRepository = stationRepository;
+        this.routeRepository = routeRepository;
         this.weatherService = weatherService;
         this.delayInfoCache = delayInfoCache;
         this.trainStatusCache = trainStatusCache;
@@ -129,23 +133,37 @@ public class DelayServiceImpl implements DelayService {
     @Override
     public Flux<DataTransferEvent<List<DelayRecord>>> getBatches(int batchSize, String routingKey) {
         Mono<TreeMap<String, TrainStationEntity>> stationMapMono = retrieveStationMapMono();
+        Mono<TreeMap<String, TrainRouteEntity>> routeMapMono   = retrieveRouteMapMono();
 
         Flux<DelayEntity> delayFlux = delayRepository.findAll()
                 .subscribeOn(scheduler);
 
-        return stationMapMono.flatMapMany(stationMap ->
-                delayFlux
-                        .map(delayEntity -> {
-                            TrainStationEntity stationEntity = stationMap.get(delayEntity.getStationCode());
-                            return recordMapper.entitiesToApi(delayEntity, stationEntity);
-                        })
-                        .buffer(batchSize)
-                        .map(recordList -> new DataTransferEvent<>(
-                                DataTransferEvent.Type.DATA_TRANSFER,
-                                routingKey,
-                                recordList))
-                        .concatWith(Mono.just(constructTerminationEvent(routingKey)))
-        );
+        return Mono.zip(stationMapMono, routeMapMono)
+                .flatMapMany(tuple -> {
+                    TreeMap<String, TrainStationEntity> stationMap = tuple.getT1();
+                    TreeMap<String, TrainRouteEntity> routeMap = tuple.getT2();
+
+                    return delayFlux
+                            .map(delayEntity -> {
+                                TrainStationEntity stationEntity = stationMap.get(delayEntity.getStationCode());
+                                TrainRouteEntity routeEntity = routeMap.get(delayEntity.getTrainNumber());
+
+                                DelayRecord dto = recordMapper.entitiesToApi(delayEntity, stationEntity);
+
+                                if (routeEntity != null) {
+                                    dto.setLineNumber(routeEntity.getLineNumber());
+                                }
+
+                                return dto;
+                            })
+                            .buffer(batchSize)
+                            .map(recordList -> new DataTransferEvent<>(
+                                    DataTransferEvent.Type.DATA_TRANSFER,
+                                    routingKey,
+                                    recordList
+                            ))
+                            .concatWith(Mono.just(constructTerminationEvent(routingKey)));
+                });
     }
 
     private LocalDateTime getTimeForWeatherForecast(DelayInfo delayInfo) {
@@ -161,11 +179,22 @@ public class DelayServiceImpl implements DelayService {
     private Mono<TreeMap<String, TrainStationEntity>> retrieveStationMapMono() {
         return stationRepository.findAll()
                 .collectList()
-                .publishOn(scheduler)
                 .map(listOfStations -> {
                     TreeMap<String, TrainStationEntity> map = new TreeMap<>();
                     for (TrainStationEntity entity : listOfStations) {
                         map.put(entity.getStationCode(), entity);
+                    }
+                    return map;
+                });
+    }
+
+    private Mono<TreeMap<String, TrainRouteEntity>> retrieveRouteMapMono() {
+        return routeRepository.findAll()
+                .collectList()
+                .map(listOfRoutes -> {
+                    TreeMap<String, TrainRouteEntity> map = new TreeMap<>();
+                    for (TrainRouteEntity entity : listOfRoutes) {
+                        map.put(entity.getTrainNumber(), entity);
                     }
                     return map;
                 });

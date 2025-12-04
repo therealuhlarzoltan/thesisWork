@@ -28,6 +28,7 @@ class WeatherInfoSerializer(serializers.Serializer):
 class DelayPredictionRequestSerializer(serializers.Serializer):
     station_code = serializers.CharField(required=True)
     train_number = serializers.CharField(required=True)
+    line_number = serializers.CharField(required=True)
     scheduled_departure = serializers.DateTimeField(required=False, allow_null=True)
     scheduled_arrival = serializers.DateTimeField(required=False, allow_null=True)
     date = serializers.DateField(required=True)

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from messaging.consumer import start_consuming  # move your _consume_batch_responses logic here
+from messaging.consumer import start_consuming
 
 class Command(BaseCommand):
     help = 'Start RabbitMQ consumer for batch responses'
