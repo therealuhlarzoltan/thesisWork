@@ -21,7 +21,7 @@ numeric_cols = WEATHER_NUM_COLS + dt_feats + [
     "stop_index",
 ]
 
-categorical_cols = + WEATHER_BOOL_COLS + [
+categorical_cols = WEATHER_BOOL_COLS + [
     "station_cluster",
     "line_service_cluster",
     "line_number",

@@ -31,7 +31,7 @@ class DropIdAndUrls(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         drop_cols = [c for c in (self.id_cols + self.url_cols) if c in df.columns]
         if drop_cols:
             df = df.drop(columns=drop_cols, errors="ignore")
@@ -48,7 +48,7 @@ class EnsureCoordinates(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         if "latitude" not in df.columns and "station_latitude" in df.columns:
             df["latitude"] = df["station_latitude"]
         if "longitude" not in df.columns and "station_longitude" in df.columns:
@@ -68,7 +68,7 @@ class OriginTerminusAndScheduleFixer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
 
         if "scheduled_arrival" not in df.columns or "scheduled_departure" not in df.columns:
             # Nothing to do
@@ -99,7 +99,7 @@ class DateFlagsAdder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         if "date" not in df.columns:
             return df
 
@@ -132,7 +132,7 @@ class WeatherFlattener(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         if self.weather_col not in df.columns:
             return df
 
@@ -155,7 +155,7 @@ class CamelToSnakeRenamer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         df.columns = [camel_to_snake(c) for c in df.columns]
         return df
 
@@ -177,7 +177,7 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
         self.bool_cols = list(bool_cols)
 
     def fit(self, X, y=None):
-        df = X.copy()
+        df = X
 
         # Store global means / modes
         self.num_means_: Dict[str, float] = {}
@@ -194,7 +194,7 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
 
         # Lat/lon per train_number: fill forward/backward
         if self.train_col in df.columns and {"latitude", "longitude"} <= set(df.columns):
@@ -245,7 +245,7 @@ class StopIndexAdder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         required = {self.date_col, self.train_col, self.time_col}
         if not required.issubset(df.columns):
             return df
@@ -285,7 +285,7 @@ class StationClusterer(BaseEstimator, TransformerMixin):
         self.station_col = station_col
 
     def fit(self, X, y=None):
-        df = X.copy()
+        df = X
         required = {self.station_col, "latitude", "longitude"}
         if not required.issubset(df.columns):
             self.station_cluster_map_ = {}
@@ -315,7 +315,7 @@ class StationClusterer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         if not hasattr(self, "station_cluster_map_") or self.n_clusters_ == 0:
             df["station_cluster"] = -1
             return df
@@ -356,7 +356,7 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        df = X.copy()
+        df = X
         required = {self.line_col, self.date_col, self.train_col, self.station_col}
         if not required.issubset(df.columns):
             # Not enough info: fall back to "no-op" mode
@@ -487,7 +487,7 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
 
         if self.line_freq_ is None or self.line_col not in df.columns:
             # Attach default values if we couldn't compute line_freq during fit
@@ -537,11 +537,108 @@ class DateTimeDecomposer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        df = X.copy()
+        df = X
         for col in self.datetime_cols:
             if col not in df.columns:
                 continue
             dt = pd.to_datetime(df[col])
             for part in self.parts:
                 df[f"{col}_{part}"] = getattr(dt.dt, part)
+        return df
+
+
+class DropInvalidDelayRecords(BaseEstimator, TransformerMixin):
+    """
+    Drop rows that are unusable for delay modelling / stop ordering.
+
+    A row is dropped if ANY of these holds (when the relevant columns exist):
+
+      - both scheduled_arrival and scheduled_departure are null
+      - both arrival and departure are null
+      - both arrival_delay and departure_delay are null
+    """
+
+    def __init__(
+        self,
+        sched_arr_col: str = "scheduled_arrival",
+        sched_dep_col: str = "scheduled_departure",
+        actual_arr_col: str = "arrival",
+        actual_dep_col: str = "departure",
+        arr_delay_col: str = "arrival_delay",
+        dep_delay_col: str = "departure_delay",
+    ):
+        self.sched_arr_col = sched_arr_col
+        self.sched_dep_col = sched_dep_col
+        self.actual_arr_col = actual_arr_col
+        self.actual_dep_col = actual_dep_col
+        self.arr_delay_col = arr_delay_col
+        self.dep_delay_col = dep_delay_col
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X
+        cols = set(df.columns)
+
+        # Start with "keep everything"
+        to_drop = pd.Series(False, index=df.index, dtype=bool)
+
+        # both scheduled_* null
+        if {self.sched_arr_col, self.sched_dep_col}.issubset(cols):
+            to_drop |= df[self.sched_arr_col].isna() & df[self.sched_dep_col].isna()
+
+        # both actual arrival/dep null
+        if {self.actual_arr_col, self.actual_dep_col}.issubset(cols):
+            to_drop |= df[self.actual_arr_col].isna() & df[self.actual_dep_col].isna()
+
+        # both delays null
+        if {self.arr_delay_col, self.dep_delay_col}.issubset(cols):
+            to_drop |= df[self.arr_delay_col].isna() & df[self.dep_delay_col].isna()
+
+        # Optional: log how many we dropped
+        # n_dropped = int(to_drop.sum())
+        # if n_dropped:
+        #     print(f"DropInvalidDelayRecords: dropping {n_dropped} rows as invalid")
+
+        if to_drop.any():
+            df = df.loc[~to_drop]
+
+        return df
+
+class DropArrivalDelayColumn(BaseEstimator, TransformerMixin):
+    """
+    Drop the 'arrival_delay' column if present.
+    Intended for the DEPARTURE-delay model pipeline.
+    """
+
+    def __init__(self, col: str = "arrival_delay"):
+        self.col = col
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X
+        if self.col in df.columns:
+            df = df.drop(columns=[self.col])
+        return df
+
+
+class DropDepartureDelayColumn(BaseEstimator, TransformerMixin):
+    """
+    Drop the 'departure_delay' column if present.
+    Intended for the ARRIVAL-delay model pipeline.
+    """
+
+    def __init__(self, col: str = "departure_delay"):
+        self.col = col
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X
+        if self.col in df.columns:
+            df = df.drop(columns=[self.col])
         return df

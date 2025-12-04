@@ -8,7 +8,7 @@ def reload_models():
     print("APScheduler: Reloading ML models from DB...")
 
     def load_model(category):
-        one_month_ago = timezone.now() - timedelta(weeks=4)
+        one_month_ago = timezone.now() - timedelta(weeks=1)
         recent_qs = (
             DelayPredictionModel.objects
             .filter(delay_type=category, created_at__gte=one_month_ago)
@@ -21,6 +21,7 @@ def reload_models():
                 DelayPredictionModel.objects
                 .filter(delay_type=category)
                 .order_by('-created_at')
+                .filter(created_at__gte=timezone.now() - timedelta(weeks=1))
             )
             db_model = fallback_qs.first()
         return pickle.loads(db_model.pipeline_binary) if db_model else None

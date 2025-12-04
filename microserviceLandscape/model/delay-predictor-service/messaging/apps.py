@@ -29,5 +29,8 @@ class MessagingConfig(AppConfig):
         scheduler.start()
         print("APScheduler started")
 
+
         atexit.register(lambda: scheduler.shutdown())
+
+        publish_initial_batch_request()
 

@@ -31,18 +31,16 @@ def apply_cluster_quantile_mask(
         mask = (df[target_col] <= global_q) & (df[target_col] >= min_delay)
         return df.loc[mask].reset_index(drop=True)
 
-    df2 = df.copy()
-
     # per-cluster quantiles
     per_cluster_q = (
-        df2.groupby(cluster_col)[target_col]
+        df.groupby(cluster_col)[target_col]
            .transform(lambda s: s.quantile(upper_q))
     )
 
     # global fallback
-    global_q = df2[target_col].quantile(upper_q)
+    global_q = df[target_col].quantile(upper_q)
     per_cluster_q = per_cluster_q.fillna(global_q)
 
-    mask = (df2[target_col] <= per_cluster_q) & (df2[target_col] >= min_delay)
+    mask = (df[target_col] <= per_cluster_q) & (df[target_col] >= min_delay)
 
-    return df2.loc[mask].reset_index(drop=True)
+    return df.loc[mask].reset_index(drop=True)
