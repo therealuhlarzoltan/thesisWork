@@ -131,7 +131,7 @@ services:
 
   eureka-server:
     build: cloud/eureka-server
-    mem_limit: 2048m
+    mem_limit: 1024m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
