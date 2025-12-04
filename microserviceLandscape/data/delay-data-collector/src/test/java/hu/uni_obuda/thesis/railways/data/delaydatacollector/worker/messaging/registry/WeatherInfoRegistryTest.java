@@ -214,93 +214,6 @@ class WeatherInfoRegistryTest {
     }
 
     @Test
-    void waitForWeather_byCorrelationId_createsSharedMonoAndLogs() {
-        String correlationId = "corr-123";
-
-        Mono<WeatherInfo> mono = testedObject.waitForWeather(correlationId);
-
-        assertThat(mono).isNotNull();
-        assertThat(sharedMonosMap()).containsKey(correlationId);
-        assertThat(pendingMap()).isEmpty();
-
-        assertThat(loggedMessages())
-                .anyMatch(msg -> msg.contains("Waiting for weather info with correlationId " + correlationId));
-    }
-
-    @Test
-    void waitForWeather_byCorrelationId_success_withTemperature_cachesAndCleansMaps() {
-        String correlationId = "corr-123";
-        String station = "BPK";
-        LocalDateTime time = LocalDateTime.of(2025, 1, 1, 19, 0);
-        WeatherInfo info = weather(station, time, 14.0);
-
-        when(weatherInfoCache.cacheWeatherInfo(info)).thenReturn(Mono.empty());
-
-        Mono<WeatherInfo> mono = testedObject.waitForWeather(correlationId);
-
-        StepVerifier.create(mono)
-                .then(() -> testedObject.onWeatherInfo(correlationId, info))
-                .expectNext(info)
-                .verifyComplete();
-
-        verify(weatherInfoCache).cacheWeatherInfo(info);
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-
-        List<String> messages = loggedMessages();
-        assertThat(messages)
-                .anyMatch(msg -> msg.contains("Waiting for weather info with correlationId " + correlationId));
-        assertThat(messages)
-                .anyMatch(msg -> msg.contains("Received weather info with correlationId " + correlationId));
-    }
-
-    @Test
-    void waitForWeather_byCorrelationId_success_withoutTemperature_doesNotCacheButCompletes() {
-        String correlationId = "corr-123";
-        String station = "BPK";
-        LocalDateTime time = LocalDateTime.of(2025, 1, 1, 19, 0);
-        WeatherInfo info = weather(station, time, null);
-
-        Mono<WeatherInfo> mono = testedObject.waitForWeather(correlationId);
-
-        StepVerifier.create(mono)
-                .then(() -> testedObject.onWeatherInfo(correlationId, info))
-                .expectNext(info)
-                .verifyComplete();
-
-        verify(weatherInfoCache, never()).cacheWeatherInfo(any());
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-    }
-
-    @Test
-    void waitForWeather_byCorrelationId_sharedMono_multipleSubscribersSeeSameResult() {
-        String correlationId = "corr-456";
-        String station = "BPK";
-        LocalDateTime time = LocalDateTime.of(2025, 1, 1, 20, 0);
-        WeatherInfo info = weather(station, time, 15.0);
-
-        when(weatherInfoCache.cacheWeatherInfo(info)).thenReturn(Mono.empty());
-
-        Mono<WeatherInfo> mono1 = testedObject.waitForWeather(correlationId);
-        Mono<WeatherInfo> mono2 = testedObject.waitForWeather(correlationId);
-
-        assertThat(mono1).isSameAs(mono2);
-
-        StepVerifier.create(Mono.zip(mono1, mono2))
-                .then(() -> testedObject.onWeatherInfo(correlationId, info))
-                .assertNext(tuple -> {
-                    assertThat(tuple.getT1()).isEqualTo(info);
-                    assertThat(tuple.getT2()).isEqualTo(info);
-                })
-                .verifyComplete();
-
-        verify(weatherInfoCache).cacheWeatherInfo(info);
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-    }
-
-    @Test
     void onError_byKey_propagatesServiceResponseExceptionAndCleansMaps() {
         String station = "BPK";
         LocalDateTime time = LocalDateTime.of(2025, 1, 1, 21, 0);
@@ -332,43 +245,6 @@ class WeatherInfoRegistryTest {
         RuntimeException cause = new RuntimeException("boom");
 
         testedObject.onError(station, time, cause);
-
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-
-        assertThat(listAppender.list)
-                .noneMatch(e -> e.getLevel() == Level.WARN);
-    }
-
-    @Test
-    void onErrorWithCorrelationId_propagatesServiceResponseExceptionAndCleansMaps() {
-        String correlationId = "corr-err-1";
-        RuntimeException cause = new RuntimeException("boom");
-
-        Mono<WeatherInfo> mono = testedObject.waitForWeather(correlationId);
-
-        StepVerifier.create(mono)
-                .then(() -> testedObject.onErrorWithCorrelationId(correlationId, cause))
-                .expectErrorSatisfies(ex -> {
-                    assertThat(ex).isInstanceOf(ServiceResponseException.class);
-                    assertThat(ex.getCause()).isEqualTo(cause);
-                })
-                .verify();
-
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-
-        List<String> messages = loggedMessages();
-        assertThat(messages)
-                .anyMatch(msg -> msg.contains("Cancelling wait for weather info with correlationId " + correlationId));
-    }
-
-    @Test
-    void onErrorWithCorrelationId_whenNoPending_doesNothingAndLogsNothing() {
-        String correlationId = "corr-err-2";
-        RuntimeException cause = new RuntimeException("boom");
-
-        testedObject.onErrorWithCorrelationId(correlationId, cause);
 
         assertThat(pendingMap()).isEmpty();
         assertThat(sharedMonosMap()).isEmpty();

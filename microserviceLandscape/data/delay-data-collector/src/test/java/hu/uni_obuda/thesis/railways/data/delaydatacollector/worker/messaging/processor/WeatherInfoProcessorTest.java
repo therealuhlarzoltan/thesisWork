@@ -14,7 +14,6 @@ import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 import hu.uni_obuda.thesis.railways.data.event.ResponsePayload;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
-import hu.uni_obuda.thesis.railways.util.exception.datacollectors.ServiceResponseException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -116,18 +115,12 @@ class WeatherInfoProcessorTest {
                 .build();
     }
 
-    private Message messageWithoutCorrelation(Event<?, ?> payload) {
+    private Message buildMessage(Event<?, ?> payload) {
         return MessageBuilder.withPayload(payload).build();
     }
 
-    private Message messageWithCorrelation(Event<?, ?> payload, String correlationId) {
-        return MessageBuilder.withPayload(payload)
-                .setHeader("correlationId", correlationId)
-                .build();
-    }
-
     @Test
-    void accept_withoutCorrelation_success_emitsToSinkCompletesRegistryAndCaches() throws Exception {
+    void accept_success_emitsToSinkCompletesRegistryAndCaches() throws Exception {
         String station = "BPK";
         LocalDateTime time = LocalDateTime.of(2025, 1, 1, 15, 0);
         WeatherInfo info = weather(station, time, 12.5);
@@ -139,7 +132,7 @@ class WeatherInfoProcessorTest {
         when(responsePayload.getMessage()).thenReturn(json);
         when(weatherInfoCache.cacheWeatherInfo(info)).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         final WeatherInfo[] registryResult = new WeatherInfo[1];
         CountDownLatch latch = new CountDownLatch(1);
@@ -166,7 +159,7 @@ class WeatherInfoProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelation_success_withNullTemperature_doesNotCache() throws Exception {
+    void accept_success_withNullTemperature_doesNotCache() throws Exception {
         String station = "BPK";
         LocalDateTime time = LocalDateTime.of(2025, 1, 1, 15, 0);
         WeatherInfo info = weather(station, time, null);
@@ -177,7 +170,7 @@ class WeatherInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn(json);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         StepVerifier.create(incomingMessageSink.getWeatherSink().asFlux().take(1))
                 .then(() -> testedObject.accept(message))
@@ -188,7 +181,7 @@ class WeatherInfoProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelation_error_logsErrorMessage_noSinkNoRegistry() {
+    void accept_error_logsErrorMessage_noSinkNoRegistry() {
         String rawError = "some-error";
 
         when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
@@ -196,7 +189,7 @@ class WeatherInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn(rawError);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -209,88 +202,13 @@ class WeatherInfoProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelation_unknownType_logsUnknown() {
+    void accept_unknownType_logsUnknown() {
         when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
         when(httpResponseEvent.getEventType()).thenReturn(null);
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn("{}");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
-
-        testedObject.accept(message);
-
-        List<String> pLogs = processorLogs();
-        assertThat(pLogs).anyMatch(m -> m.contains("Received unknown event type"));
-    }
-
-    @Test
-    void accept_withCorrelation_success_emitsToSinkCompletesRegistryAndCaches() throws Exception {
-        String station = "BPK";
-        LocalDateTime time = LocalDateTime.of(2025, 1, 1, 16, 0);
-        String correlationId = "corr-123";
-        WeatherInfo info = weather(station, time, 10.0);
-        String json = objectMapper.writeValueAsString(info);
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.SUCCESS);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn(json);
-        when(weatherInfoCache.cacheWeatherInfo(info)).thenReturn(Mono.empty());
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        final WeatherInfo[] registryResult = new WeatherInfo[1];
-        CountDownLatch latch = new CountDownLatch(1);
-        registry.waitForWeather(correlationId)
-                .subscribe(r -> {
-                    registryResult[0] = r;
-                    latch.countDown();
-                });
-
-        StepVerifier.create(incomingMessageSink.getWeatherSink().asFlux().take(1))
-                .then(() -> testedObject.accept(message))
-                .assertNext(resp -> assertThat(resp).usingRecursiveComparison().isEqualTo(info))
-                .verifyComplete();
-
-        assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
-        assertThat(registryResult[0]).usingRecursiveComparison().isEqualTo(info);
-
-        verify(weatherInfoCache).cacheWeatherInfo(info);
-
-        List<String> pLogs = processorLogs();
-        List<String> rLogs = registryLogs();
-        assertThat(pLogs).anyMatch(m -> m.contains("Processing message created at"));
-        assertThat(rLogs).anyMatch(m -> m.contains("Received weather info with correlationId " + correlationId));
-    }
-
-    @Test
-    void accept_withCorrelation_error_logsErrorMessage() {
-        String correlationId = "corr-err";
-        String rawError = "err-msg";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.ERROR);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn(rawError);
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        testedObject.accept(message);
-
-        List<String> pLogs = processorLogs();
-        assertThat(pLogs).anyMatch(m -> m.contains("Received an error response: " + rawError));
-    }
-
-    @Test
-    void accept_withCorrelation_unknownType_logsUnknown() {
-        String correlationId = "corr-unknown";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(null);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn("{}");
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -303,7 +221,7 @@ class WeatherInfoProcessorTest {
     void accept_whenPayloadNotHttpResponseEvent_logsUnexpectedAndReturns() {
         Event<String, String> genericEvent = mock(Event.class);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(genericEvent);
+        Message<Event<?, ?>> message = buildMessage(genericEvent);
 
         testedObject.accept(message);
 
@@ -319,7 +237,7 @@ class WeatherInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn("{not-valid-json");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -346,7 +264,7 @@ class WeatherInfoProcessorTest {
         when(responsePayload.getMessage()).thenReturn(json);
         when(weatherInfoCache.cacheWeatherInfo(info)).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         int threads = 10;
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -388,7 +306,7 @@ class WeatherInfoProcessorTest {
         when(responsePayload.getMessage()).thenReturn(json);
         when(weatherInfoCache.cacheWeatherInfo(info)).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 

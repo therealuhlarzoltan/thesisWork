@@ -22,15 +22,19 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
     @Override
     public void accept(Message<Event<?, ?>> eventMessage) {
         log.debug("Received message wth id {}", eventMessage.getHeaders().getId());
-        if (eventMessage.getHeaders().containsKey("correlationId")) {
-            processMessageWithCorrelationId(eventMessage);
-        } else {
-            processMessageWithoutCorrelationId(eventMessage);
-        }
+        processMessage(eventMessage);
     }
 
-    private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {
-        log.info("Processing message created at {} with no correlationId...", message.getPayload().getEventCreatedAt());
+    private HttpResponseEvent retrieveHttpResponseEvent(Event<?, ?> genericEvent) {
+        if (!(genericEvent instanceof HttpResponseEvent responseEvent)) {
+            log.error("Unexpected event parameters, expected a HttpResponseEvent");
+            return null;
+        }
+        return responseEvent;
+    }
+
+    private void processMessage(Message<Event<?, ?>> message) {
+        log.info("Processing message created at {}...", message.getPayload().getEventCreatedAt());
         HttpResponseEvent responseEvent = retrieveHttpResponseEvent(message.getPayload());
         if (responseEvent == null) {
             log.error("Could not retrieve response event from message: {}", message.getPayload());
@@ -47,46 +51,9 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
                 messageSink.getWeatherSink().tryEmitNext(response);
                 registry.onWeatherInfo(response);
             }
-            case ERROR -> {
-                log.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
-            }
+            case ERROR -> log.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
             case null, default -> log.error("Received unknown event type: {}", eventType);
         }
-
-    }
-
-    private void processMessageWithCorrelationId(Message<Event<?, ?>> message) {
-        String correlationId = message.getHeaders().get("correlationId").toString();
-        log.info("Processing message created at {} with correlationId {}...", message.getPayload().getEventCreatedAt(), correlationId);
-        HttpResponseEvent responseEvent = retrieveHttpResponseEvent(message.getPayload());
-        if (responseEvent == null) {
-            log.error("Could not retrieve response event from message: {}", message.getPayload());
-            return;
-        }
-        HttpResponseEvent.Type eventType = responseEvent.getEventType();
-        switch (eventType) {
-            case SUCCESS -> {
-                WeatherInfo response = retrieveWeatherInfo(responseEvent);
-                if (response == null) {
-                    log.error("Could not retrieve weather info from event: {}", responseEvent);
-                    return;
-                }
-                messageSink.getWeatherSink().tryEmitNext(response);
-                registry.onWeatherInfo(correlationId, response);
-            }
-            case ERROR -> {
-                log.error("Received an error response: {}", retrieveErrorMessage(responseEvent));
-            }
-            case null, default -> log.error("Received unknown event type: {}", eventType);
-        }
-    }
-
-    private HttpResponseEvent retrieveHttpResponseEvent(Event<?, ?> genericEvent) {
-        if (!(genericEvent instanceof HttpResponseEvent responseEvent)) {
-            log.error("Unexpected event parameters, expected a HttpResponseEvent");
-            return null;
-        }
-        return responseEvent;
     }
 
     private WeatherInfo retrieveWeatherInfo(HttpResponseEvent httpResponseEvent) {
@@ -103,7 +70,7 @@ public class WeatherInfoProcessorImpl implements WeatherInfoProcessor {
     }
 
     private <T> T deserializeObject(String json, Class<T> clazz) {
-        T obj = null;
+        T obj;
         try {
             obj = objectMapper.readValue(json, clazz);
         } catch (JsonProcessingException ex) {

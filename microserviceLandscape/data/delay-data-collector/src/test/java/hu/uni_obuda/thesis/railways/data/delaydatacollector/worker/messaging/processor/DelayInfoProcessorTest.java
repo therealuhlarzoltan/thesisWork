@@ -93,18 +93,12 @@ class DelayInfoProcessorTest {
                 .build();
     }
 
-    private Message messageWithoutCorrelation(Event<?, ?> payload) {
+    private Message buildMessage(Event<?, ?> payload) {
         return MessageBuilder.withPayload(payload).build();
     }
 
-    private Message messageWithCorrelation(Event<?, ?> payload, String correlationId) {
-        return MessageBuilder.withPayload(payload)
-                .setHeader("correlationId", correlationId)
-                .build();
-    }
-
     @Test
-    void accept_withoutCorrelation_success_emitsToSinkAndLogs() throws Exception {
+    void accept_success_emitsToSinkAndLogs() throws Exception {
         String train = "IC123";
         String station = "BPK";
         DelayInfo info = delayInfo(train, station);
@@ -115,7 +109,7 @@ class DelayInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn(json);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         StepVerifier.create(incomingMessageSink.getDelaySink().asFlux().take(1))
                 .then(() -> testedObject.accept(message))
@@ -128,32 +122,7 @@ class DelayInfoProcessorTest {
     }
 
     @Test
-    void accept_withCorrelation_success_emitsToSinkAndLogs() throws Exception {
-        String train = "IC123";
-        String station = "BPK";
-        String correlationId = "corr-123";
-        DelayInfo info = delayInfo(train, station);
-        String json = objectMapper.writeValueAsString(info);
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.SUCCESS);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn(json);
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        StepVerifier.create(incomingMessageSink.getDelaySink().asFlux().take(1))
-                .then(() -> testedObject.accept(message))
-                .assertNext(resp -> assertThat(resp).usingRecursiveComparison().isEqualTo(info))
-                .verifyComplete();
-
-        List<String> logs = loggedProcessorMessages();
-        assertThat(logs).anyMatch(m -> m.contains("Processing message created at"));
-        assertThat(logs).anyMatch(m -> m.contains("Added delay info to message sink for train " + train));
-    }
-
-    @Test
-    void accept_withoutCorrelation_errorWithTooEarly_marksCompleteAndLogs() throws Exception {
+    void accept_errorWithTooEarly_marksCompleteAndLogs() throws Exception {
         String train = "IC999";
         LocalDate date = LocalDate.of(2025, 1, 1);
         String json = "{\"trainNumber\":\"" + train + "\",\"date\":\"" + date + "\"}";
@@ -166,7 +135,7 @@ class DelayInfoProcessorTest {
         when(responsePayload.getMessage()).thenReturn(json);
         when(statusCache.markComplete(train, date)).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -174,31 +143,6 @@ class DelayInfoProcessorTest {
 
         List<String> logs = loggedProcessorMessages();
         assertThat(logs).anyMatch(m -> m.contains("Received an error response for id: some-key"));
-        assertThat(logs).anyMatch(m -> m.contains("Train with number " + train + " is not in operation on " + date));
-    }
-
-    @Test
-    void accept_withCorrelation_errorWithTooEarly_marksCompleteAndLogs() throws Exception {
-        String train = "IC999";
-        LocalDate date = LocalDate.of(2025, 1, 1);
-        String correlationId = "corr-too-early";
-        String json = "{\"trainNumber\":\"" + train + "\",\"date\":\"" + date + "\"}";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.ERROR);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getStatus()).thenReturn(HttpStatus.TOO_EARLY);
-        when(responsePayload.getMessage()).thenReturn(json);
-        when(statusCache.markComplete(train, date)).thenReturn(Mono.empty());
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        testedObject.accept(message);
-
-        verify(statusCache).markComplete(train, date);
-
-        List<String> logs = loggedProcessorMessages();
-        assertThat(logs).anyMatch(m -> m.contains("Received an error response for correlationId: " + correlationId));
         assertThat(logs).anyMatch(m -> m.contains("Train with number " + train + " is not in operation on " + date));
     }
 
@@ -211,7 +155,7 @@ class DelayInfoProcessorTest {
         when(responsePayload.getStatus()).thenReturn(HttpStatus.INTERNAL_SERVER_ERROR);
         when(responsePayload.getMessage()).thenReturn("{\"message\":\"oops\"}");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -221,49 +165,13 @@ class DelayInfoProcessorTest {
     }
 
     @Test
-    void accept_withCorrelation_errorWithNonTooEarlyStatus_doesNotMarkComplete() {
-        String correlationId = "corr-err";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.ERROR);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getStatus()).thenReturn(HttpStatus.BAD_REQUEST);
-        when(responsePayload.getMessage()).thenReturn("{\"message\":\"oops\"}");
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        testedObject.accept(message);
-
-        verify(statusCache, never()).markComplete(anyString(), any());
-        List<String> logs = loggedProcessorMessages();
-        assertThat(logs).anyMatch(m -> m.contains("Received an error response for correlationId: " + correlationId));
-    }
-
-    @Test
     void accept_unknownType_logsUnknown() {
         when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
         when(httpResponseEvent.getEventType()).thenReturn(null);
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn("{}");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
-
-        testedObject.accept(message);
-
-        List<String> logs = loggedProcessorMessages();
-        assertThat(logs).anyMatch(m -> m.contains("Received unknown event type"));
-    }
-
-    @Test
-    void accept_withCorrelation_unknownType_logsUnknown() {
-        String correlationId = "corr-unknown";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(null);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn("{}");
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -276,7 +184,7 @@ class DelayInfoProcessorTest {
         @SuppressWarnings("unchecked")
         Event<String, String> genericEvent = mock(Event.class);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(genericEvent);
+        Message<Event<?, ?>> message = buildMessage(genericEvent);
 
         testedObject.accept(message);
 
@@ -292,7 +200,7 @@ class DelayInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn("{not-valid-json");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -317,7 +225,7 @@ class DelayInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn(json);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         int threads = 10;
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -356,7 +264,7 @@ class DelayInfoProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn(json);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 

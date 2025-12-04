@@ -40,16 +40,13 @@ class ElviraMessageProcessorTest {
     @Mock
     private ResponseMessageSender responseSender;
 
-    private ObjectMapper objectMapper;
-
     private ElviraMessageProcessorImpl testedObject;
 
     private  URL exceptionSourceURL;
 
-
     @BeforeEach
     void setUp() throws MalformedURLException {
-        objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         exceptionSourceURL = URI.create("http://localhost:8080/Exception").toURL();
         testedObject = new ElviraMessageProcessorImpl(objectMapper, elviraRailDataCollector, responseSender, Schedulers.immediate());
@@ -75,7 +72,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_validCrudEventAndNonEmptyFlux_successResponseSent() {
+    void accept_validCrudEventAndNonEmptyFlux_successResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN1");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN1", request);
@@ -105,7 +102,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_validCrudEventAndEmptyFlux_noResponseSent() {
+    void accept_validCrudEventAndEmptyFlux_noResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN2");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN2", request);
@@ -124,7 +121,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_validCrudEventAndInvalidInputError_errorResponseSentWithBadRequest() {
+    void accept_validCrudEventAndInvalidInputError_errorResponseSentWithBadRequest() {
         DelayInfoRequest request = createRequest("TRAIN3");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN3", request);
@@ -153,7 +150,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_validCrudEventWithMixedSuccessAndExternalError_successAndErrorResponsesSent() {
+    void accept_validCrudEventWithMixedSuccessAndExternalError_successAndErrorResponsesSent() {
         DelayInfoRequest request = createRequest("TRAIN4");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN4", request);
@@ -187,113 +184,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withCorrelationId_validCrudEventAndNonEmptyFlux_successResponseSentWithCorrelationId() {
-        DelayInfoRequest request = createRequest("TRAIN5");
-        CrudEvent<String, DelayInfoRequest> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, "TRAIN5", request);
-
-        DelayInfo delayInfo = DelayInfo.builder().trainNumber("TRAIN5").build();
-
-        when(elviraRailDataCollector.getDelayInfo(anyString(), anyString(), anyString(), any(LocalDate.class)))
-                .thenReturn(Flux.just(delayInfo));
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-1"));
-
-        testedObject.accept(message);
-
-        verify(elviraRailDataCollector, times(1))
-                .getDelayInfo(eq(request.getTrainNumber()), eq(request.getFrom()), eq(request.getTo()), eq(request.getDate()));
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-1"), captor.capture());
-
-        HttpResponseEvent sentEvent = captor.getValue();
-        assertEquals(HttpResponseEvent.Type.SUCCESS, sentEvent.getEventType());
-        assertEquals("TRAIN5", sentEvent.getKey());
-        assertEquals(HttpStatus.OK, sentEvent.getData().getStatus());
-    }
-
-    @Test
-    void accept_withCorrelationId_validCrudEventAndEmptyFlux_noResponseSent() {
-        DelayInfoRequest request = createRequest("TRAIN6");
-        CrudEvent<String, DelayInfoRequest> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, "TRAIN6", request);
-
-        when(elviraRailDataCollector.getDelayInfo(anyString(), anyString(), anyString(), any(LocalDate.class)))
-                .thenReturn(Flux.empty());
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-2"));
-
-        testedObject.accept(message);
-
-        verify(elviraRailDataCollector, times(1))
-                .getDelayInfo(eq(request.getTrainNumber()), eq(request.getFrom()), eq(request.getTo()), eq(request.getDate()));
-
-        verifyNoInteractions(responseSender);
-    }
-
-    @Test
-    void accept_withCorrelationId_validCrudEventAndFormatError_errorResponseSentWithBadGateway() {
-        DelayInfoRequest request = createRequest("TRAIN7");
-        CrudEvent<String, DelayInfoRequest> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, "TRAIN7", request);
-
-        ExternalApiFormatMismatchException exception =
-                new ExternalApiFormatMismatchException(exceptionSourceURL);
-
-        when(elviraRailDataCollector.getDelayInfo(anyString(), anyString(), anyString(), any(LocalDate.class)))
-                .thenReturn(Flux.error(exception));
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-3"));
-
-        testedObject.accept(message);
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-3"), captor.capture());
-
-        HttpResponseEvent sentEvent = captor.getValue();
-        assertEquals(HttpResponseEvent.Type.ERROR, sentEvent.getEventType());
-        assertEquals("TRAIN7", sentEvent.getKey());
-        assertEquals(HttpStatus.BAD_GATEWAY, sentEvent.getData().getStatus());
-    }
-
-    @Test
-    void accept_withCorrelationId_validCrudEventWithMixedSuccessAndInternalError_successAndErrorResponsesSentWithCorrelationId() {
-        DelayInfoRequest request = createRequest("TRAIN8");
-        CrudEvent<String, DelayInfoRequest> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, "TRAIN8", request);
-
-        DelayInfo delayInfo = DelayInfo.builder().trainNumber("TRAIN8").build();
-        InternalApiException exception = new InternalApiException(exceptionSourceURL);
-
-        when(elviraRailDataCollector.getDelayInfo(anyString(), anyString(), anyString(), any(LocalDate.class)))
-                .thenReturn(Flux.concat(Flux.just(delayInfo), Flux.error(exception)));
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-4"));
-
-        testedObject.accept(message);
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(2))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-4"), captor.capture());
-
-        assertEquals(2, captor.getAllValues().size());
-        HttpResponseEvent first = captor.getAllValues().get(0);
-        HttpResponseEvent second = captor.getAllValues().get(1);
-
-        assertEquals(HttpResponseEvent.Type.SUCCESS, first.getEventType());
-        assertEquals("TRAIN8", first.getKey());
-        assertEquals(HttpStatus.OK, first.getData().getStatus());
-
-        assertEquals(HttpResponseEvent.Type.ERROR, second.getEventType());
-        assertEquals("TRAIN8", second.getKey());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, second.getData().getStatus());
-    }
-
-    @Test
-    void accept_withoutCorrelationId_nonCrudEvent_incorrectParametersErrorResponseSent() {
+    void accept_nonCrudEvent_incorrectParametersErrorResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN9");
         Event<String, DelayInfoRequest> event = new Event<>(request.getTrainNumber(), request) {
             @Override
@@ -317,7 +208,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_crudEventWithNonStringKey_incorrectParametersErrorResponseSent() {
+    void accept_crudEventWithNonStringKey_incorrectParametersErrorResponseSent() {
         DelayInfoRequest request = createRequest("TRAIN10");
         CrudEvent<Integer, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, 123, request);
@@ -337,7 +228,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSent() {
+    void accept_crudEventWithConversionError_incorrectParametersErrorResponseSent() {
         ObjectMapper spyMapper = spy(new ObjectMapper());
         spyMapper.registerModule(new JavaTimeModule());
         ElviraMessageProcessorImpl localProcessor =
@@ -366,104 +257,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withCorrelationId_nonCrudEvent_incorrectParametersErrorResponseSentWithCorrelationId() {
-        DelayInfoRequest request = createRequest("TRAIN12");
-        Event<String, DelayInfoRequest> event = new Event<>(request.getTrainNumber(), request) {
-            @Override
-             public Enum<?> getEventType() {
-                return null;
-            }
-        };
-
-        Message<Event<?, ?>> message = buildMessage(event, Map.of("correlationId", "CID-5"));
-
-        testedObject.accept(message);
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-5"), captor.capture());
-
-        HttpResponseEvent sentEvent = captor.getValue();
-        assertEquals(HttpResponseEvent.Type.ERROR, sentEvent.getEventType());
-        assertEquals("TRAIN12", sentEvent.getKey());
-        assertEquals(HttpStatus.BAD_REQUEST, sentEvent.getData().getStatus());
-    }
-
-    @Test
-    void accept_withCorrelationId_crudEventWithNonStringKey_incorrectParametersErrorResponseSentWithCorrelationId() {
-        DelayInfoRequest request = createRequest("TRAIN13");
-        CrudEvent<Integer, DelayInfoRequest> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, 456, request);
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-6"));
-
-        testedObject.accept(message);
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-6"), captor.capture());
-
-        HttpResponseEvent sentEvent = captor.getValue();
-        assertEquals(HttpResponseEvent.Type.ERROR, sentEvent.getEventType());
-        assertEquals("456", sentEvent.getKey());
-        assertEquals(HttpStatus.BAD_REQUEST, sentEvent.getData().getStatus());
-    }
-
-    @Test
-    void accept_withCorrelationId_crudEventWithConversionError_incorrectParametersErrorResponseSentWithCorrelationId() {
-        ObjectMapper spyMapper = spy(new ObjectMapper());
-        spyMapper.registerModule(new JavaTimeModule());
-        ElviraMessageProcessorImpl localProcessor =
-                new ElviraMessageProcessorImpl(spyMapper, elviraRailDataCollector, responseSender, Schedulers.immediate());
-
-        CrudEvent<String, Object> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, "TRAIN14", new Object());
-
-        doThrow(new IllegalArgumentException("conversion failed"))
-                .when(spyMapper)
-                .convertValue(any(), eq(DelayInfoRequest.class));
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-7"));
-
-        localProcessor.accept(message);
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-7"), captor.capture());
-
-        HttpResponseEvent sentEvent = captor.getValue();
-        assertEquals(HttpResponseEvent.Type.ERROR, sentEvent.getEventType());
-        assertEquals("TRAIN14", sentEvent.getKey());
-        assertEquals(HttpStatus.BAD_REQUEST, sentEvent.getData().getStatus());
-    }
-
-    @Test
-    void accept_withCorrelationId_validCrudEventAndApiException_errorResponseSentWithBadGateway() {
-        DelayInfoRequest request = createRequest("TRAIN15");
-        CrudEvent<String, DelayInfoRequest> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, "TRAIN15", request);
-
-        ApiException exception = new ApiException(exceptionSourceURL);
-
-        when(elviraRailDataCollector.getDelayInfo(anyString(), anyString(), anyString(), any(LocalDate.class)))
-                .thenReturn(Flux.error(exception));
-
-        Message<Event<?, ?>> message = buildMessage(crudEvent, Map.of("correlationId", "CID-8"));
-
-        testedObject.accept(message);
-
-        ArgumentCaptor<HttpResponseEvent> captor = ArgumentCaptor.forClass(HttpResponseEvent.class);
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("CID-8"), captor.capture());
-
-        HttpResponseEvent sentEvent = captor.getValue();
-        assertEquals(HttpResponseEvent.Type.ERROR, sentEvent.getEventType());
-        assertEquals("TRAIN15", sentEvent.getKey());
-        assertEquals(HttpStatus.BAD_GATEWAY, sentEvent.getData().getStatus());
-    }
-
-    @Test
-    void accept_withoutCorrelationId_validCrudEventAndTrainNotInServiceError_errorResponseSentWithTooEarly() {
+    void accept_validCrudEventAndTrainNotInServiceError_errorResponseSentWithTooEarly() {
         DelayInfoRequest request = createRequest("TRAIN16");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN16", request);
@@ -488,7 +282,7 @@ class ElviraMessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_validCrudEventAndRuntimeError_errorResponseSentWithInternalServerError() {
+    void accept_validCrudEventAndRuntimeError_errorResponseSentWithInternalServerError() {
         DelayInfoRequest request = createRequest("TRAIN17");
         CrudEvent<String, DelayInfoRequest> crudEvent =
                 new CrudEvent<>(CrudEvent.Type.GET, "TRAIN17", request);

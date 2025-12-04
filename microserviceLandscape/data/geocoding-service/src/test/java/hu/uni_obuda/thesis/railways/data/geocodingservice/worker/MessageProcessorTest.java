@@ -36,14 +36,12 @@ class MessageProcessorTest {
     @Mock
     private ResponseMessageSender responseMessageSender;
 
-    private Scheduler messageProcessingScheduler;
-
     private MessageProcessorImpl messageProcessor;
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
 
-        messageProcessingScheduler = Schedulers.immediate();
+        Scheduler messageProcessingScheduler = Schedulers.immediate();
 
         messageProcessor = new MessageProcessorImpl(
                 objectMapper,
@@ -56,7 +54,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void givenGetEventWithoutCorrelationId_whenGeocodingSucceeds_thenSuccessResponseIsSent() {
+    void givenGetEvent_whenGeocodingSucceeds_thenSuccessResponseIsSent() {
         String address = "Budapest-Nyugati";
         GeocodingRequest request = new GeocodingRequest(address);
 
@@ -85,36 +83,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void givenGetEventWithCorrelationId_whenGeocodingSucceeds_thenSuccessResponseIsSentWithCorrelationId() {
-        String address = "Budapest-Nyugati";
-        String correlationId = "corr-123";
-
-        GeocodingRequest request = new GeocodingRequest(address);
-        CrudEvent<String, Object> incomingEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, address, new Object());
-
-        when(objectMapper.convertValue(any(), eq(GeocodingRequest.class)))
-                .thenReturn(request);
-
-        GeocodingResponse geocodingResponse = new GeocodingResponse();
-        when(geocodingController.getCoordinates(anyString()))
-                .thenReturn(Mono.just(geocodingResponse));
-
-        Message<Event<?, ?>> message = MessageBuilder
-                .<Event<?, ?>>withPayload(incomingEvent)
-                .setHeader("correlationId", correlationId)
-                .build();
-
-        messageProcessor.accept(message);
-
-        verify(geocodingController).getCoordinates(address);
-        verify(responseMessageSender)
-                .sendResponseMessage(eq(BINDING_NAME), eq(correlationId), any(HttpResponseEvent.class));
-        verifyNoMoreInteractions(responseMessageSender);
-    }
-
-    @Test
-    void givenGetEventWithoutCorrelationId_whenGeocodingFails_thenErrorResponseIsSent() {
+    void getEvent_whenGeocodingFails_thenErrorResponseIsSent() {
         String address = "Budapest-Nyugati";
         GeocodingRequest request = new GeocodingRequest(address);
 
@@ -136,34 +105,6 @@ class MessageProcessorTest {
         verify(geocodingController).getCoordinates(address);
         verify(responseMessageSender)
                 .sendResponseMessage(eq(BINDING_NAME), any(HttpResponseEvent.class));
-        verifyNoMoreInteractions(responseMessageSender);
-    }
-
-    @Test
-    void givenGetEventWithCorrelationId_whenGeocodingFails_thenErrorResponseIsSentWithCorrelationId() {
-        String address = "Budapest-Nyugati";
-        String correlationId = "corr-456";
-        GeocodingRequest request = new GeocodingRequest(address);
-
-        CrudEvent<String, Object> incomingEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, address, new Object());
-
-        when(objectMapper.convertValue(any(), eq(GeocodingRequest.class)))
-                .thenReturn(request);
-
-        when(geocodingController.getCoordinates(anyString()))
-                .thenReturn(Mono.error(new RuntimeException("boom")));
-
-        Message<Event<?, ?>> message = MessageBuilder
-                .<Event<?, ?>>withPayload(incomingEvent)
-                .setHeader("correlationId", correlationId)
-                .build();
-
-        messageProcessor.accept(message);
-
-        verify(geocodingController).getCoordinates(address);
-        verify(responseMessageSender)
-                .sendResponseMessage(eq(BINDING_NAME), eq(correlationId), any(HttpResponseEvent.class));
         verifyNoMoreInteractions(responseMessageSender);
     }
 

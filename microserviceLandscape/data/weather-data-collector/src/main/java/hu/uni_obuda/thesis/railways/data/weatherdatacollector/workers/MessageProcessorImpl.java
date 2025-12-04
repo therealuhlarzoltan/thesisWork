@@ -6,23 +6,19 @@ import hu.uni_obuda.thesis.railways.data.event.CrudEvent;
 import hu.uni_obuda.thesis.railways.data.event.Event;
 import hu.uni_obuda.thesis.railways.data.event.HttpResponseEvent;
 import hu.uni_obuda.thesis.railways.data.event.ResponsePayload;
-import hu.uni_obuda.thesis.railways.data.raildatacollector.dto.DelayInfoRequest;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.controller.WeatherDataCollector;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfoRequest;
 import hu.uni_obuda.thesis.railways.util.exception.datacollectors.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 @Slf4j
+@RequiredArgsConstructor
 public class MessageProcessorImpl implements MessageProcessor {
 
     private final ObjectMapper objectMapper;
@@ -30,25 +26,12 @@ public class MessageProcessorImpl implements MessageProcessor {
     private final ResponseMessageSender responseSender;
     private final Scheduler messageProcessingScheduler;
 
-    public MessageProcessorImpl(ObjectMapper objectMapper, WeatherDataCollector weatherDataCollector,
-                                ResponseMessageSender responseSender, Scheduler messageProcessingScheduler) {
-        this.objectMapper = objectMapper;
-        this.weatherDataCollector = weatherDataCollector;
-        this.responseSender = responseSender;
-        this.messageProcessingScheduler = messageProcessingScheduler;
-    }
-
     @Override
     public void accept(Message<Event<?, ?>> eventMessage) {
         log.debug("Received message wth id {}", eventMessage.getHeaders().getId());
-        if (eventMessage.getHeaders().containsKey("correlationId")) {
-            processMessageWithCorrelationId(eventMessage);
-        } else {
-            processMessageWithoutCorrelationId(eventMessage);
-        }
+        processMessage(eventMessage);
     }
 
-    @SuppressWarnings("unchecked")
     private CrudEvent<String, WeatherInfoRequest> retrieveCrudEvent(Event<?, ?> genericEvent) {
         if (!(genericEvent instanceof CrudEvent<?, ?> crudEvent)) {
             log.error("Unexpected event parameters, expected a CrudEvent");
@@ -70,11 +53,11 @@ public class MessageProcessorImpl implements MessageProcessor {
         return new CrudEvent<>(crudEvent.getEventType(), (String)crudEvent.getKey(), weatherInfoRequest);
     }
 
-    private void processMessageWithoutCorrelationId(Message<Event<?, ?>> message) {
-        log.info("Processing message created at {} with no correlationId...", message.getPayload().getEventCreatedAt());
+    private void processMessage(Message<Event<?, ?>> message) {
+        log.info("Processing message created at {}", message.getPayload().getEventCreatedAt());
         CrudEvent<String, WeatherInfoRequest> crudEvent = retrieveCrudEvent(message.getPayload());
         if (crudEvent == null) {
-            handleIncorrectEventParametersError(message.getPayload(), null);
+            handleIncorrectEventParametersError(message.getPayload());
             return;
         }
         CrudEvent.Type eventType = crudEvent.getEventType();
@@ -98,42 +81,9 @@ public class MessageProcessorImpl implements MessageProcessor {
                         .subscribeOn(messageProcessingScheduler)
                         .subscribe();
             }
-            case null, default -> handleIncorrectEventTypeError(crudEvent, null);
+            case null, default -> handleIncorrectEventTypeError(crudEvent);
         }
 
-    }
-
-    private void processMessageWithCorrelationId(Message<Event<?, ?>> message) {
-        String correlationId = message.getHeaders().get("correlationId").toString();
-        log.info("Processing message created at {} with correlationId {}...", message.getPayload().getEventCreatedAt(), correlationId);
-        CrudEvent<String, WeatherInfoRequest> crudEvent = retrieveCrudEvent(message.getPayload());
-        if (crudEvent == null) {
-            handleIncorrectEventParametersError(message.getPayload(), correlationId);
-            return;
-        }
-        CrudEvent.Type eventType = crudEvent.getEventType();
-        switch (eventType) {
-            case GET -> {
-                WeatherInfoRequest request = crudEvent.getData();
-                Mono<WeatherInfo> weatherInfoMono = weatherDataCollector.getWeatherInfo(request.getStationName(), request.getLatitude(), request.getLongitude(), request.getTime());
-                weatherInfoMono
-                        .onErrorResume(throwable -> {
-                            log.error("Constructed empty WeatherInfo due to error: {}", throwable.getMessage());
-                            return Mono.just(WeatherInfo.builder().address(request.getStationName()).time(request.getTime()).build());
-                        })
-                        .switchIfEmpty(Mono.just(WeatherInfo.builder().address(request.getStationName()).time(request.getTime()).build()))
-                        .flatMap(weatherInfo -> {
-                            return Mono.fromCallable(() -> {
-                                ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(weatherInfo), HttpStatus.OK);
-                                return new HttpResponseEvent(HttpResponseEvent.Type.SUCCESS, request.getStationName(), responsePayload);
-                            });
-                        })
-                        .doOnNext(event -> responseSender.sendResponseMessage("weatherDataResponses-out-0", correlationId, event))
-                        .subscribeOn(messageProcessingScheduler)
-                        .subscribe();
-            }
-            case null, default -> handleIncorrectEventTypeError(crudEvent, correlationId);
-        }
     }
 
     private String serializeObjectToJson(Object object) {
@@ -145,45 +95,15 @@ public class MessageProcessorImpl implements MessageProcessor {
         }
     }
 
-    private void handleIncorrectEventParametersError(Event<?, ?> event, String correlationId) {
+    private void handleIncorrectEventParametersError(Event<?, ?> event) {
         ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(new MessageFormatException("The received Event was not an instance of CrudEvent<String, WeatherInfoRequest>")), HttpStatus.BAD_REQUEST);
         HttpResponseEvent errorEvent = new HttpResponseEvent(HttpResponseEvent.Type.ERROR, event.getKey().toString(), responsePayload);
-        if (correlationId != null) {
-            responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, errorEvent);
-        } else {
-            responseSender.sendResponseMessage("railDataResponses-out-0", errorEvent);
-        }
+        responseSender.sendResponseMessage("railDataResponses-out-0", errorEvent);
     }
 
-    private void handleIncorrectEventTypeError(CrudEvent<String, WeatherInfoRequest> crudEvent, String correlationId) {
+    private void handleIncorrectEventTypeError(CrudEvent<String, WeatherInfoRequest> crudEvent) {
         ResponsePayload responsePayload = new ResponsePayload(serializeObjectToJson(new MessageFormatException("The received event had an unsupported event type")), HttpStatus.METHOD_NOT_ALLOWED);
         HttpResponseEvent errorEvent = new HttpResponseEvent(HttpResponseEvent.Type.ERROR, crudEvent.getKey(), responsePayload);
-        if (correlationId != null) {
-            responseSender.sendResponseMessage("railDataResponses-out-0", correlationId, errorEvent);
-        } else {
-            responseSender.sendResponseMessage("railDataResponses-out-0", errorEvent);
-        }
-    }
-
-    private Throwable resolveException(Throwable throwable) {
-        return switch (throwable) {
-            case InvalidInputDataException invalidInputDataException -> invalidInputDataException;
-            case ExternalApiException externalApiException -> externalApiException;
-            case ExternalApiFormatMismatchException externalApiFormatMismatchException -> externalApiFormatMismatchException;
-            case InternalApiException internalApiException -> internalApiException;
-            case ApiException apiException -> apiException;
-            default -> throwable;
-        };
-    }
-
-    private HttpStatus resolveHttpStatus(Throwable throwable) {
-        return switch (throwable) {
-            case InvalidInputDataException invalidInputDataException -> HttpStatus.resolve(invalidInputDataException.getStatusCode().value());
-            case ExternalApiException externalApiException -> HttpStatus.resolve(externalApiException.getStatusCode().value());
-            case ExternalApiFormatMismatchException externalApiFormatMismatchException -> HttpStatus.BAD_GATEWAY;
-            case InternalApiException internalApiException -> HttpStatus.INTERNAL_SERVER_ERROR;
-            case ApiException apiException -> HttpStatus.BAD_GATEWAY;
-            case null, default -> HttpStatus.INTERNAL_SERVER_ERROR;
-        };
+        responseSender.sendResponseMessage("railDataResponses-out-0", errorEvent);
     }
 }

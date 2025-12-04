@@ -27,22 +27,4 @@ public class MessageSenderImpl implements MessageSender {
             log.info("Successfully sent a message to {}", bindingName);
         }
     }
-
-    @Override
-    public void sendMessage(String bindingName, String correlationId, Event<?, ?> event) {
-        if (correlationId == null) {
-            log.warn("No correlationId found in the message headers, will not send the message");
-            return;
-        }
-        log.info("Sending a  message to {} with correlationId {}", bindingName, correlationId);
-        Message message = MessageBuilder.withPayload(event)
-                .setHeader("correlationId", correlationId)
-                .setHeader("partitionKey", event.getKey())
-                .build();
-        if (!streamBridge.send(bindingName, message)) {
-            log.error("Failed to send the  message to {} with correlationId {}", bindingName, correlationId);
-        } else {
-            log.info("Successfully sent a message to {} with correlationId {}", bindingName, correlationId);
-        }
-    }
 }
