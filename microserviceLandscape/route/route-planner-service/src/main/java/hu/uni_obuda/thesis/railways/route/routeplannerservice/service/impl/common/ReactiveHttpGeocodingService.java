@@ -36,8 +36,11 @@ public class ReactiveHttpGeocodingService implements GeocodingService {
         log.debug("Geocoding cache miss for {}", stationName);
         return geocodingGateway.getCoordinates(stationName)
                 .doOnNext(response -> {
-                    geocodingCache.put(stationName, response);
-                    log.debug("Geocoding response cached for {}", stationName);
+                    if (!response.isEmpty()) {
+                        geocodingCache.put(stationName, response);
+                        log.debug("Geocoding response cached for {}", stationName);
+                    }
+                    log.info("Unable to cache empty geocoding response for {}", stationName);
                 });
     }
 }
