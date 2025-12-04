@@ -171,7 +171,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public ReactiveJwtDecoder jwtDecoder(@Value("${jwt.secret}") String secret) {
+    public ReactiveJwtDecoder jwtDecoder(@Value("${app.jwt.secret}") String secret) {
         return NimbusReactiveJwtDecoder
                 .withSecretKey(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"))
                 .build();
