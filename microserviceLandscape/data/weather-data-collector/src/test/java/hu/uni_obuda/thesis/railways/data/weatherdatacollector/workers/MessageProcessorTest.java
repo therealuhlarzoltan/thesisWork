@@ -45,7 +45,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_validGet_sendsSuccessResponse() throws Exception {
+    void accept_validGet_sendsSuccessResponse() throws Exception {
         LocalDateTime time = LocalDateTime.of(2024, 10, 10, 10, 0);
         WeatherInfoRequest request = buildRequest(time);
 
@@ -72,8 +72,7 @@ class MessageProcessorTest {
         when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"dummy\":\"json\"}");
 
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent).build();
+        Message<Event<?, ?>> message = (Message) MessageBuilder.withPayload(crudEvent).build();
 
         MessageProcessorImpl tested = createTested();
 
@@ -85,42 +84,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void accept_withCorrelationId_getErrorFromService_usesFallbackAndSendsSuccessResponseWithCorrelationId() throws Exception {
-        LocalDateTime time = LocalDateTime.of(2024, 10, 10, 11, 0);
-        WeatherInfoRequest request = buildRequest(time);
-
-        CrudEvent<String, Object> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, request.getStationName(), request);
-
-        when(objectMapper.convertValue(any(), eq(WeatherInfoRequest.class)))
-                .thenReturn(request);
-
-        when(weatherDataCollector.getWeatherInfo(
-                request.getStationName(),
-                request.getLatitude(),
-                request.getLongitude(),
-                request.getTime()
-        )).thenReturn(Mono.error(new RuntimeException("boom")));
-
-        when(objectMapper.writeValueAsString(any()))
-                .thenReturn("{\"dummy\":\"json\"}");
-
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent)
-                        .setHeader("correlationId", "corr-123")
-                        .build();
-
-        MessageProcessorImpl tested = createTested();
-
-        tested.accept(message);
-
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("weatherDataResponses-out-0"), eq("corr-123"), any(HttpResponseEvent.class));
-        verifyNoMoreInteractions(responseSender);
-    }
-
-    @Test
-    void accept_withoutCorrelationId_getEmptyFromService_usesFallbackWeatherInfo() throws Exception {
+    void accept_getEmptyFromService_usesFallbackWeatherInfo() throws Exception {
         LocalDateTime time = LocalDateTime.of(2024, 10, 10, 12, 0);
         WeatherInfoRequest request = buildRequest(time);
 
@@ -140,8 +104,7 @@ class MessageProcessorTest {
         when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"dummy\":\"json\"}");
 
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent).build();
+        Message<Event<?, ?>> message = (Message) MessageBuilder.withPayload(crudEvent).build();
 
         MessageProcessorImpl tested = createTested();
 
@@ -153,7 +116,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelationId_nonCrudEvent_triggersIncorrectEventParametersError() throws Exception {
+    void accept_nonCrudEvent_triggersIncorrectEventParametersError() throws Exception {
         @SuppressWarnings("unchecked")
         Event<Object, Object> genericEvent = mock(Event.class);
         when(genericEvent.getKey()).thenReturn("key-1");
@@ -161,8 +124,7 @@ class MessageProcessorTest {
         when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"error\":\"msg\"}");
 
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(genericEvent).build();
+        Message<Event<?, ?>> message = (Message) MessageBuilder.withPayload(genericEvent).build();
 
         MessageProcessorImpl tested = createTested();
 
@@ -177,60 +139,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void accept_withCorrelationId_crudEventWithNonStringKey_triggersIncorrectEventParametersError() throws Exception {
-        LocalDateTime time = LocalDateTime.of(2024, 10, 10, 13, 0);
-        WeatherInfoRequest request = buildRequest(time);
-
-        CrudEvent<Integer, Object> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, 123, request);
-
-        when(objectMapper.writeValueAsString(any()))
-                .thenReturn("{\"error\":\"msg\"}");
-
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent)
-                        .setHeader("correlationId", "corr-456")
-                        .build();
-
-        MessageProcessorImpl tested = createTested();
-
-        tested.accept(message);
-
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("corr-456"), any(HttpResponseEvent.class));
-        verifyNoMoreInteractions(responseSender);
-    }
-
-    @Test
-    void accept_withCorrelationId_convertValueThrowsIllegalArgument_triggersIncorrectEventParametersError() throws Exception {
-        LocalDateTime time = LocalDateTime.of(2024, 10, 10, 14, 0);
-        WeatherInfoRequest request = buildRequest(time);
-
-        CrudEvent<String, Object> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.GET, request.getStationName(), request);
-
-        when(objectMapper.convertValue(any(), eq(WeatherInfoRequest.class)))
-                .thenThrow(new IllegalArgumentException("cannot map"));
-
-        when(objectMapper.writeValueAsString(any()))
-                .thenReturn("{\"error\":\"msg\"}");
-
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent)
-                        .setHeader("correlationId", "corr-789")
-                        .build();
-
-        MessageProcessorImpl tested = createTested();
-
-        tested.accept(message);
-
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("corr-789"), any(HttpResponseEvent.class));
-        verifyNoMoreInteractions(responseSender);
-    }
-
-    @Test
-    void accept_withoutCorrelationId_unsupportedEventType_triggersIncorrectEventTypeError() throws Exception {
+    void accept_unsupportedEventType_triggersIncorrectEventTypeError() throws Exception {
         LocalDateTime time = LocalDateTime.of(2024, 10, 10, 15, 0);
         WeatherInfoRequest request = buildRequest(time);
 
@@ -243,8 +152,7 @@ class MessageProcessorTest {
         when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"error\":\"unsupported\"}");
 
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent).build();
+        Message<Event<?, ?>> message = (Message) MessageBuilder.withPayload(crudEvent).build();
 
         MessageProcessorImpl tested = createTested();
 
@@ -258,37 +166,7 @@ class MessageProcessorTest {
     }
 
     @Test
-    void accept_withCorrelationId_unsupportedEventType_triggersIncorrectEventTypeErrorWithCorrelationId() throws Exception {
-        LocalDateTime time = LocalDateTime.of(2024, 10, 10, 16, 0);
-        WeatherInfoRequest request = buildRequest(time);
-
-        CrudEvent<String, Object> crudEvent =
-                new CrudEvent<>(CrudEvent.Type.UPDATE, request.getStationName(), request);
-
-        when(objectMapper.convertValue(any(), eq(WeatherInfoRequest.class)))
-                .thenReturn(request);
-
-        when(objectMapper.writeValueAsString(any()))
-                .thenReturn("{\"error\":\"unsupported\"}");
-
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(crudEvent)
-                        .setHeader("correlationId", "corr-999")
-                        .build();
-
-        MessageProcessorImpl tested = createTested();
-
-        tested.accept(message);
-
-        verify(responseSender, times(1))
-                .sendResponseMessage(eq("railDataResponses-out-0"), eq("corr-999"), any(HttpResponseEvent.class));
-        verifyNoMoreInteractions(responseSender);
-
-        verifyNoInteractions(weatherDataCollector);
-    }
-
-    @Test
-    void accept_withoutCorrelationId_serializeObjectToJsonFails_stillSendsErrorResponse() throws Exception {
+    void accept_serializeObjectToJsonFails_stillSendsErrorResponse() throws Exception {
         @SuppressWarnings("unchecked")
         Event<Object, Object> genericEvent = mock(Event.class);
         when(genericEvent.getKey()).thenReturn("key-serialize");
@@ -296,8 +174,7 @@ class MessageProcessorTest {
         when(objectMapper.writeValueAsString(any()))
                 .thenThrow(new JsonProcessingException("fail serialize") {});
 
-        Message<Event<?, ?>> message =
-                (Message) MessageBuilder.withPayload(genericEvent).build();
+        Message<Event<?, ?>> message = (Message) MessageBuilder.withPayload(genericEvent).build();
 
         MessageProcessorImpl tested = createTested();
 

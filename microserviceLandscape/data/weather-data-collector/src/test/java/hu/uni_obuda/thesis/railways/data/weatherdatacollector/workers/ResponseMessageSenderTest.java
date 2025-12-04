@@ -9,13 +9,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +47,7 @@ class ResponseMessageSenderTest {
     }
 
     @Test
-    void sendResponseMessage_withoutCorrelationId_whenSendFails_logsInfoAndError() {
+    void sendResponseMessage_whenSendFails_logsInfoAndError() {
         String bindingName = "testBinding";
         HttpResponseEvent event = mock(HttpResponseEvent.class);
 
@@ -61,7 +59,7 @@ class ResponseMessageSenderTest {
 
         assertThat(listAppender.list).hasSize(2);
 
-        ILoggingEvent infoLog = listAppender.list.get(0);
+        ILoggingEvent infoLog = listAppender.list.getFirst();
         assertThat(infoLog.getLevel()).isEqualTo(Level.INFO);
         assertThat(infoLog.getFormattedMessage())
                 .isEqualTo("Sending a response message to " + bindingName);
@@ -70,56 +68,5 @@ class ResponseMessageSenderTest {
         assertThat(errorLog.getLevel()).isEqualTo(Level.ERROR);
         assertThat(errorLog.getFormattedMessage())
                 .isEqualTo("Failed to send the response message to " + bindingName);
-    }
-
-    @Test
-    void sendResponseMessage_withNullCorrelationId_logsWarnAndDoesNotSend() {
-        String bindingName = "testBinding";
-        HttpResponseEvent event = mock(HttpResponseEvent.class);
-
-        testedObject.sendResponseMessage(bindingName, null, event);
-
-        verifyNoInteractions(streamBridge);
-
-        assertThat(listAppender.list).hasSize(1);
-        ILoggingEvent warnLog = listAppender.list.get(0);
-        assertThat(warnLog.getLevel()).isEqualTo(Level.WARN);
-        assertThat(warnLog.getFormattedMessage())
-                .isEqualTo("No correlationId found in the message headers, will not send a response message");
-    }
-
-    @Test
-    void sendResponseMessage_withCorrelationId_whenSendFails_logsInfoErrorAndSetsHeader() {
-        String bindingName = "testBinding";
-        String correlationId = "corr-123";
-        HttpResponseEvent event = mock(HttpResponseEvent.class);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<Message<HttpResponseEvent>> messageCaptor =
-                ArgumentCaptor.forClass((Class) Message.class);
-
-        when(streamBridge.send(eq(bindingName), any(Message.class))).thenReturn(false);
-
-        testedObject.sendResponseMessage(bindingName, correlationId, event);
-
-        verify(streamBridge, times(1)).send(eq(bindingName), messageCaptor.capture());
-
-        Message<HttpResponseEvent> sentMessage = messageCaptor.getValue();
-        assertThat(sentMessage.getPayload()).isEqualTo(event);
-
-        MessageHeaders headers = sentMessage.getHeaders();
-        assertThat(headers.get("correlationId")).isEqualTo(correlationId);
-
-        assertThat(listAppender.list).hasSize(2);
-
-        ILoggingEvent infoLog = listAppender.list.get(0);
-        assertThat(infoLog.getLevel()).isEqualTo(Level.INFO);
-        assertThat(infoLog.getFormattedMessage())
-                .isEqualTo("Sending a response message to " + bindingName + " with correlationId " + correlationId);
-
-        ILoggingEvent errorLog = listAppender.list.get(1);
-        assertThat(errorLog.getLevel()).isEqualTo(Level.ERROR);
-        assertThat(errorLog.getFormattedMessage())
-                .isEqualTo("Failed to send the response message to " + bindingName + " with correlationId " + correlationId);
     }
 }

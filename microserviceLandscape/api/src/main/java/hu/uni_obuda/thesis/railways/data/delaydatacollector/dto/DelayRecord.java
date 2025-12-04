@@ -18,6 +18,7 @@ public class DelayRecord {
     private Double stationLatitude;
     private Double stationLongitude;
     private String trainNumber;
+    private String lineNumber;
     private LocalDateTime scheduledArrival;
     private LocalDateTime scheduledDeparture;
     private LocalDateTime actualArrival;

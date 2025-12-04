@@ -1,6 +1,11 @@
+import os
 import atexit
 
 from django.apps import AppConfig
+
+def is_training_instance() -> bool:
+    val = os.getenv("IS_TRAINING_INSTANCE", "true").strip().lower()
+    return val in ("1", "true", "yes", "y", "on")
 
 class MessagingConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -10,28 +15,29 @@ class MessagingConfig(AppConfig):
         import sys
         if 'runserver' not in sys.argv:
             return
-        
-        from apscheduler.schedulers.background import BackgroundScheduler
-        from apscheduler.triggers.interval import IntervalTrigger
-        from django_apscheduler.jobstores import DjangoJobStore
-        from .scheduler import publish_initial_batch_request
-        print('Sending batch request...')
-        scheduler = BackgroundScheduler()
-        scheduler.add_jobstore(DjangoJobStore(), "default")
 
-        scheduler.add_job(
-            publish_initial_batch_request,
-            trigger=IntervalTrigger(hours=2),
-            id="publish_initial_batch_request",
-            name="Initiate data fetch ever hour",
-            replace_existing=True,
-        )
+        if is_training_instance():
+            from apscheduler.schedulers.background import BackgroundScheduler
+            from apscheduler.triggers.interval import IntervalTrigger
+            from django_apscheduler.jobstores import DjangoJobStore
+            from .scheduler import publish_initial_batch_request
+            print('Sending batch request...')
+            scheduler = BackgroundScheduler()
+            scheduler.add_jobstore(DjangoJobStore(), "default")
 
-        scheduler.start()
-        print("APScheduler started")
+            scheduler.add_job(
+                publish_initial_batch_request,
+                trigger=IntervalTrigger(hours=12),
+                id="publish_initial_batch_request",
+                name="Initiate data fetch every 12 hours",
+                replace_existing=True,
+            )
 
-        print("Running publish_initial_batch_request() immediately at startup")
-        publish_initial_batch_request()
+            scheduler.start()
+            print("APScheduler started")
 
-        atexit.register(lambda: scheduler.shutdown())
+            print("Running publish_initial_batch_request() immediately at startup")
+            publish_initial_batch_request()
+
+            atexit.register(lambda: scheduler.shutdown())
 

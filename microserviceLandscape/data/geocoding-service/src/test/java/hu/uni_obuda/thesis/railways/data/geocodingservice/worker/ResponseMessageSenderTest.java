@@ -17,7 +17,6 @@ import org.springframework.messaging.Message;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -45,37 +44,6 @@ class ResponseMessageSenderTest {
     void tearDown() {
         Logger logger = (Logger) LoggerFactory.getLogger(ResponseMessageSenderImpl.class);
         logger.detachAppender(listAppender);
-    }
-
-    @Test
-    void sendResponseMessage_withCorrelationId_sendCalledAndInfoLogged() {
-        HttpResponseEvent event = new HttpResponseEvent();
-        when(streamBridge.send(eq("binding-out"), any(Message.class))).thenReturn(true);
-
-        testedObject.sendResponseMessage("binding-out", "corr-123", event);
-
-        verify(streamBridge, times(1)).send(eq("binding-out"), any(Message.class));
-        assertFalse(listAppender.list.isEmpty());
-
-        ILoggingEvent infoLog = listAppender.list.get(0);
-        assertEquals(Level.INFO, infoLog.getLevel());
-        assertTrue(infoLog.getFormattedMessage()
-                .contains("Sending a response message to binding-out with correlationId corr-123"));
-    }
-
-    @Test
-    void sendResponseMessage_noCorrelationId_warnLoggedAndNoMessageSent() {
-        HttpResponseEvent event = new HttpResponseEvent();
-
-        testedObject.sendResponseMessage("binding-out", null, event);
-
-        verify(streamBridge, never()).send(anyString(), any(Message.class));
-        assertFalse(listAppender.list.isEmpty());
-
-        ILoggingEvent warnLog = listAppender.list.get(0);
-        assertEquals(Level.WARN, warnLog.getLevel());
-        assertTrue(warnLog.getFormattedMessage()
-                .contains("No correlationId found in the message headers"));
     }
 
     @Test

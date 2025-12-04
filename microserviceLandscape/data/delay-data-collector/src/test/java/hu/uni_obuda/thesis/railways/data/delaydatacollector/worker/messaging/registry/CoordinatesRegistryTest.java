@@ -183,65 +183,6 @@ class CoordinatesRegistryTest {
     }
 
     @Test
-    void waitForCoordinatesWithCorrelationId_createsSharedMonoAndLogs() {
-        String correlationId = "corr-123";
-
-        Mono<GeocodingResponse> mono = testedObject.waitForCoordinatesWithCorrelationId(correlationId);
-        assertThat(mono).isNotNull();
-
-        assertThat(sharedMonosMap()).containsKey(correlationId);
-        assertThat(pendingMap()).isEmpty();
-
-        assertThat(loggedMessages())
-                .anyMatch(msg -> msg.contains("Waiting for coordinates with correlationId " + correlationId));
-    }
-
-    @Test
-    void waitForCoordinatesWithCorrelationId_success_onCoordinatesWithCorrelationIdCompletesMonoAndCaches() {
-        String correlationId = "corr-123";
-        String station = "BPK";
-        GeocodingResponse response = coords(station, 47.5, 19.08);
-
-        when(coordinatesCache.cache(eq(station), eq(response))).thenReturn(Mono.empty());
-
-        Mono<GeocodingResponse> mono = testedObject.waitForCoordinatesWithCorrelationId(correlationId);
-
-        StepVerifier.create(mono)
-                .then(() -> testedObject.onCoordinatesWithCorrelationId(correlationId, response))
-                .expectNext(response)
-                .verifyComplete();
-
-        verify(coordinatesCache).cache(station, response);
-
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-
-        List<String> messages = loggedMessages();
-        assertThat(messages)
-                .anyMatch(msg -> msg.contains("Waiting for coordinates with correlationId " + correlationId));
-        assertThat(messages)
-                .anyMatch(msg -> msg.contains("Registered coordinates with correlationId " + correlationId));
-    }
-
-    @Test
-    void waitForCoordinatesWithCorrelationId_emptyCoordinates_doesNotCacheButCompletesMono() {
-        String correlationId = "corr-123";
-        String station = "BPK";
-        GeocodingResponse emptyCoords = coords(station, null, null);
-
-        Mono<GeocodingResponse> mono = testedObject.waitForCoordinatesWithCorrelationId(correlationId);
-
-        StepVerifier.create(mono)
-                .then(() -> testedObject.onCoordinatesWithCorrelationId(correlationId, emptyCoords))
-                .expectNext(emptyCoords)
-                .verifyComplete();
-
-        verify(coordinatesCache, never()).cache(any(), any());
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-    }
-
-    @Test
     void onCoordinates_whenNoPendingSinkOnlyCachesAndLogs() {
         String station = "BPK";
         GeocodingResponse response = coords(station, 47.5, 19.08);
@@ -287,42 +228,6 @@ class CoordinatesRegistryTest {
         RuntimeException cause = new RuntimeException("boom");
 
         testedObject.onError(station, cause);
-
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-
-        assertThat(listAppender.list).noneMatch(e -> e.getLevel() == Level.ERROR);
-    }
-
-    @Test
-    void onErrorWithCorrelationId_propagatesServiceResponseExceptionToSubscriberAndCleansMaps() {
-        String correlationId = "corr-123";
-        RuntimeException cause = new RuntimeException("boom");
-
-        Mono<GeocodingResponse> mono = testedObject.waitForCoordinatesWithCorrelationId(correlationId);
-
-        StepVerifier.create(mono)
-                .then(() -> testedObject.onErrorWithCorrelationId(correlationId, cause))
-                .expectErrorSatisfies(ex -> {
-                    assertThat(ex).isInstanceOf(ServiceResponseException.class);
-                    assertThat(ex.getCause()).isEqualTo(cause);
-                })
-                .verify();
-
-        assertThat(pendingMap()).isEmpty();
-        assertThat(sharedMonosMap()).isEmpty();
-
-        List<String> messages = loggedMessages();
-        assertThat(messages)
-                .anyMatch(msg -> msg.contains("Cancelling wait for coordinates with correlationId " + correlationId));
-    }
-
-    @Test
-    void onErrorWithCorrelationId_whenNoPendingSink_doesNothing() {
-        String correlationId = "corr-123";
-        RuntimeException cause = new RuntimeException("boom");
-
-        testedObject.onErrorWithCorrelationId(correlationId, cause);
 
         assertThat(pendingMap()).isEmpty();
         assertThat(sharedMonosMap()).isEmpty();

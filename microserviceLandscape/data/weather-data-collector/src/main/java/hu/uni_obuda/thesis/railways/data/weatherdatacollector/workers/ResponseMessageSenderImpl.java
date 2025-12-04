@@ -25,19 +25,4 @@ public class ResponseMessageSenderImpl implements ResponseMessageSender {
             log.error("Failed to send the response message to {}", bindingName);
         }
     }
-
-    @Override
-    public void sendResponseMessage(String bindingName, String correlationId, HttpResponseEvent event) {
-        if (correlationId == null) {
-            log.warn("No correlationId found in the message headers, will not send a response message");
-            return;
-        }
-        log.info("Sending a response message to {} with correlationId {}", bindingName, correlationId);
-        Message<HttpResponseEvent> responseMessage = MessageBuilder.withPayload(event)
-                .setHeader("correlationId", correlationId)
-                .build();
-        if (!streamBridge.send(bindingName, responseMessage)) {
-            log.error("Failed to send the response message to {} with correlationId {}", bindingName, correlationId);
-        }
-    }
 }

@@ -157,6 +157,14 @@ spring:
           group: railDataRequestsGroup
           contentType: application/json
 
+    rabbit:
+      bindings:
+        railDataResponses-out-0:
+          producer:
+            lazy: true
+            maxLength: 100
+            overflowBehavior: drop-head
+
 
   spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
     maxAttempts: 3
@@ -214,7 +222,7 @@ railway.api:
 ---
 spring.activate.on-profile: data-source-emma
 railway.api:
-  base-url: https://emma.mav.hu
+  base-url: https://mavplusz.hu
   timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
   train-details-getter-uri: //otp2-backend/otp/routers/default/index/graphql
   graphql.short-timetable-document: Plan
@@ -224,3 +232,34 @@ railway.api:
     limit:
       delay-between-requests: 2000
       number-of-concurrent-calls: 4
+
+---
+spring.activate.on-profile: instance-1
+
+spring.cloud.stream.bindings.messageProcessor-in-0:
+  destination: railDataRequests
+  group: railDataRequestsGroup
+  consumer:
+    partitioned: true
+    instance-index: 0
+
+---
+spring.activate.on-profile: instance-2
+
+spring.cloud.stream.bindings.messageProcessor-in-0:
+  destination: railDataRequests
+  group: railDataRequestsGroup
+  consumer:
+    partitioned: true
+    instance-index: 1
+
+---
+spring.activate.on-profile: instance-3
+
+spring.cloud.stream.bindings.messageProcessor-in-0:
+  destination: railDataRequests
+  group: railDataRequestsGroup
+  consumer:
+    partitioned: true
+    instance-index: 2
+
