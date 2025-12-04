@@ -198,7 +198,7 @@ logging:
     org.springframework.web.reactive.function.client.WebClient: INFO
 
 ---
-spring.activate.on-profile: docker
+spring.config.activate.on-profile: docker
 
 server.port: 8080
 
@@ -209,7 +209,7 @@ spring:
       port: 6379
 
 ---
-spring.activate.on-profile: data-source-elvira
+spring.config.activate.on-profile: data-source-elvira
 railway.api:
   base-url: http://apiv2.oroszi.net/elvira
   timetable-getter-uri: /
@@ -220,7 +220,7 @@ railway.api:
       number-of-concurrent-calls: 4
 
 ---
-spring.activate.on-profile: data-source-emma
+spring.config.activate.on-profile: data-source-emma
 railway.api:
   base-url: https://mavplusz.hu
   timetable-getter-uri: //otp2-backend/otp/routers/default/index/graphql
@@ -234,7 +234,7 @@ railway.api:
       number-of-concurrent-calls: 4
 
 ---
-spring.activate.on-profile: instance-1
+spring.config.activate.on-profile: instance-1
 
 spring.cloud.stream.bindings.messageProcessor-in-0:
   destination: railDataRequests
@@ -243,8 +243,14 @@ spring.cloud.stream.bindings.messageProcessor-in-0:
     partitioned: true
     instance-index: 0
 
+spring:
+  data:
+    redis:
+      host: redis-2
+      port: 6379
+
 ---
-spring.activate.on-profile: instance-2
+spring.config.activate.on-profile: instance-2
 
 spring.cloud.stream.bindings.messageProcessor-in-0:
   destination: railDataRequests
@@ -253,8 +259,14 @@ spring.cloud.stream.bindings.messageProcessor-in-0:
     partitioned: true
     instance-index: 1
 
+spring:
+  data:
+    redis:
+      host: redis-3
+      port: 6379
+
 ---
-spring.activate.on-profile: instance-3
+spring.config.activate.on-profile: instance-3
 
 spring.cloud.stream.bindings.messageProcessor-in-0:
   destination: railDataRequests
@@ -262,4 +274,10 @@ spring.cloud.stream.bindings.messageProcessor-in-0:
   consumer:
     partitioned: true
     instance-index: 2
+
+spring:
+  data:
+    redis:
+      host: redis-4
+      port: 6379
 

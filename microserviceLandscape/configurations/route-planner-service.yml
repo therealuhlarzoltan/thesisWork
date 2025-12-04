@@ -335,6 +335,6 @@ logging:
     org.springframework.web.reactive.function.client.WebClient: INFO
 
 ---
-spring.activate.on-profile: docker
+spring.config.activate.on-profile: docker
 
 server.port: 8080

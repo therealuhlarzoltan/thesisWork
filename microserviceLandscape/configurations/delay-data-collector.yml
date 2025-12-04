@@ -182,7 +182,7 @@ logging:
     root: INFO
 
 ---
-spring.activate.on-profile: docker
+spring.config.activate.on-profile: docker
 
 server.port: 8080
 
@@ -197,7 +197,7 @@ spring:
       port: 6379
 
 ---
-spring.activate.on-profile: scaled-2
+spring.config.activate.on-profile: scaled-2
 
 spring.cloud.stream:
   bindings:
@@ -215,7 +215,7 @@ spring.cloud.stream:
         partition-count: 2
 
 ---
-spring.activate.on-profile: scaled-3
+spring.config.activate.on-profile: scaled-3
 
 spring.cloud.stream:
   bindings:
