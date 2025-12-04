@@ -535,3 +535,121 @@ class DropDepartureDelayColumn(BaseEstimator, TransformerMixin):
         if self.col in df.columns:
             df = df.drop(columns=[self.col])
         return df
+
+class DropZeroDelayTrains(BaseEstimator, TransformerMixin):
+
+    def __init__(
+        self,
+        date_col: str = "date",
+        train_col: str = "train_number",
+        arr_delay_col: str = "arrival_delay",
+        dep_delay_col: str = "departure_delay",
+        min_zero_delays: int = 100,
+        min_zero_pct: float = 40.0,
+    ):
+        self.date_col = date_col
+        self.train_col = train_col
+        self.arr_delay_col = arr_delay_col
+        self.dep_delay_col = dep_delay_col
+        self.min_zero_delays = min_zero_delays
+        self.min_zero_pct = min_zero_pct
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X
+
+        required = {
+            self.date_col,
+            self.train_col,
+            self.arr_delay_col,
+            self.dep_delay_col,
+        }
+        if not required.issubset(df.columns):
+            return df
+
+        df[self.date_col] = pd.to_datetime(df[self.date_col])
+
+        delay_events = (
+            df[[self.date_col, self.arr_delay_col, self.dep_delay_col]]
+            .melt(
+                id_vars=self.date_col,
+                value_vars=[self.arr_delay_col, self.dep_delay_col],
+                var_name="delay_type",
+                value_name="delay",
+            )
+        )
+
+        zero_delay_stats = (
+            delay_events
+            .dropna(subset=["delay"])
+            .groupby(self.date_col)
+            .agg(
+                zero_delays=("delay", lambda s: (s == 0).sum()),
+                total_events=("delay", "size"),
+            )
+        )
+
+        if zero_delay_stats.empty:
+            return df
+
+        zero_delay_stats["zero_delay_pct"] = (
+            100.0 * zero_delay_stats["zero_delays"] / zero_delay_stats["total_events"]
+        )
+
+        dates_with_excess_zeroes = zero_delay_stats[
+            (zero_delay_stats["zero_delays"] >= self.min_zero_delays)
+            & (zero_delay_stats["zero_delay_pct"] >= self.min_zero_pct)
+        ].index
+
+        if len(dates_with_excess_zeroes) == 0:
+            return df
+
+        mask_dates = df[self.date_col].isin(dates_with_excess_zeroes)
+
+        delay_events_train = (
+            df.loc[
+                mask_dates,
+                [
+                    self.date_col,
+                    self.train_col,
+                    self.arr_delay_col,
+                    self.dep_delay_col,
+                ],
+            ]
+            .melt(
+                id_vars=[self.date_col, self.train_col],
+                value_vars=[self.arr_delay_col, self.dep_delay_col],
+                var_name="delay_type",
+                value_name="delay",
+            )
+        )
+
+        if delay_events_train.empty:
+            return df
+
+        all_null_or_zero_per_train = (
+            delay_events_train
+            .groupby([self.date_col, self.train_col])["delay"]
+            .apply(lambda s: s.dropna().eq(0).all())
+            .rename("all_null_or_zero")
+            .reset_index()
+        )
+
+        df = df.merge(
+            all_null_or_zero_per_train,
+            on=[self.date_col, self.train_col],
+            how="left",
+        )
+
+        df = df[
+            ~(
+                df[self.date_col].isin(dates_with_excess_zeroes)
+                & df["all_null_or_zero"].fillna(False)
+            )
+        ].copy()
+
+        df = df.drop(columns=["all_null_or_zero"])
+
+        return df

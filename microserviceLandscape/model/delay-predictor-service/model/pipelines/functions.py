@@ -18,10 +18,14 @@ from model.cleaning.transformers import (
     DropInvalidDelayRecords,
     DropArrivalDelayColumn,
     DropDepartureDelayColumn,
+    DropZeroDelayTrains,
 )
 
 def make_cleaning_pipeline(delay_type: str) -> Pipeline:
-    steps: List[Tuple[str, TransformerMixin]] = [("rename_camel_to_snake_columns", CamelToSnakeRenamer()),]
+    steps: List[Tuple[str, TransformerMixin]] = [
+        ("rename_camel_to_snake_columns", CamelToSnakeRenamer()),
+        ("drop_measurement_errors", DropZeroDelayTrains())
+    ]
 
     if delay_type == "arrival":
         steps.append(("drop_departure_delay_col", DropDepartureDelayColumn()))
