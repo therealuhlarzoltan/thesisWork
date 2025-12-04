@@ -124,6 +124,22 @@ logging:
     org.springframework.web.reactive.function.client.WebClient: INFO
 
 ---
+spring.config.activate.on-profile: scaled-2
+
+spring.cloud.stream.bindings.messageProcessor-in-0:
+  consumer:
+    partitioned: true
+    instanceCount: 2
+
+---
+spring.config.activate.on-profile: scaled-3
+
+spring.cloud.stream.bindings.messageProcessor-in-0:
+  consumer:
+    partitioned: true
+    instanceCount: 3
+
+---
 spring.config.activate.on-profile: docker
 
 server.port: 8080
@@ -135,7 +151,6 @@ spring.cloud.stream.bindings.messageProcessor-in-0:
   destination: geocodingDataRequests
   group: geocodingDataRequestsGroup
   consumer:
-    partitioned: true
     instance-index: 0
 
 ---
@@ -145,7 +160,6 @@ spring.cloud.stream.bindings.messageProcessor-in-0:
   destination: geocodingDataRequests
   group: geocodingDataRequestsGroup
   consumer:
-    partitioned: true
     instance-index: 1
 
 ---
@@ -155,5 +169,4 @@ spring.cloud.stream.bindings.messageProcessor-in-0:
   destination: geocodingDataRequests
   group: geocodingDataRequestsGroup
   consumer:
-    partitioned: true
     instance-index: 2
