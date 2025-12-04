@@ -10,9 +10,6 @@ from prediction.serializers import DelayPredictionRequestSerializer
 
 from prediction import model_cache
 
-
-
-
 class ArrivalDelayPredictorView(APIView):
     http_method_names = ['post']
 
@@ -34,12 +31,11 @@ class ArrivalDelayPredictorView(APIView):
             raise BadRequest(serializer.errors)
 
 
-
 class DepartureDelayPredictorView(APIView):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        print("📩 Got departure delay prediction request:\n" + json.dumps(request.data, indent=2))
+        print("Got departure delay prediction request:\n" + json.dumps(request.data, indent=2))
         serializer = DelayPredictionRequestSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data

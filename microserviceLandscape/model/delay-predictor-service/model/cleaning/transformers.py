@@ -16,10 +16,6 @@ from model.common.commons import (
 )
 
 class DropIdAndUrls(BaseEstimator, TransformerMixin):
-    """
-    Drop purely technical columns that are never needed for modeling.
-    Does NOT drop station_code, train_number, line_number, etc.
-    """
 
     def __init__(self,
                  id_cols: Sequence[str] = ("id",),
@@ -39,10 +35,6 @@ class DropIdAndUrls(BaseEstimator, TransformerMixin):
 
 
 class EnsureCoordinates(BaseEstimator, TransformerMixin):
-    """
-    Make sure we always have 'latitude' and 'longitude' columns.
-    If only 'station_latitude' / 'station_longitude' exist, copy them.
-    """
 
     def fit(self, X, y=None):
         return self
@@ -57,12 +49,6 @@ class EnsureCoordinates(BaseEstimator, TransformerMixin):
 
 
 class OriginTerminusAndScheduleFixer(BaseEstimator, TransformerMixin):
-    """
-    Set is_origin / is_terminus flags and fill missing scheduled edges:
-      - at origin: use scheduled_departure for scheduled_arrival
-      - at terminus: use scheduled_arrival for scheduled_departure
-    Works even if some columns are missing (no crash).
-    """
 
     def fit(self, X, y=None):
         return self
@@ -71,7 +57,6 @@ class OriginTerminusAndScheduleFixer(BaseEstimator, TransformerMixin):
         df = X
 
         if "scheduled_arrival" not in df.columns or "scheduled_departure" not in df.columns:
-            # Nothing to do
             return df
 
         df["is_origin"] = df["scheduled_arrival"].isna()
@@ -87,15 +72,11 @@ class OriginTerminusAndScheduleFixer(BaseEstimator, TransformerMixin):
 
 
 class DateFlagsAdder(BaseEstimator, TransformerMixin):
-    """
-    Ensure 'date' is datetime and add is_weekend / is_holiday flags.
-    """
 
     def __init__(self, country="HU"):
         self.country = country
 
     def fit(self, X, y=None):
-        # We don't need training data; holidays lib can be called in transform.
         return self
 
     def transform(self, X):
@@ -110,7 +91,6 @@ class DateFlagsAdder(BaseEstimator, TransformerMixin):
         if self.country == "HU":
             hu_holidays = holidays.Hungary(years=years)
         else:
-            # Fallback; you can extend with other countries if you want.
             hu_holidays = holidays.country_holidays(self.country, years=years)
 
         df["is_holiday"] = df["date"].apply(lambda d: d in hu_holidays)
@@ -118,12 +98,6 @@ class DateFlagsAdder(BaseEstimator, TransformerMixin):
 
 
 class WeatherFlattener(BaseEstimator, TransformerMixin):
-    """
-    Flatten 'weather' JSON/dict column into top-level columns.
-
-    Assumes each row has either a dict-like object or a JSON that pandas/json_normalize
-    can understand. Drops the nested 'time' field if present.
-    """
 
     def __init__(self, weather_col: str = "weather"):
         self.weather_col = weather_col
@@ -146,10 +120,6 @@ class WeatherFlattener(BaseEstimator, TransformerMixin):
 
 
 class CamelToSnakeRenamer(BaseEstimator, TransformerMixin):
-    """
-    Apply camel_to_snake to all columns.
-    Useful after WeatherFlattener.
-    """
 
     def fit(self, X, y=None):
         return self
@@ -161,12 +131,6 @@ class CamelToSnakeRenamer(BaseEstimator, TransformerMixin):
 
 
 class WeatherImputer(BaseEstimator, TransformerMixin):
-    """
-    Impute:
-      - latitude / longitude per train_number via ffill/bfill
-      - numeric weather cols with mean
-      - boolean weather cols with mode (or False fallback)
-    """
 
     def __init__(self,
                  train_col: str = "train_number",
@@ -179,7 +143,6 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         df = X
 
-        # Store global means / modes
         self.num_means_: Dict[str, float] = {}
         for col in self.num_cols:
             if col in df.columns:
@@ -196,19 +159,16 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         df = X
 
-        # Lat/lon per train_number: fill forward/backward
         if self.train_col in df.columns and {"latitude", "longitude"} <= set(df.columns):
             df[["latitude", "longitude"]] = (
                 df.groupby(self.train_col)[["latitude", "longitude"]]
                 .transform(lambda grp: grp.ffill().bfill())
             )
 
-        # Numeric weather means
         for col, mean_val in self.num_means_.items():
             if col in df.columns:
                 df[col] = df[col].astype(float).fillna(mean_val)
 
-        # Boolean weather modes
         for col in self.bool_cols:
             if col in df.columns:
                 fill_val = self.bool_modes_.get(col, False)
@@ -218,17 +178,6 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
 
 
 class StopIndexAdder(BaseEstimator, TransformerMixin):
-    """
-    Add 'stop_index' within (date, train_number), ordered by scheduled_arrival with a 6h buffer
-    for overnight trains:
-
-      - Convert scheduled_arrival to datetime
-      - If hour < buffer_hours, treat it as 'next day' → add 1 day
-      - Rank within (date, train_number) by this adjusted time.
-
-    Requirements:
-      - columns: 'date', 'train_number', 'scheduled_arrival'
-    """
 
     def __init__(self,
                  date_col: str = "date",
@@ -241,7 +190,6 @@ class StopIndexAdder(BaseEstimator, TransformerMixin):
         self.buffer_hours = buffer_hours
 
     def fit(self, X, y=None):
-        # purely deterministic, no learned state
         return self
 
     def transform(self, X):
@@ -253,7 +201,6 @@ class StopIndexAdder(BaseEstimator, TransformerMixin):
         dt = pd.to_datetime(df[self.time_col])
         df["_order_time"] = dt
 
-        # If scheduled_arrival is earlier than buffer_hours, assume it's past midnight → +1 day
         hours = df["_order_time"].dt.hour
         add_day = (hours < self.buffer_hours).astype("int32")
         df["_order_time"] = df["_order_time"] + pd.to_timedelta(add_day, unit="D")
@@ -269,12 +216,6 @@ class StopIndexAdder(BaseEstimator, TransformerMixin):
 
 
 class StationClusterer(BaseEstimator, TransformerMixin):
-    """
-    Cluster stations by latitude/longitude; attach station_cluster.
-    The clustering is learned at fit-time and reused at prediction time.
-
-    Uses KMeans on distinct (station_code, latitude, longitude) rows.
-    """
 
     def __init__(self,
                  n_clusters: int = 50,
@@ -330,14 +271,6 @@ class StationClusterer(BaseEstimator, TransformerMixin):
 
 
 class LineServiceFeatures(BaseEstimator, TransformerMixin):
-    """
-    Compute line-level frequency & stop pattern stats and cluster lines into
-    line_service_cluster groups. Also attaches:
-      - max_daily_trains
-      - mean_stops_per_run
-
-    This is the sklearn version of your notebook's line_freq + KMeans logic.
-    """
 
     def __init__(self,
                  line_col: str = "line_number",
@@ -359,7 +292,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
         df = X
         required = {self.line_col, self.date_col, self.train_col, self.station_col}
         if not required.issubset(df.columns):
-            # Not enough info: fall back to "no-op" mode
             self.line_freq_ = None
             self.global_max_daily_trains_ = 0.0
             self.global_mean_stops_per_run_ = 0.0
@@ -370,7 +302,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
         ).copy()
         df_line[self.date_col] = pd.to_datetime(df_line[self.date_col])
 
-        # (line, date, train) -> stops_per_run
         train_runs = (
             df_line
             .groupby([self.line_col, self.date_col, self.train_col])[self.station_col]
@@ -378,7 +309,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
             .reset_index(name="stops_per_run")
         )
 
-        # (line, date) -> trains_per_day
         line_date_counts = (
             train_runs
             .groupby([self.line_col, self.date_col])[self.train_col]
@@ -386,7 +316,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
             .reset_index(name="trains_per_day")
         )
 
-        # Aggregate daily frequency features per line
         line_freq = (
             line_date_counts
             .groupby(self.line_col)["trains_per_day"]
@@ -398,7 +327,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
             )
         )
 
-        # Weekday / weekend split
         line_date_counts["is_weekend"] = line_date_counts[self.date_col].dt.weekday >= 5
 
         weekday_means = (
@@ -417,7 +345,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
 
         line_freq = line_freq.join(weekday_means).join(weekend_means)
 
-        # Stops-per-run stats per line
         stops_agg = (
             train_runs
             .groupby(self.line_col)["stops_per_run"]
@@ -431,7 +358,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
 
         line_freq = line_freq.join(stops_agg)
 
-        # Fill gaps (e.g. lines with only weekday runs)
         line_freq = line_freq.fillna(0.0)
 
         line_freq["weekend_trains"] = line_freq["weekend_trains"].fillna(0.0)
@@ -440,7 +366,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
             line_freq["weekend_trains"] / (line_freq["weekday_trains"] + 1e-3)
         )
 
-        # Choose k using silhouette, roughly matching your notebook
         X_service = line_freq[[
             "mean_daily_trains",
             "median_daily_trains",
@@ -490,7 +415,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
         df = X
 
         if self.line_freq_ is None or self.line_col not in df.columns:
-            # Attach default values if we couldn't compute line_freq during fit
             df["line_service_cluster"] = -1
             df["max_daily_trains"] = self.global_max_daily_trains_
             df["mean_stops_per_run"] = self.global_mean_stops_per_run_
@@ -521,11 +445,6 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
 
 
 class DateTimeDecomposer(BaseEstimator, TransformerMixin):
-    """
-    Add dt parts for date, scheduled_departure, scheduled_arrival
-    according to ALLOWED_DT_PARTS, but **do not** drop the original
-    datetime columns (ColumnTransformer will ignore them).
-    """
 
     def __init__(self,
                  datetime_cols: Sequence[str] = ("date", "scheduled_departure", "scheduled_arrival"),
@@ -548,15 +467,6 @@ class DateTimeDecomposer(BaseEstimator, TransformerMixin):
 
 
 class DropInvalidDelayRecords(BaseEstimator, TransformerMixin):
-    """
-    Drop rows that are unusable for delay modelling / stop ordering.
-
-    A row is dropped if ANY of these holds (when the relevant columns exist):
-
-      - both scheduled_arrival and scheduled_departure are null
-      - both arrival and departure are null
-      - both arrival_delay and departure_delay are null
-    """
 
     def __init__(
         self,
@@ -581,25 +491,16 @@ class DropInvalidDelayRecords(BaseEstimator, TransformerMixin):
         df = X
         cols = set(df.columns)
 
-        # Start with "keep everything"
         to_drop = pd.Series(False, index=df.index, dtype=bool)
 
-        # both scheduled_* null
         if {self.sched_arr_col, self.sched_dep_col}.issubset(cols):
             to_drop |= df[self.sched_arr_col].isna() & df[self.sched_dep_col].isna()
 
-        # both actual arrival/dep null
         if {self.actual_arr_col, self.actual_dep_col}.issubset(cols):
             to_drop |= df[self.actual_arr_col].isna() & df[self.actual_dep_col].isna()
 
-        # both delays null
         if {self.arr_delay_col, self.dep_delay_col}.issubset(cols):
             to_drop |= df[self.arr_delay_col].isna() & df[self.dep_delay_col].isna()
-
-        # Optional: log how many we dropped
-        # n_dropped = int(to_drop.sum())
-        # if n_dropped:
-        #     print(f"DropInvalidDelayRecords: dropping {n_dropped} rows as invalid")
 
         if to_drop.any():
             df = df.loc[~to_drop]
@@ -607,10 +508,6 @@ class DropInvalidDelayRecords(BaseEstimator, TransformerMixin):
         return df
 
 class DropArrivalDelayColumn(BaseEstimator, TransformerMixin):
-    """
-    Drop the 'arrival_delay' column if present.
-    Intended for the DEPARTURE-delay model pipeline.
-    """
 
     def __init__(self, col: str = "arrival_delay"):
         self.col = col
@@ -626,10 +523,6 @@ class DropArrivalDelayColumn(BaseEstimator, TransformerMixin):
 
 
 class DropDepartureDelayColumn(BaseEstimator, TransformerMixin):
-    """
-    Drop the 'departure_delay' column if present.
-    Intended for the ARRIVAL-delay model pipeline.
-    """
 
     def __init__(self, col: str = "departure_delay"):
         self.col = col

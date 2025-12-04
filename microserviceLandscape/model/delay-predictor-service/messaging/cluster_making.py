@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-
 def apply_cluster_quantile_mask(
     df: pd.DataFrame,
     target_col: str,
@@ -10,34 +9,20 @@ def apply_cluster_quantile_mask(
     upper_q: float = 0.98,
     min_delay: float = -5.0,
 ) -> pd.DataFrame:
-    """
-    Training-only helper.
-
-    For each cluster in cluster_col, compute upper_q quantile of target_col,
-    then keep only rows where:
-        min_delay <= target <= cluster_q(cluster)
-
-    If cluster_q is NaN for some rows, falls back to global quantile.
-
-    Returns a filtered copy of df.
-    """
 
     if target_col not in df.columns:
         raise ValueError(f"{target_col} not found in dataframe")
 
     if cluster_col not in df.columns:
-        # no cluster info → fall back to global quantile only
         global_q = df[target_col].quantile(upper_q)
         mask = (df[target_col] <= global_q) & (df[target_col] >= min_delay)
         return df.loc[mask].reset_index(drop=True)
 
-    # per-cluster quantiles
     per_cluster_q = (
         df.groupby(cluster_col)[target_col]
            .transform(lambda s: s.quantile(upper_q))
     )
 
-    # global fallback
     global_q = df[target_col].quantile(upper_q)
     per_cluster_q = per_cluster_q.fillna(global_q)
 

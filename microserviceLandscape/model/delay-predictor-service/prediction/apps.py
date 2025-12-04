@@ -51,7 +51,6 @@ class PredictionConfig(AppConfig):
             instance_host=hostname
         )
 
-        # Graceful shutdown hooks
         def eureka_shutdown_handler(signum=None, frame=None):
             print("Shutting down and deregistering from Eureka...")
             eureka_client.stop()
