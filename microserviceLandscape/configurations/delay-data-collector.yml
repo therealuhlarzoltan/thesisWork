@@ -101,6 +101,30 @@ spring:
             required-groups: auditGroup
           contentType: application/json
 
+    rabbit:
+      bindings:
+        railDataRequests-out-0:
+          producer:
+            lazy: true
+            maxLength: 100
+            overflowBehavior: drop-head
+        weatherDataRequests-out-0:
+          producer:
+            lazy: true
+            maxLength: 100
+            overflowBehavior: drop-head
+        geocodingDataRequests-out-0:
+          producer:
+            lazy: true
+            maxLength: 100
+            overflowBehavior: drop-head
+        dataRequestProcessor-out-0:
+          producer:
+            lazy: true
+            maxLength: 100
+            overflowBehavior: drop-head
+
+
 spring.cloud.stream.bindings.delayInfoProcessor-in-0.consumer:
   maxAttempts: 3
   backOffInitialInterval: 500
