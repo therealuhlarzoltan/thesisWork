@@ -3,7 +3,6 @@ package hu.uni_obuda.thesis.railways.model.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import hu.uni_obuda.thesis.railways.data.weatherdatacollector.dto.WeatherInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +19,7 @@ import java.time.LocalDateTime;
 public class DelayPredictionRequest {
     private String stationCode;
     private String trainNumber;
+    private String lineNumber;
     private LocalDateTime scheduledDeparture;
     private LocalDateTime scheduledArrival;
     private LocalDate date;
