@@ -109,18 +109,12 @@ class CoordinateProcessorTest {
                 .build();
     }
 
-    private Message messageWithoutCorrelation(Event<?, ?> payload) {
+    private Message buildMessage(Event<?, ?> payload) {
         return MessageBuilder.withPayload(payload).build();
     }
 
-    private Message messageWithCorrelation(Event<?, ?> payload, String correlationId) {
-        return MessageBuilder.withPayload(payload)
-                .setHeader("correlationId", correlationId)
-                .build();
-    }
-
     @Test
-    void accept_withoutCorrelation_success_emitsToSinkAndCompletesRegistryAndCaches() throws Exception {
+    void accept_success_emitsToSinkAndCompletesRegistryAndCaches() throws Exception {
         String station = "BPK";
         GeocodingResponse response = coords(station, 47.5, 19.08);
         String json = objectMapper.writeValueAsString(response);
@@ -132,7 +126,7 @@ class CoordinateProcessorTest {
 
         when(coordinatesCache.cache(eq(station), eq(response))).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         // subscribing to registry before processing
         final GeocodingResponse[] registryResult = new GeocodingResponse[1];
@@ -143,20 +137,16 @@ class CoordinateProcessorTest {
                     latch.countDown();
                 });
 
-        // verify sink + trigger processor
         StepVerifier.create(incomingMessageSink.getCoordinatesSink().asFlux().take(1))
                 .then(() -> testedObject.accept(message))
                 .assertNext(resp -> assertThat(resp).usingRecursiveComparison().isEqualTo(response))
                 .verifyComplete();
 
-        // registry got result
         assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
         assertThat(registryResult[0]).usingRecursiveComparison().isEqualTo(response);
 
-        // cache invoked only once
         verify(coordinatesCache).cache(station, response);
 
-        // correct logs
         List<String> processorLogs = loggedProcessorMessages();
         List<String> registryLogs = loggedRegistryMessages();
         assertThat(processorLogs).anyMatch(m -> m.contains("Processing message created at"));
@@ -164,7 +154,7 @@ class CoordinateProcessorTest {
     }
 
     @Test
-    void accept_withoutCorrelation_error_logsErrorMessage_noSinkNoRegistry() {
+    void accept_error_logsErrorMessage_noSinkNoRegistry() {
         String rawError = "{invalid-json";
 
         when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
@@ -172,109 +162,30 @@ class CoordinateProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn(rawError);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
-        // sink should not emit anything
         StepVerifier.create(incomingMessageSink.getCoordinatesSink().asFlux().take(1))
                 .expectTimeout(Duration.ofMillis(200))
                 .verify();
 
-        // no call into registry
-        // using real registry, can asserting internal maps stay empty
         assertThat(ReflectionTestUtils.<Object>getField(registry, "pending"))
                 .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.MAP)
                 .isEmpty();
 
-        // correct logs
         List<String> logs = loggedProcessorMessages();
         assertThat(logs).anyMatch(m -> m.contains("Received an error response: " + rawError));
     }
 
     @Test
-    void accept_withoutCorrelation_unknownType_logsUnknown() {
+    void accept_unknownType_logsUnknown() {
         when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
         when(httpResponseEvent.getEventType()).thenReturn(null);
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn("{}");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
-
-        testedObject.accept(message);
-
-        List<String> logs = loggedProcessorMessages();
-        assertThat(logs).anyMatch(m -> m.contains("Received unknown event type"));
-    }
-
-    @Test
-    void accept_withCorrelation_success_emitsToSinkAndCompletesRegistryAndCaches() throws Exception {
-        String station = "BPK";
-        String correlationId = "corr-123";
-        GeocodingResponse response = coords(station, 47.5, 19.08);
-        String json = objectMapper.writeValueAsString(response);
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.SUCCESS);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn(json);
-        when(coordinatesCache.cache(eq(station), eq(response))).thenReturn(Mono.empty());
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        // waiting with correlationId
-        final GeocodingResponse[] registryResult = new GeocodingResponse[1];
-        CountDownLatch latch = new CountDownLatch(1);
-        registry.waitForCoordinatesWithCorrelationId(correlationId)
-                .subscribe(r -> {
-                    registryResult[0] = r;
-                    latch.countDown();
-                });
-
-        StepVerifier.create(incomingMessageSink.getCoordinatesSink().asFlux().take(1))
-                .then(() -> testedObject.accept(message))
-                .assertNext(resp -> assertThat(resp).usingRecursiveComparison().isEqualTo(response))
-                .verifyComplete();
-
-        assertThat(latch.await(3, TimeUnit.SECONDS)).isTrue();
-        assertThat(registryResult[0]).usingRecursiveComparison().isEqualTo(response);
-
-        verify(coordinatesCache).cache(station, response);
-
-        List<String> processorLogs = loggedProcessorMessages();
-        List<String> registryLogs = loggedRegistryMessages();
-        assertThat(processorLogs).anyMatch(m -> m.contains("Processing message created at"));
-        assertThat(registryLogs).anyMatch(m -> m.contains("Registered coordinates with correlationId " + correlationId));
-    }
-
-    @Test
-    void accept_withCorrelation_error_logsErrorMessage() {
-        String correlationId = "corr-err";
-        String rawError = "{invalid-json";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(HttpResponseEvent.Type.ERROR);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn(rawError);
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
-
-        testedObject.accept(message);
-
-        List<String> logs = loggedProcessorMessages();
-        assertThat(logs).anyMatch(m -> m.contains("Received an error response: " + rawError));
-    }
-
-    @Test
-    void accept_withCorrelation_unknownType_logsUnknown() {
-        String correlationId = "corr-unknown";
-
-        when(httpResponseEvent.getEventCreatedAt()).thenReturn(ZonedDateTime.now());
-        when(httpResponseEvent.getEventType()).thenReturn(null);
-        when(httpResponseEvent.getData()).thenReturn(responsePayload);
-        when(responsePayload.getMessage()).thenReturn("{}");
-
-        Message<Event<?, ?>> message = messageWithCorrelation(httpResponseEvent, correlationId);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -287,7 +198,7 @@ class CoordinateProcessorTest {
         @SuppressWarnings("unchecked")
         Event<String, String> genericEvent = mock(Event.class);
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(genericEvent);
+        Message<Event<?, ?>> message = buildMessage(genericEvent);
 
         testedObject.accept(message);
 
@@ -303,7 +214,7 @@ class CoordinateProcessorTest {
         when(httpResponseEvent.getData()).thenReturn(responsePayload);
         when(responsePayload.getMessage()).thenReturn("{not-valid-json");
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 
@@ -330,7 +241,7 @@ class CoordinateProcessorTest {
         when(responsePayload.getMessage()).thenReturn(json);
         when(coordinatesCache.cache(eq(station), eq(response))).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         int threads = 10;
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -349,7 +260,6 @@ class CoordinateProcessorTest {
         // giving some time for subscribers to register pending sinks
         Thread.sleep(100);
 
-        // processing the message in main thread
         testedObject.accept(message);
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -358,7 +268,6 @@ class CoordinateProcessorTest {
         assertThat(results).hasSize(threads);
         results.forEach(r -> assertThat(r).usingRecursiveComparison().isEqualTo(response));
 
-        // single cache invocation for multiple identical calls
         verify(coordinatesCache, times(1)).cache(station, response);
     }
 
@@ -374,7 +283,7 @@ class CoordinateProcessorTest {
         when(responsePayload.getMessage()).thenReturn(json);
         when(coordinatesCache.cache(eq(station), eq(response))).thenReturn(Mono.empty());
 
-        Message<Event<?, ?>> message = messageWithoutCorrelation(httpResponseEvent);
+        Message<Event<?, ?>> message = buildMessage(httpResponseEvent);
 
         testedObject.accept(message);
 

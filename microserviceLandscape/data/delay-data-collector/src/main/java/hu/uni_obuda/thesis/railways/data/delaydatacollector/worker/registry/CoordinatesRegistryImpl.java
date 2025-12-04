@@ -29,20 +29,6 @@ public class CoordinatesRegistryImpl implements CoordinatesRegistry {
     private Integer timeout;
 
     @Override
-    public Mono<GeocodingResponse> waitForCoordinatesWithCorrelationId(String correlationId) {
-        log.info("Waiting for coordinates with correlationId {}", correlationId);
-        return sharedMonos.computeIfAbsent(correlationId, key ->
-                Mono.<GeocodingResponse>create(sink -> pending.put(key, sink))
-                        .timeout(Duration.ofSeconds(timeout))
-                        .doFinally(_ -> {
-                            pending.remove(key);
-                            sharedMonos.remove(key);
-                        })
-                        .cache()
-        );
-    }
-
-    @Override
     public Mono<GeocodingResponse> waitForCoordinates(String stationName) {
         log.info("Waiting for coordinates for station {}", stationName);
         return sharedMonos.computeIfAbsent(stationName, key ->
@@ -69,31 +55,10 @@ public class CoordinatesRegistryImpl implements CoordinatesRegistry {
     }
 
     @Override
-    public void onCoordinatesWithCorrelationId(String correlationId, GeocodingResponse coordinates) {
-        if (!coordinates.isEmpty()) {
-            cache.cache(coordinates.getAddress(), coordinates).subscribe();
-        }
-        MonoSink<GeocodingResponse> sink = pending.remove(correlationId);
-        if (sink != null) {
-            sink.success(coordinates);
-        }
-        log.info("Registered coordinates with correlationId {}", correlationId);
-    }
-
-    @Override
     public void onError(String stationName, Throwable throwable) {
         MonoSink<GeocodingResponse> sink = pending.remove(stationName);
         if (sink != null) {
             log.warn("Cancelling wait for coordinates for station {} due to error: {}", stationName, throwable.getMessage());
-            sink.error(new ServiceResponseException("Unable to get geocoding response", throwable));
-        }
-    }
-
-    @Override
-    public void onErrorWithCorrelationId(String correlationId, Throwable throwable) {
-        MonoSink<GeocodingResponse> sink = pending.remove(correlationId);
-        if (sink != null) {
-            log.warn("Cancelling wait for coordinates with correlationId {} due to error: {}", correlationId, throwable.getMessage());
             sink.error(new ServiceResponseException("Unable to get geocoding response", throwable));
         }
     }
