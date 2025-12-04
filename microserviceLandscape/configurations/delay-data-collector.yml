@@ -155,6 +155,12 @@ spring.cloud.stream.rabbit.bindings.geocodingResponseProcessor-in-0.consumer:
   autoBindDlq: true
   republishToDlq: true
 
+spring.cloud.stream.bindings.dataRequestProcessor-in-0.consumer:
+  maxAttempts: 3
+  backOffInitialInterval: 500
+  backOffMaxInterval: 1000
+  backOffMultiplier: 2.0
+
 spring.cloud.stream.rabbit.bindings.dataRequestProcessor-in-0.consumer:
   atoBindDlg: true
   republishToDlq: true
@@ -190,3 +196,38 @@ spring:
       host: redis-1
       port: 6379
 
+---
+spring.activate.on-profile: scaled-2
+
+spring.cloud.stream:
+  bindings:
+    railDataRequests-out-0:
+      producer:
+        partition-key-expression: headers['partitionKey']
+        partition-count: 2
+    weatherDataRequests-out-0:
+      producer:
+        partition-key-expression: headers['partitionKey']
+        partition-count: 2
+    geocodingDataRequests-out-0:
+      producer:
+        partition-key-expression: headers['partitionKey']
+        partition-count: 2
+
+---
+spring.activate.on-profile: scaled-3
+
+spring.cloud.stream:
+  bindings:
+    railDataRequests-out-0:
+      producer:
+        partition-key-expression: headers['partitionKey']
+        partition-count: 3
+    weatherDataRequests-out-0:
+      producer:
+        partition-key-expression: headers['partitionKey']
+        partition-count: 3
+    geocodingDataRequests-out-0:
+      producer:
+        partition-key-expression: headers['partitionKey']
+        partition-count: 3
