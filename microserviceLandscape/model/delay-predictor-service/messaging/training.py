@@ -44,7 +44,7 @@ def _train_arrival_model(df):
             cleaned,
             target_col="arrival_delay",
             cluster_col="line_service_cluster",
-            upper_q=0.98,
+            upper_q=0.99,
             min_delay=-5.0,
         )
 
@@ -122,7 +122,7 @@ def _train_departure_model(df):
             cleaned,
             target_col="departure_delay",
             cluster_col="line_service_cluster",
-            upper_q=0.98,
+            upper_q=0.99,
             min_delay=-5.0,
         )
 
