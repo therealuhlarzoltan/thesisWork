@@ -23,8 +23,10 @@ class DropIdAndUrls(BaseEstimator, TransformerMixin):
         self.id_cols = list(id_cols)
         self.url_cols = list(url_cols)
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -39,6 +41,7 @@ class EnsureCoordinates(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
+
     def transform(self, X):
         df = X
         if "latitude" not in df.columns and "station_latitude" in df.columns:
@@ -52,6 +55,7 @@ class OriginTerminusAndScheduleFixer(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -76,8 +80,10 @@ class DateFlagsAdder(BaseEstimator, TransformerMixin):
     def __init__(self, country="HU"):
         self.country = country
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -102,8 +108,10 @@ class WeatherFlattener(BaseEstimator, TransformerMixin):
     def __init__(self, weather_col: str = "weather"):
         self.weather_col = weather_col
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -123,6 +131,7 @@ class CamelToSnakeRenamer(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -156,6 +165,7 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
 
         return self
 
+
     def transform(self, X):
         df = X
 
@@ -179,39 +189,98 @@ class WeatherImputer(BaseEstimator, TransformerMixin):
 
 class StopIndexAdder(BaseEstimator, TransformerMixin):
 
-    def __init__(self,
-                 date_col: str = "date",
-                 train_col: str = "train_number",
-                 time_col: str = "scheduled_arrival",
-                 buffer_hours: int = 6):
+    def __init__(
+        self,
+        date_col: str = "date",
+        line_col: str = "line_number",
+        station_col: str = "station_code",
+        time_col: str = "scheduled_arrival",
+        buffer_hours: int = 6,
+    ):
         self.date_col = date_col
-        self.train_col = train_col
+        self.line_col = line_col
+        self.station_col = station_col
         self.time_col = time_col
         self.buffer_hours = buffer_hours
 
+
     def fit(self, X, y=None):
+        df = X
+
+        required = {self.date_col, self.line_col, self.station_col, self.time_col}
+        if not required.issubset(df.columns):
+            self.stop_index_map_ = {}
+            self.default_stop_index_ = -1
+            return self
+
+        tmp = df[[self.date_col, self.line_col, self.station_col, self.time_col]].copy()
+        tmp = tmp.dropna(subset=[self.line_col, self.station_col, self.time_col])
+
+        if tmp.empty:
+            self.stop_index_map_ = {}
+            self.default_stop_index_ = -1
+            return self
+
+        dt = pd.to_datetime(tmp[self.time_col])
+        tmp["_order_time"] = dt
+
+        hours = tmp["_order_time"].dt.hour
+        add_day = (hours < self.buffer_hours).astype("int32")
+        tmp["_order_time"] = tmp["_order_time"] + pd.to_timedelta(add_day, unit="D")
+
+        route_stats = (
+            tmp.groupby([self.line_col, self.station_col])["_order_time"]
+               .median()
+               .reset_index()
+        )
+
+        if route_stats.empty:
+            self.stop_index_map_ = {}
+            self.default_stop_index_ = -1
+            return self
+
+        route_stats = route_stats.sort_values([self.line_col, "_order_time"])
+
+        route_stats["stop_index"] = (
+            route_stats
+            .groupby(self.line_col)["_order_time"]
+            .rank(method="dense")
+            .astype("int32") - 1
+        )
+
+        self.stop_index_map_ = {
+            (row[self.line_col], row[self.station_col]): int(row["stop_index"])
+            for _, row in route_stats.iterrows()
+        }
+        self.default_stop_index_ = -1
+
         return self
+
 
     def transform(self, X):
         df = X
-        required = {self.date_col, self.train_col, self.time_col}
-        if not required.issubset(df.columns):
+
+        if not hasattr(self, "stop_index_map_"):
             return df
 
-        dt = pd.to_datetime(df[self.time_col])
-        df["_order_time"] = dt
+        if not self.stop_index_map_:
+            df["stop_index"] = self.default_stop_index_
+            return df
 
-        hours = df["_order_time"].dt.hour
-        add_day = (hours < self.buffer_hours).astype("int32")
-        df["_order_time"] = df["_order_time"] + pd.to_timedelta(add_day, unit="D")
+        if not {self.line_col, self.station_col}.issubset(df.columns):
+            df["stop_index"] = self.default_stop_index_
+            return df
+
+        idx = pd.MultiIndex.from_arrays([df[self.line_col], df[self.station_col]])
+        mapping = pd.Series(self.stop_index_map_)
 
         df["stop_index"] = (
-            df.groupby([self.date_col, self.train_col])["_order_time"]
-              .rank(method="first")
-              .astype("int32") - 1
+            mapping.reindex(idx)
+                   .fillna(self.default_stop_index_)
+                   .astype("int32")
+                   .values
         )
 
-        df = df.drop(columns=["_order_time"])
         return df
 
 
@@ -224,6 +293,7 @@ class StationClusterer(BaseEstimator, TransformerMixin):
         self.n_clusters = n_clusters
         self.random_state = random_state
         self.station_col = station_col
+
 
     def fit(self, X, y=None):
         df = X
@@ -254,6 +324,7 @@ class StationClusterer(BaseEstimator, TransformerMixin):
         self.station_cluster_map_ = dict(zip(coords[self.station_col], labels))
 
         return self
+
 
     def transform(self, X):
         df = X
@@ -287,6 +358,7 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
         self.min_k = min_k
         self.max_k = max_k
         self.random_state = random_state
+
 
     def fit(self, X, y=None):
         df = X
@@ -411,6 +483,7 @@ class LineServiceFeatures(BaseEstimator, TransformerMixin):
 
         return self
 
+
     def transform(self, X):
         df = X
 
@@ -452,8 +525,10 @@ class DateTimeDecomposer(BaseEstimator, TransformerMixin):
         self.datetime_cols = list(datetime_cols)
         self.parts = list(parts)
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -484,8 +559,10 @@ class DropInvalidDelayRecords(BaseEstimator, TransformerMixin):
         self.arr_delay_col = arr_delay_col
         self.dep_delay_col = dep_delay_col
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -512,8 +589,10 @@ class DropArrivalDelayColumn(BaseEstimator, TransformerMixin):
     def __init__(self, col: str = "arrival_delay"):
         self.col = col
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -527,8 +606,10 @@ class DropDepartureDelayColumn(BaseEstimator, TransformerMixin):
     def __init__(self, col: str = "departure_delay"):
         self.col = col
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
@@ -554,8 +635,10 @@ class DropZeroDelayTrains(BaseEstimator, TransformerMixin):
         self.min_zero_delays = min_zero_delays
         self.min_zero_pct = min_zero_pct
 
+
     def fit(self, X, y=None):
         return self
+
 
     def transform(self, X):
         df = X
