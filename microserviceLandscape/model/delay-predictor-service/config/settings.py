@@ -42,6 +42,7 @@ def lower_keys(d):
     else:
         return d
 
+
 def resolve_config_property(flat_key, config):
     keys = flat_key.lower().split('_')
 
@@ -56,6 +57,12 @@ def resolve_config_property(flat_key, config):
         if match:
             return os.getenv(match.group(1), "")
     return current
+
+
+def is_training_instance() -> bool:
+    val = os.getenv("IS_TRAINING_INSTANCE", "true").strip().lower()
+    return val in ("1", "true", "yes", "y", "on")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -90,8 +97,10 @@ INSTALLED_APPS = [
     'django_apscheduler',
     'health_check',
     'health_check.db',
-    'health_check.contrib.rabbitmq'
 ]
+
+if is_training_instance():
+    INSTALLED_APPS.append('health_check.contrib.rabbitmq')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
