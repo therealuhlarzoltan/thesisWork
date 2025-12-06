@@ -56,7 +56,7 @@ logging:
     root: INFO
 
 ---
-spring.activate.on-profile: docker
+spring.config.activate.on-profile: docker
 
 spring:
   datasource:
