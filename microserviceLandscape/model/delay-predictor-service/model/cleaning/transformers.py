@@ -287,7 +287,7 @@ class StopIndexAdder(BaseEstimator, TransformerMixin):
 class StationClusterer(BaseEstimator, TransformerMixin):
 
     def __init__(self,
-                 n_clusters: int = 50,
+                 n_clusters: int = 100,
                  random_state: int = 42,
                  station_col: str = "station_code"):
         self.n_clusters = n_clusters
@@ -297,14 +297,14 @@ class StationClusterer(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         df = X
-        required = {self.station_col, "latitude", "longitude"}
+        required = {self.station_col, "station_latitude", "station_longitude"}
         if not required.issubset(df.columns):
             self.station_cluster_map_ = {}
             self.n_clusters_ = 0
             return self
 
         coords = (
-            df[[self.station_col, "latitude", "longitude"]]
+            df[[self.station_col, "station_latitude", "station_longitude"]]
             .dropna()
             .drop_duplicates(subset=[self.station_col])
         )
@@ -318,7 +318,7 @@ class StationClusterer(BaseEstimator, TransformerMixin):
         self.n_clusters_ = n_clusters
 
         km = KMeans(n_clusters=n_clusters, random_state=self.random_state)
-        labels = km.fit_predict(coords[["latitude", "longitude"]])
+        labels = km.fit_predict(coords[["station_latitude", "station_longitude"]])
 
         self.kmeans_ = km
         self.station_cluster_map_ = dict(zip(coords[self.station_col], labels))
@@ -626,7 +626,7 @@ class DropZeroDelayTrains(BaseEstimator, TransformerMixin):
         arr_delay_col: str = "arrival_delay",
         dep_delay_col: str = "departure_delay",
         min_zero_delays: int = 100,
-        min_zero_pct: float = 40.0,
+        min_zero_pct: float = 50.0,
     ):
         self.date_col = date_col
         self.train_col = train_col

@@ -19,11 +19,15 @@ numeric_cols = WEATHER_NUM_COLS + dt_feats + [
     "max_daily_trains",
     "mean_stops_per_run",
     "stop_index",
+    "station_latitude",
+    "station_longitude",
 ]
 
 categorical_cols = WEATHER_BOOL_COLS + [
     "station_cluster",
+    "station_code",
     "line_service_cluster",
+    "train_number",
     "line_number",
     "is_origin",
     "is_terminus",

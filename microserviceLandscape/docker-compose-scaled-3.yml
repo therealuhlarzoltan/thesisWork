@@ -4,7 +4,7 @@ services:
     build: data/rail-data-collector
     mem_limit: 2048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,data-source-emma,scaled-2,instance-1
+      - SPRING_PROFILES_ACTIVE=docker,data-source-emma,scaled-3,instance-1
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_LIMITFORPERIOD=2
@@ -13,7 +13,7 @@ services:
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITFORPERIOD=2
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_TIMEOUTDURATION=5s
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITFORPERIOD=3
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITFORPERIOD=2
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_TIMEOUTDURATION=5s
     depends_on:
@@ -36,16 +36,16 @@ services:
     build: data/rail-data-collector
     mem_limit: 2048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,data-source-emma,scaled-2,instance-2
+      - SPRING_PROFILES_ACTIVE=docker,data-source-emma,scaled-3,instance-2
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_LIMITFORPERIOD=2
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_LIMITFORPERIOD=1
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_TIMEOUTDURATION=5s
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITFORPERIOD=2
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITFORPERIOD=1
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_TIMEOUTDURATION=5s
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITFORPERIOD=3
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITFORPERIOD=2
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_TIMEOUTDURATION=5s
     depends_on:
@@ -63,15 +63,47 @@ services:
       timeout: 2s
       retries: 60
 
+  rail-data-collector-3:
+    container_name: rail-data-collector-3
+    build: data/rail-data-collector
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,data-source-emma,scaled-3,instance-3
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_LIMITFORPERIOD=2
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_LIMITREFRESHPERIOD=1s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTIMETABLEAPI_TIMEOUTDURATION=5s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITFORPERIOD=1
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_LIMITREFRESHPERIOD=1s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETFULLTIMETABLEAPI_TIMEOUTDURATION=5s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITFORPERIOD=2
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_LIMITREFRESHPERIOD=1s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETTRAINDETAILSAPI_TIMEOUTDURATION=5s
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis-4:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
   weather-data-collector-1:
     container_name: weather-data-collector-1
     build: data/weather-data-collector
     mem_limit: 2048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,scaled-2,instance-1
+      - SPRING_PROFILES_ACTIVE=docker,scaled-3,instance-1
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITFORPERIOD=6
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITFORPERIOD=4
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_TIMEOUTDURATION=3s
     depends_on:
@@ -92,10 +124,34 @@ services:
     build: data/weather-data-collector
     mem_limit: 2048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,scaled-2,instance-2
+      - SPRING_PROFILES_ACTIVE=docker,scaled-3,instance-2
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITFORPERIOD=6
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITFORPERIOD=4
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITREFRESHPERIOD=1s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_TIMEOUTDURATION=3s
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  weather-data-collector-3:
+    container_name: weather-data-collector-3
+    build: data/weather-data-collector
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,scaled-3,instance-3
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITFORPERIOD=4
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GETWEATHERDATAAPI_TIMEOUTDURATION=3s
     depends_on:
@@ -116,10 +172,10 @@ services:
     build: data/geocoding-service
     mem_limit: 2048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,scaled-2,instance-1
+      - SPRING_PROFILES_ACTIVE=docker,scaled-3,instance-1
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITFORPERIOD=6
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITFORPERIOD=4
       - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_TIMEOUTDURATION=3s
     depends_on:
@@ -140,10 +196,34 @@ services:
     build: data/geocoding-service
     mem_limit: 2048m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,scaled-2,instance-2
+      - SPRING_PROFILES_ACTIVE=docker,scaled-3,instance-2
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
-      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITFORPERIOD=6
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITFORPERIOD=4
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITREFRESHPERIOD=1s
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_TIMEOUTDURATION=3s
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  geocoding-service-3:
+    container_name: geocoding-service-3
+    build: data/geocoding-service
+    mem_limit: 2048m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,scaled-3,instance-3
+      - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
+      - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
+      - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITFORPERIOD=4
       - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_LIMITREFRESHPERIOD=1s
       - RESILIENCE4J_RATELIMITER_INSTANCES_GEOCODINGAPI_TIMEOUTDURATION=3s
     depends_on:
@@ -163,7 +243,7 @@ services:
     build: data/delay-data-collector
     mem_limit: 3072m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,local-debug,data-source-emma,scaled-2
+      - SPRING_PROFILES_ACTIVE=docker,local-debug,data-source-emma,scaled-3
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
     depends_on:
@@ -216,6 +296,31 @@ services:
 
   delay-predictor-service-2:
     container_name: delay-predictor-service-2
+    build: model/delay-predictor-service
+    mem_limit: 2048m
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - CONFIG_PROFILE=docker
+      - IS_TRAINING_INSTANCE=False
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgresql-2:
+        condition: service_healthy
+      delay-data-collector:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:8000/actuator/health/" ]
+      interval: 10s
+      timeout: 2s
+      retries: 60
+
+  delay-predictor-service-3:
+    container_name: delay-predictor-service-3
     build: model/delay-predictor-service
     mem_limit: 2048m
     environment:
@@ -388,6 +493,17 @@ services:
     container_name: redis-3
     ports:
       - "6381:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-4:
+    image: redis:7.2-alpine
+    container_name: redis-4
+    ports:
+      - "6382:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "-p", "6379", "ping" ]
       interval: 10s

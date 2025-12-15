@@ -44,7 +44,7 @@ def _train_arrival_model(df):
             cleaned,
             target_col="arrival_delay",
             cluster_col="line_service_cluster",
-            upper_q=0.99,
+            upper_q=0.98,
             min_delay=-5.0,
         )
 
@@ -68,7 +68,6 @@ def _train_arrival_model(df):
             X_train_proc,
             y_train,
             eval_set=[(X_train_proc, y_train), (X_test_proc, y_test)],
-            verbose=True,
         )
 
         print("\nEvaluating arrival delay model...")
@@ -122,7 +121,7 @@ def _train_departure_model(df):
             cleaned,
             target_col="departure_delay",
             cluster_col="line_service_cluster",
-            upper_q=0.99,
+            upper_q=0.98,
             min_delay=-5.0,
         )
 
@@ -146,7 +145,6 @@ def _train_departure_model(df):
             X_train_proc,
             y_train,
             eval_set=[(X_train_proc, y_train), (X_test_proc, y_test)],
-            verbose=True,
         )
 
         print("\nEvaluating departure delay model...")

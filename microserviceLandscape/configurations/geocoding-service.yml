@@ -61,9 +61,9 @@ resilience4j:
   ratelimiter:
     instances:
       geocodingApi:
-        limitForPeriod: 10
+        limitForPeriod: 12
         limitRefreshPeriod: 1s
-        timeoutDuration: 5s
+        timeoutDuration: 3s
 
 spring:
 
@@ -83,14 +83,6 @@ spring:
           destination: geocodingDataRequests
           group: geocodingDataRequestsGroup
           contentType: application/json
-
-    rabbit:
-      bindings:
-        geocodingDataResponses-out-0:
-          producer:
-            lazy: true
-            maxLength: 100
-            overflowBehavior: drop-head
 
 spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
   maxAttempts: 3

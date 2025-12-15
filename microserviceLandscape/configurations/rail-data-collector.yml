@@ -121,15 +121,15 @@ resilience4j:
   ratelimiter:
     instances:
       getTimetableApi:
-        limitForPeriod: 3
+        limitForPeriod: 4
         limitRefreshPeriod: 1s
         timeoutDuration: 5s
       getTrainDetailsApi:
-        limitForPeriod: 5
+        limitForPeriod: 6
         limitRefreshPeriod: 1s
         timeoutDuration: 5s
       getFullTimetableApi:
-        limitForPeriod: 3
+        limitForPeriod: 4
         limitRefreshPeriod: 1s
         timeoutDuration: 5s
 
@@ -156,14 +156,6 @@ spring:
           destination: railDataRequests
           group: railDataRequestsGroup
           contentType: application/json
-
-    rabbit:
-      bindings:
-        railDataResponses-out-0:
-          producer:
-            lazy: true
-            maxLength: 100
-            overflowBehavior: drop-head
 
 
   spring.cloud.stream.bindings.messageProcessor-in-0.consumer:

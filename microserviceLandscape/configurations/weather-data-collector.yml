@@ -39,7 +39,6 @@ resilience4j:
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiException
           - hu.uni_obuda.thesis.railways.util.exception.datacollectors.ExternalApiFormatMismatchException
 
-
   retry:
     instances:
       getWeatherDataApi:
@@ -55,7 +54,7 @@ resilience4j:
   ratelimiter:
     instances:
       getWeatherDataApi:
-        limitForPeriod: 10
+        limitForPeriod: 12
         limitRefreshPeriod: 1s
         timeoutDuration: 3s
 
@@ -77,14 +76,6 @@ spring:
           destination: weatherDataRequests
           group: weatherDataRequestsGroup
           contentType: application/json
-
-    rabbit:
-      bindings:
-        weatherDataResponses-out-0:
-          producer:
-            lazy: true
-            maxLength: 100
-            overflowBehavior: drop-head
 
 spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
   maxAttempts: 3

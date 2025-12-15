@@ -63,9 +63,9 @@ services:
 
   delay-data-collector:
     build: data/delay-data-collector
-    mem_limit: 3048m
+    mem_limit: 3072m
     environment:
-      - SPRING_PROFILES_ACTIVE=docker,production,data-source-emma
+      - SPRING_PROFILES_ACTIVE=docker,local-debug,data-source-emma
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
       - CONFIG_SERVER_PASSWORD=${CONFIG_SERVER_PASSWORD}
     depends_on:
@@ -93,10 +93,11 @@ services:
 
   delay-predictor-service:
     build: model/delay-predictor-service
-    mem_limit: 6144m
+    mem_limit: 10000m
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - CONFIG_PROFILE=docker
+      - IS_TRAINING_INSTANCE=False
     depends_on:
       config-server:
         condition: service_healthy
@@ -116,7 +117,7 @@ services:
 
   route-planner-service:
     build: route/route-planner-service
-    mem_limit: 3048m
+    mem_limit: 3072m
     environment:
       - SPRING_PROFILES_ACTIVE=docker,data-source-emma
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
@@ -144,7 +145,7 @@ services:
 
   api-gateway:
     build: cloud/api-gateway
-    mem_limit: 1048m
+    mem_limit: 2048m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}
@@ -169,7 +170,7 @@ services:
 
   security-server:
     build: cloud/security-server
-    mem_limit: 1048m
+    mem_limit: 1024m
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USER=${CONFIG_SERVER_USER}

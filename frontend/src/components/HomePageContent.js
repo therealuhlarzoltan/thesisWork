@@ -137,7 +137,7 @@ function HomePageContent() {
 
         if (diffMinutes < 2) {
             return <Alert severity="error" sx={{ my: 1 }}>Meghiúsuló átszállás ({diffMinutes} perc)</Alert>;
-        } else if (diffMinutes <= 6) {
+        } else if (diffMinutes <= 5) {
             return <Alert severity="warning" sx={{ my: 1 }}>Rizikós átszállási idő: {diffMinutes} perc</Alert>;
         } else {
             return null;
